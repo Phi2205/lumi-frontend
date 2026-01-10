@@ -63,4 +63,4 @@ export default function Home() {
     </div>
   );
 }
-export { default } from "./../app/page"
+export { default } from "./../app/page";
