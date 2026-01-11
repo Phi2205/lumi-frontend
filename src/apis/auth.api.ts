@@ -1,8 +1,12 @@
-import { api } from '../lib/axios';
+import axiosInstance from './axiosInstance';
 
-export const loginApi = (data: {
+export interface LoginPayload {
   email: string;
   password: string;
-}) => {
-  return api.post('/auth/login', data);
-};
+}
+
+export const loginApi = (data: LoginPayload) => 
+  axiosInstance.post('/auth/login', data);
+
+export const logoutApi = () => 
+  axiosInstance.post('/auth/logout');

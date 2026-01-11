@@ -1,11 +1,17 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Dancing_Script } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { AuthProviderWrapper } from "@/components/providers/AuthProviderWrapper"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const dancingScript = Dancing_Script({ 
+  subsets: ["latin"],
+  variable: "--font-dancing-script",
+  weight: ["400", "500", "600", "700"]
+})
 
 export const metadata: Metadata = {
   title: "SocialHub - Connect & Share",
@@ -37,8 +43,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`font-sans antialiased`}>
-        {children}
+      <body className={`font-sans antialiased ${dancingScript.variable}`}>
+        <AuthProviderWrapper>
+          {children}
+        </AuthProviderWrapper>
         <Analytics />
       </body>
     </html>

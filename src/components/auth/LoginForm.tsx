@@ -1,16 +1,21 @@
+"use client"
+
 import type React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Eye, EyeOff } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function LoginForm() {
+  const { login, isLoading: authLoading } = useAuth()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const [errorMessage, setErrorMessage] = useState<string>("")
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {}
@@ -39,10 +44,21 @@ export default function LoginForm() {
     }
 
     setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    console.log("Login attempt:", { email, password })
-    setIsLoading(false)
+    setErrorMessage("")
+
+    try {
+      await login(email, password)
+      // AuthContext will handle redirect to home page
+    } catch (error: any) {
+      console.error("Login error:", error)
+      setErrorMessage(
+        error?.response?.data?.message || 
+        error?.message || 
+        "Login failed. Please check your credentials and try again."
+      )
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -58,7 +74,7 @@ export default function LoginForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className={errors.email ? "border-red-500" : ""}
-          disabled={isLoading}
+          disabled={isLoading || authLoading}
         />
         {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
       </div>
@@ -75,19 +91,25 @@ export default function LoginForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className={errors.password ? "border-red-500 pr-10" : "pr-10"}
-            disabled={isLoading}
+            disabled={isLoading || authLoading}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            disabled={isLoading}
+            disabled={isLoading || authLoading}
           >
             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
         {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
       </div>
+
+      {errorMessage && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600">{errorMessage}</p>
+        </div>
+      )}
 
       <div className="flex items-center justify-between pt-2">
         <label className="flex items-center gap-2 cursor-pointer">
