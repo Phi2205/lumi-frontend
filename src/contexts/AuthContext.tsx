@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser, logoutUser } from '@/services/auth.service';
+import { loginUser, logoutUser, registerUser } from '@/services/auth.service';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 
 interface User {
@@ -18,6 +18,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -57,6 +58,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const register = async (email: string, password: string, username: string) => {
+    try {
+      setIsLoading(true);
+      const response = await registerUser({ email, password, username });
+      
+      if (response.success && response.user) {
+        setUser(response.user);
+        setItem('user', response.user);
+        
+        // Redirect to home page (auto login after registration)
+        router.push('/');
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       setIsLoading(true);
@@ -82,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,
     isLoading,
     login,
+    register,
     logout,
   };
 

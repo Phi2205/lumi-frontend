@@ -21,3 +21,12 @@ export const logoutUser = async () => {
         localStorage.removeItem('user');
     }
 }
+
+export const registerUser = async (data: { email: string, password: string, username: string }) => {
+    try {
+        const response = await authApi.registerApi(data);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
