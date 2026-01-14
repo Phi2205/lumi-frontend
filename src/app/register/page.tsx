@@ -4,11 +4,13 @@ import type React from "react"
 
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Eye, EyeOff, CheckSquare, Square } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
 export default function SignupPage() {
   const { register, isLoading: authLoading } = useAuth()
+  const router = useRouter()
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -76,7 +78,8 @@ export default function SignupPage() {
 
     try {
       await register(email, password, username)
-      // AuthContext will handle redirect to home page
+      // Redirect to OTP verification page
+      router.push(`/verify-otp?email=${encodeURIComponent(email)}`)
     } catch (error: any) {
       console.error("Register error:", error)
       setErrorMessage(

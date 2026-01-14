@@ -30,3 +30,21 @@ export const registerUser = async (data: { email: string, password: string, user
         throw error;
     }
 }
+
+export const verifyOtp = async (data: { email: string, otp: string }) => {
+    try {
+        const response = await authApi.verifyOtpApi(data);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const resendOtp = async (data: { email: string }) => {
+    try {
+        const response = await authApi.resendOtpApi(data);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

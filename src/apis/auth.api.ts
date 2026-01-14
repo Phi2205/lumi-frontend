@@ -11,6 +11,11 @@ export interface RegisterPayload {
   username: string;
 }
 
+export interface VerifyPayload{
+  email: string;
+  otp: string;
+}
+
 export const loginApi = (data: LoginPayload) => 
   axiosInstance.post('/auth/login', data);
 
@@ -19,3 +24,9 @@ export const logoutApi = () =>
 
 export const registerApi = (data: RegisterPayload) => 
   axiosInstance.post('/auth/register', data);
+
+export const verifyOtpApi = (data: VerifyPayload) => 
+  axiosInstance.post('/auth/verify-otp', data);
+
+export const resendOtpApi = (data: { email: string }) => 
+  axiosInstance.post('/auth/resend-otp', data);

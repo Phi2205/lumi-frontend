@@ -109,7 +109,7 @@ export default function LoginPage() {
                     <input
                       type="email"
                       className="w-full h-[50px] bg-white/15 border border-transparent rounded-full pl-5 pr-5 text-white placeholder-white/80 transition-all duration-300 focus:outline-none focus:bg-white/10 focus:border-white/50 hover:bg-white/10 hover:border-white/50"
-                      placeholder="Username"
+                      placeholder="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       disabled={isLoading || authLoading}
