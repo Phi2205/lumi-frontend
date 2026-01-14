@@ -1,146 +1,256 @@
 "use client";
-import Link from "next/link";
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Eye, EyeOff, CheckSquare, Square } from 'lucide-react';
 import Image from "next/image";
-import LoginForm from "@/components/auth/LoginForm";
-import { Mail } from "lucide-react";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
+  const { login, isLoading: authLoading } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Set full height on mount and window resize
+  useEffect(() => {
+    const setFullHeight = () => {
+      if (containerRef.current) {
+        containerRef.current.style.height = `${window.innerHeight}px`;
+      }
+    };
+
+    setFullHeight();
+    window.addEventListener('resize', setFullHeight);
+
+    return () => {
+      window.removeEventListener('resize', setFullHeight);
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      setErrorMessage('Please enter both email and password');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      await login(email, password);
+      // AuthContext will handle redirect to home page
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setErrorMessage(
+        error?.response?.data?.message || 
+        error?.message || 
+        'Login failed. Please check your credentials and try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Brand & Features */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-500 via-cyan-400 to-yellow-300 text-white flex-col justify-between p-12">
-        <div>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 relative">
-              <Image
-                src="/lumi-logo.png"
-                alt="Lumi Logo"
-                width={64}
-                height={64}
-                priority
-              />
-            </div>
-          </div>
-          <h2 className="text-4xl font-bold mb-2 text-white drop-shadow-lg">
-            lumi
-          </h2>
-          <p className="text-white/90 text-base font-medium">
-            Where communities shine
-          </p>
-        </div>
-
-        <div className="space-y-8">
-          <div>
-            <div className="w-14 h-14 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center mb-4 shadow-lg">
-              <span className="text-3xl">🏘️</span>
-            </div>
-            <h3 className="text-2xl font-bold mb-2">Your Community Hub</h3>
-            <p className="text-white/90 text-base leading-relaxed">
-              Connect with neighbors, friends, and local communities all in one
-              vibrant place.
-            </p>
-          </div>
-
-          <div>
-            <div className="w-14 h-14 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center mb-4 shadow-lg">
-              <span className="text-3xl">💬</span>
-            </div>
-            <h3 className="text-2xl font-bold mb-2">Share Moments</h3>
-            <p className="text-white/90 text-base leading-relaxed">
-              Post stories, photos, and messages to inspire your community and
-              stay connected.
-            </p>
-          </div>
-
-          <div>
-            <div className="w-14 h-14 rounded-full bg-white/30 backdrop-blur-sm flex items-center justify-center mb-4 shadow-lg">
-              <span className="text-3xl">✨</span>
-            </div>
-            <h3 className="text-2xl font-bold mb-2">Authentic Connections</h3>
-            <p className="text-white/90 text-base leading-relaxed">
-              Build meaningful relationships through genuine interactions and
-              shared interests.
-            </p>
-          </div>
-        </div>
-
-        <div className="pt-8 border-t border-white/30">
-          <p className="text-white/90 text-sm">
-            Join thousands of creators and communities building brighter futures
-            on Lumi
-          </p>
-        </div>
-      </div>
-
-      {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-16 bg-white">
-        <div className="w-full max-w-sm">
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 relative">
-              <Image
-                src="/lumi-logo.png"
-                alt="Lumi Logo"
-                width={48}
-                height={48}
-              />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
-              lumi
-            </span>
-          </div>
-
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back
-          </h1>
-          <p className="text-gray-600 mb-8">
-            Sign in to your account to continue
-          </p>
-
-          <LoginForm />
-
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-center text-gray-600 text-sm">
-              Don't have an account?{" "}
-              <Link
-                href="/signup"
-                className="font-semibold text-blue-500 hover:text-cyan-400 transition-colors"
-              >
-                Create one
-              </Link>
-            </p>
-          </div>
-
-          <div className="mt-6">
-            <div className="relative mb-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  or continue with
+    <div 
+      ref={containerRef}
+      className="bg-cover bg-no-repeat bg-center relative"
+      style={{ 
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(/bg12.jpg)`
+      }}
+    >
+      
+      <section className="py-28">
+        <div className="container mx-auto px-4">
+          {/* Lumi Logo - Instagram Style */}
+          <div className="flex justify-center mb-12">
+            <div className="relative inline-block">
+              {/* Instagram-style gradient background circle with glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 via-orange-500 to-yellow-400 rounded-full blur-2xl opacity-50 -z-10 scale-[2]"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 via-orange-500 to-yellow-400 rounded-full blur-lg opacity-70 -z-10 scale-150"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 via-orange-500 to-yellow-400 rounded-full -z-10"></div>
+              
+              {/* Lumi Logo Text - Handwritten Script Style */}
+              <div className="relative px-10 py-5">
+                <span 
+                  className="text-7xl md:text-8xl font-normal text-white block"
+                  style={{ 
+                    fontFamily: 'var(--font-dancing-script), "Brush Script MT", cursive',
+                    letterSpacing: '4px',
+                    fontWeight: 500,
+                    textShadow: '0 2px 20px rgba(0,0,0,0.5), 0 0 40px rgba(255,255,255,0.2)',
+                    transform: 'rotate(-1.5deg)',
+                    display: 'inline-block',
+                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))'
+                  }}
+                >
+                  Lumi
                 </span>
               </div>
             </div>
-
-            <button className="w-full py-3 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors font-medium text-gray-700 flex items-center justify-center gap-2">
-              <Mail className="w-5 h-5" />
-              Google
-            </button>
           </div>
 
-          <p className="text-center text-xs text-gray-500 mt-8">
-            By signing in, you agree to our{" "}
-            <Link href="/terms" className="text-blue-500 hover:underline">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="text-blue-500 hover:underline">
-              Privacy Policy
-            </Link>
-          </p>
+          {/* Form Container */}
+          <div className="flex justify-center">
+            <div className="w-full md:w-1/2 lg:w-1/3">
+              <div className="relative text-white/90">
+                <h3 className="mb-6 text-center text-white font-light">Have an account?</h3>
+                
+                <form onSubmit={handleSubmit} className="signin-form">
+                  {/* Email Field */}
+                  <div className="relative mb-4">
+                    <input
+                      type="email"
+                      className="w-full h-[50px] bg-white/15 border border-transparent rounded-full pl-5 pr-5 text-white placeholder-white/80 transition-all duration-300 focus:outline-none focus:bg-white/10 focus:border-white/50 hover:bg-white/10 hover:border-white/50"
+                      placeholder="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isLoading || authLoading}
+                      required
+                    />
+                  </div>
+
+                  {/* Password Field */}
+                  <div className="relative mb-4">
+                    <input
+                      id="password-field"
+                      type={showPassword ? "text" : "password"}
+                      className="w-full h-[50px] bg-white/15 border border-transparent rounded-full pl-5 pr-12 text-white placeholder-white/80 transition-all duration-300 focus:outline-none focus:bg-white/10 focus:border-white/50 hover:bg-white/10 hover:border-white/50"
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isLoading || authLoading}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute top-1/2 right-[15px] -translate-y-1/2 text-white/90 cursor-pointer hover:text-white transition"
+                      disabled={isLoading || authLoading}
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+
+                  {/* Error Message */}
+                  {errorMessage && (
+                    <div className="mb-4 p-3 bg-red-500/30 border border-red-400/50 rounded-full text-white text-sm">
+                      {errorMessage}
+                    </div>
+                  )}
+
+                  {/* Sign In Button */}
+                  <div className="mb-4">
+                    <button 
+                      type="submit" 
+                      disabled={isLoading || authLoading}
+                      className="w-full h-[50px] rounded-full text-sm uppercase font-normal cursor-pointer transition-all duration-300 focus:outline-none shadow-none disabled:opacity-50 disabled:cursor-not-allowed border"
+                      style={{
+                        backgroundColor: 'var(--brand-primary)',
+                        borderColor: 'var(--brand-primary)',
+                        color: 'black'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.color = 'var(--brand-primary)';
+                        e.currentTarget.style.borderColor = 'var(--brand-primary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--brand-primary)';
+                        e.currentTarget.style.color = 'black';
+                        e.currentTarget.style.borderColor = 'var(--brand-primary)';
+                      }}
+                    >
+                      {isLoading || authLoading ? 'Signing in...' : 'Sign In'}
+                    </button>
+                  </div>
+
+                  {/* Remember Me & Forgot Password */}
+                  <div className="flex flex-col md:flex-row mb-4">
+                    <div className="w-full md:w-1/2 mb-4 md:mb-0">
+                      <label className="block relative pl-8 cursor-pointer text-base font-medium select-none" style={{ color: 'var(--brand-primary)' }}>
+                        Remember Me
+                        <input
+                          type="checkbox"
+                          checked={rememberMe}
+                          onChange={(e) => setRememberMe(e.target.checked)}
+                          className="absolute opacity-0 cursor-pointer h-0 w-0"
+                          disabled={isLoading || authLoading}
+                        />
+                        <span className="absolute top-0 left-0">
+                          {rememberMe ? (
+                            <CheckSquare className="w-5 h-5 -mt-1 transition-all duration-300" style={{ color: 'var(--brand-primary)' }} />
+                          ) : (
+                            <Square className="w-5 h-5 -mt-1 transition-all duration-300" style={{ color: 'var(--brand-primary)' }} />
+                          )}
+                        </span>
+                      </label>
+                    </div>
+                    <div className="w-full md:w-1/2 text-center md:text-right">
+                      <a href="#" className="text-white transition-all duration-300" style={{ '--hover-color': 'var(--brand-primary)' } as React.CSSProperties} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--brand-primary)'} onMouseLeave={(e) => e.currentTarget.style.color = 'white'}>
+                        Forgot Password
+                      </a>
+                    </div>
+                  </div>
+                </form>
+
+                {/* Separator */}
+                <p className="w-full text-center my-4">&mdash; Google &mdash;</p>
+
+                {/* Google Login Button */}
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    className="w-full h-[50px] rounded-full text-sm uppercase font-normal cursor-pointer transition-all duration-300 focus:outline-none shadow-none border flex items-center justify-center gap-3"
+                    style={{
+                      backgroundColor: 'var(--brand-primary)',
+                      borderColor: 'var(--brand-primary)',
+                      color: 'black'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = 'var(--brand-primary)';
+                      e.currentTarget.style.borderColor = 'var(--brand-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--brand-primary)';
+                      e.currentTarget.style.color = 'black';
+                      e.currentTarget.style.borderColor = 'var(--brand-primary)';
+                    }}
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    <span className="font-medium">Google</span>
+                  </button>
+                </div>
+
+                {/* Sign Up Link */}
+                <p className="mt-8 text-center text-sm text-white/90">
+                  Don't have an account?{" "}
+                  <Link 
+                    href="/register" 
+                    className="font-medium transition-all duration-300 hover:opacity-80"
+                    style={{ color: 'var(--brand-primary)' }}
+                  >
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
