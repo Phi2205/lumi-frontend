@@ -96,10 +96,10 @@ export default function SignupPage() {
     <div 
       ref={containerRef}
       className="bg-cover bg-no-repeat bg-center relative"
-      style={{ backgroundImage: `url(/bg12.jpg)` }}
+      style={{ 
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(/bg12.jpg)`
+      }}
     >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/30 -z-10"></div>
       
       <section className="py-28">
         <div className="container mx-auto px-4">

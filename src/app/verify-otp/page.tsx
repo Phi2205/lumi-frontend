@@ -57,6 +57,12 @@ export default function VerifyOtpPage() {
     setErrorMessage("")
   }
 
+  // Generate dynamic placeholder: "xxxxxx" -> "1xxxxx" -> "12xxxx" -> ...
+  const getPlaceholder = () => {
+    if (otp.length === 0) return "xxxxxx"
+    return otp + "x".repeat(6 - otp.length)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -120,10 +126,10 @@ export default function VerifyOtpPage() {
     <div 
       ref={containerRef}
       className="bg-cover bg-no-repeat bg-center relative"
-      style={{ backgroundImage: `url(/bg12.jpg)` }}
+      style={{ 
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(/bg12.jpg)`
+      }}
     >
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/30 -z-10"></div>
       
       <section className="py-28">
         <div className="container mx-auto px-4">
@@ -168,19 +174,32 @@ export default function VerifyOtpPage() {
                 <form onSubmit={handleSubmit} className="verify-otp-form">
                   {/* OTP Input Field */}
                   <div className="relative mb-4">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      className="w-full h-[50px] bg-white/15 border border-transparent rounded-full pl-5 pr-5 text-white placeholder-white/80 transition-all duration-300 focus:outline-none focus:bg-white/10 focus:border-white/50 hover:bg-white/10 hover:border-white/50 text-center text-2xl tracking-widest font-semibold"
-                      placeholder="000000"
-                      value={otp}
-                      onChange={handleOtpChange}
-                      disabled={isLoading || isResending}
-                      required
-                      maxLength={6}
-                      autoFocus
-                    />
+                    <div className="relative">
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        className="w-full h-[50px] bg-white/15 border border-transparent rounded-full pl-5 pr-5 text-transparent transition-all duration-300 focus:outline-none focus:bg-white/10 focus:border-white/50 hover:bg-white/10 hover:border-white/50 text-center text-2xl font-semibold"
+                        style={{ letterSpacing: '0.5em', caretColor: 'transparent' }}
+                        value={otp}
+                        onChange={handleOtpChange}
+                        disabled={isLoading || isResending}
+                        required
+                        maxLength={6}
+                        autoFocus
+                      />
+                      {/* Dynamic Placeholder Overlay */}
+                      <div 
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none text-center text-2xl font-semibold text-white/80"
+                        style={{ 
+                          paddingLeft: '1.25rem', 
+                          paddingRight: '1.25rem',
+                          letterSpacing: '0.5em'
+                        }}
+                      >
+                        {getPlaceholder()}
+                      </div>
+                    </div>
                     {errorMessage && <p className="mt-1 text-sm text-red-300 text-center">{errorMessage}</p>}
                     {successMessage && <p className="mt-1 text-sm text-green-300 text-center">{successMessage}</p>}
                   </div>
