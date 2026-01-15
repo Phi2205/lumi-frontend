@@ -53,27 +53,27 @@ export function CommentSection({ postId }: CommentSectionProps) {
   }
 
   return (
-    <div className="border-t border-border bg-secondary/30 px-4 py-4 space-y-4">
+    <div className="border-t border-white/10 backdrop-blur-2xl bg-white/3 px-4 py-4 space-y-4">
       {/* Existing Comments */}
       <div className="space-y-3 max-h-64 overflow-y-auto">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-3">
-            <Avatar className="h-8 w-8 flex-shrink-0">
+            <Avatar className="h-8 w-8 flex-shrink-0 ring-2 ring-blue-400/50">
               <AvatarImage src={comment.avatar || "/placeholder.svg"} alt={comment.author} />
               <AvatarFallback>{comment.author[0]}</AvatarFallback>
             </Avatar>
-            <div className="flex-1 bg-card rounded-lg p-3">
-              <p className="font-semibold text-sm text-foreground">{comment.author}</p>
-              <p className="text-sm text-foreground">{comment.content}</p>
-              <p className="text-xs text-muted-foreground mt-1">{comment.timestamp}</p>
+            <div className="flex-1 backdrop-blur-2xl bg-white/5 border border-white/15 rounded-lg p-3">
+              <p className="font-semibold text-sm text-white">{comment.author}</p>
+              <p className="text-sm text-white/90">{comment.content}</p>
+              <p className="text-xs text-white/50 mt-1">{comment.timestamp}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Add Comment */}
-      <div className="flex gap-2 pt-2 border-t border-border">
-        <Avatar className="h-8 w-8 flex-shrink-0">
+      <div className="flex gap-2 pt-2 border-t border-white/10">
+        <Avatar className="h-8 w-8 flex-shrink-0 ring-2 ring-blue-400/50">
           <AvatarImage src="/placeholder.svg" alt="You" />
           <AvatarFallback>Y</AvatarFallback>
         </Avatar>
@@ -83,11 +83,11 @@ export function CommentSection({ postId }: CommentSectionProps) {
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleAddComment()}
-            className="rounded-full bg-card text-foreground placeholder:text-muted-foreground"
+            className="rounded-full border-white/20 backdrop-blur-2xl bg-white/5 text-white placeholder:text-white/50"
           />
           <Button
             size="sm"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full"
+            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 rounded-full shadow-lg"
             onClick={handleAddComment}
             disabled={!newComment.trim()}
           >

@@ -1,7 +1,8 @@
+"use client"
+
 import { PostCard, type Post } from "./PostCard"
 import { Stories } from "./Stories"
 import { useState } from "react"
-import { Card } from "@/components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -103,11 +104,11 @@ export function Feed() {
       <Stories />
 
       {/* Create Post Card */}
-      <Card className="border-border bg-card p-4">
+      <div className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:bg-white/8 p-4">
         <div className="space-y-4">
           {/* User Input Section */}
           <div className="flex gap-3">
-            <Avatar className="h-10 w-10 flex-shrink-0">
+            <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-blue-400/50">
               <AvatarImage src="/placeholder.svg" alt="You" />
               <AvatarFallback>Y</AvatarFallback>
             </Avatar>
@@ -115,7 +116,7 @@ export function Feed() {
               placeholder="What's on your mind?"
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
-              className="flex-1 rounded-full border-border bg-secondary placeholder:text-muted-foreground"
+              className="flex-1 rounded-full border-white/20 backdrop-blur-2xl bg-white/5 border border-white/15 placeholder:text-white/50 text-white"
             />
           </div>
 
@@ -124,13 +125,13 @@ export function Feed() {
             <Button
               variant="ghost"
               size="sm"
-              className="gap-2 text-muted-foreground hover:text-primary hover:bg-primary/10"
+              className="gap-2 text-white/60 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
             >
               <ImageIcon className="h-4 w-4" />
               Photo
             </Button>
             <Button
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 rounded-lg shadow-lg"
               onClick={handlePostSubmit}
               disabled={!newPost.trim()}
             >
@@ -138,7 +139,7 @@ export function Feed() {
             </Button>
           </div>
         </div>
-      </Card>
+      </div>
 
       {/* Feed Posts */}
       <div className="space-y-2">

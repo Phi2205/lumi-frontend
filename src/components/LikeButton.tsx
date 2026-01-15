@@ -23,10 +23,10 @@ export function LikeButton({ postId, liked, count, onLike }: LikeButtonProps) {
     <Button
       variant="ghost"
       size="sm"
-      className={`flex-1 gap-2 ${
+      className={`flex-1 gap-2 rounded-lg transition-all ${
         isLiked
-          ? "text-destructive hover:bg-destructive/10"
-          : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+          ? "text-red-400 hover:bg-red-500/10"
+          : "text-white/60 hover:text-white hover:bg-white/10"
       }`}
       onClick={handleLike}
     >

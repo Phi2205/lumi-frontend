@@ -20,11 +20,11 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-card">
+    <header className="sticky top-0 z-40 backdrop-blur-3xl bg-white/5 border-b border-white/20">
       <div className="mx-auto flex h-16 max-w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <span className="text-3xl sm:text-4xl text-foreground font-normal" style={{ fontFamily: 'var(--font-dancing-script), cursive', letterSpacing: '0.5px', fontWeight: 600 }}>
+          <span className="text-3xl sm:text-4xl text-white font-normal" style={{ fontFamily: 'var(--font-dancing-script), cursive', letterSpacing: '0.5px', fontWeight: 600 }}>
             Lumi
           </span>
         </div>
@@ -32,72 +32,72 @@ export function Header() {
         {/* Search Bar - Desktop */}
         <div className="hidden flex-1 max-w-md md:block">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
             <Input
               placeholder="Search posts, people..."
-              className="pl-10 rounded-full border-border bg-secondary text-foreground placeholder:text-muted-foreground"
+              className="pl-10 rounded-full border-white/20 backdrop-blur-2xl bg-white/5 text-white placeholder:text-white/50"
             />
           </div>
         </div>
 
         {/* Right Section */}
         <div className="flex items-center gap-2 sm:gap-4">
-          <Button variant="ghost" size="icon" className="relative hover:bg-secondary">
+          <Button variant="ghost" size="icon" className="relative text-white/60 hover:text-white hover:bg-white/10 rounded-lg">
             <Bell className="h-5 w-5" />
-            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-destructive" />
+            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
           </Button>
 
           {/* Avatar with Dropdown Menu */}
           <div className="hidden sm:block relative group">
-            <Avatar className="h-9 w-9 cursor-pointer hover:ring-2 hover:ring-primary transition-all">
+            <Avatar className="h-9 w-9 cursor-pointer hover:ring-2 hover:ring-blue-400/50 transition-all ring-2 ring-blue-400/30">
               <AvatarImage src="/placeholder.svg" alt="User" />
               <AvatarFallback>{user?.username?.[0] || user?.email?.[0] || "U"}</AvatarFallback>
             </Avatar>
             
             {/* Dropdown Menu */}
             <div className="absolute right-0 top-full mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-              <div className="bg-card border border-border rounded-lg shadow-lg py-2">
+              <div className="backdrop-blur-xl bg-neutral-900/90 border border-white/20 rounded-xl shadow-2xl py-2 overflow-hidden">
                 {/* User Info */}
-                <div className="px-4 py-3 border-b border-border">
-                  <p className="text-sm font-semibold text-foreground">
+                <div className="px-4 py-3 border-b border-white/20 bg-white/5">
+                  <p className="text-sm font-semibold text-white font-weight-600">
                     {user?.username || "User"}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-xs text-neutral-300 mt-0.5 truncate">
                     {user?.email || "user@example.com"}
                   </p>
                 </div>
                 
                 {/* Menu Items */}
-                <div className="py-1">
+                <div className="py-1.5">
                   <button
-                    className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-secondary flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-sm text-white font-medium hover:bg-white/15 flex items-center gap-3 transition-all duration-150 rounded-lg mx-1.5 group/item"
                     onClick={() => {
                       // TODO: Navigate to profile
                       console.log('Navigate to profile')
                     }}
                   >
-                    <User className="h-4 w-4" />
+                    <User className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
                     <span>Profile</span>
                   </button>
                   
                   <button
-                    className="w-full px-4 py-2 text-left text-sm text-foreground hover:bg-secondary flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-sm text-white font-medium hover:bg-white/15 flex items-center gap-3 transition-all duration-150 rounded-lg mx-1.5 group/item"
                     onClick={() => {
                       // TODO: Navigate to settings
                       console.log('Navigate to settings')
                     }}
                   >
-                    <Settings className="h-4 w-4" />
+                    <Settings className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
                     <span>Settings</span>
                   </button>
                   
-                  <div className="border-t border-border my-1"></div>
+                  <div className="border-t border-white/20 my-1.5 mx-2"></div>
                   
                   <button
-                    className="w-full px-4 py-2 text-left text-sm text-destructive hover:bg-destructive/10 flex items-center gap-3 transition-colors"
+                    className="w-full px-4 py-2.5 text-left text-sm text-red-400 font-semibold hover:bg-red-500/20 hover:text-red-300 flex items-center gap-3 transition-all duration-150 rounded-lg mx-1.5 group/item"
                     onClick={handleLogout}
                   >
-                    <LogOut className="h-4 w-4" />
+                    <LogOut className="h-4 w-4 text-red-400 group-hover/item:text-red-300 transition-colors" />
                     <span>Logout</span>
                   </button>
                 </div>
@@ -108,7 +108,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden hover:bg-secondary"
+            className="md:hidden text-white/60 hover:text-white hover:bg-white/10 rounded-lg"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             <Menu className="h-5 w-5" />
