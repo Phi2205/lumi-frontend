@@ -7,6 +7,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, CheckSquare, Square } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+import { BackgroundImage } from "@/components/BackgroundImage"
 
 export default function SignupPage() {
   const { register, isLoading: authLoading } = useAuth()
@@ -95,40 +96,27 @@ export default function SignupPage() {
   return (
     <div 
       ref={containerRef}
-      className="bg-cover bg-no-repeat bg-center relative"
-      style={{ 
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(/bg12.jpg)`
-      }}
+      className="relative"
     >
+      <BackgroundImage />
       
       <section className="py-28">
         <div className="container mx-auto px-4">
-          {/* Lumi Logo - Instagram Style */}
+          {/* Lumi Logo */}
           <div className="flex justify-center mb-12">
-            <div className="relative inline-block">
-              {/* Instagram-style gradient background circle with glow */}
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 via-orange-500 to-yellow-400 rounded-full blur-2xl opacity-50 -z-10 scale-[2]"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 via-orange-500 to-yellow-400 rounded-full blur-lg opacity-70 -z-10 scale-150"></div>
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-500 via-pink-500 via-orange-500 to-yellow-400 rounded-full -z-10"></div>
-              
-              {/* Lumi Logo Text - Handwritten Script Style */}
-              <div className="relative px-10 py-5">
-                <span 
-                  className="text-7xl md:text-8xl font-normal text-white block"
-                  style={{ 
-                    fontFamily: 'var(--font-dancing-script), "Brush Script MT", cursive',
-                    letterSpacing: '4px',
-                    fontWeight: 500,
-                    textShadow: '0 2px 20px rgba(0,0,0,0.5), 0 0 40px rgba(255,255,255,0.2)',
-                    transform: 'rotate(-1.5deg)',
-                    display: 'inline-block',
-                    filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))'
-                  }}
-                >
-                  Lumi
-                </span>
-              </div>
-            </div>
+            <span 
+              className="text-7xl md:text-8xl font-normal text-white block"
+              style={{ 
+                fontFamily: 'var(--font-dancing-script), "Brush Script MT", cursive',
+                letterSpacing: '4px',
+                fontWeight: 500,
+                textShadow: '0 2px 20px rgba(0,0,0,0.5)',
+                transform: 'rotate(-1.5deg)',
+                display: 'inline-block'
+              }}
+            >
+              Lumi
+            </span>
           </div>
 
           {/* Form Container */}

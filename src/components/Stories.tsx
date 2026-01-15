@@ -1,8 +1,9 @@
+"use client"
+
 import { useState } from "react"
 import { Plus } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 
 interface Story {
   id: string
@@ -70,17 +71,17 @@ export function Stories() {
   return (
     <>
       {/* Stories Container */}
-      <Card className="border-border bg-card mb-6 p-4">
+      <div className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:bg-white/8 mb-6 p-4">
         <div className="flex gap-3 overflow-x-auto pb-2">
           {/* Add Story Card */}
           <div className="flex-shrink-0">
-            <div className="relative h-24 w-20 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 border-2 border-primary/30 flex items-center justify-center cursor-pointer hover:border-primary/50 transition-colors">
+            <div className="relative h-24 w-20 rounded-lg overflow-hidden bg-gradient-to-br from-blue-500/30 to-cyan-500/30 border-2 border-white/30 flex items-center justify-center cursor-pointer hover:border-white/50 hover:bg-gradient-to-br hover:from-blue-500/40 hover:to-cyan-500/40 transition-all">
               <div className="flex flex-col items-center">
-                <Plus className="h-6 w-6 text-primary" />
-                <span className="text-xs text-primary font-semibold mt-1">Add</span>
+                <Plus className="h-6 w-6 text-white" />
+                <span className="text-xs text-white font-semibold mt-1">Add</span>
               </div>
             </div>
-            <p className="text-xs text-center text-foreground font-medium mt-2">Your Story</p>
+            <p className="text-xs text-center text-white font-medium mt-2">Your Story</p>
           </div>
 
           {/* Story Items */}
@@ -91,7 +92,7 @@ export function Stories() {
               onClick={() => setSelectedStory(story.id)}
             >
               <div
-                className={`relative h-24 w-20 rounded-lg overflow-hidden ${!story.hasViewed ? "ring-2 ring-primary" : "ring-2 ring-muted"}`}
+                className={`relative h-24 w-20 rounded-lg overflow-hidden ring-2 transition-all ${!story.hasViewed ? "ring-blue-400" : "ring-white/30"}`}
               >
                 <img
                   src={story.image || "/placeholder.svg"}
@@ -101,21 +102,21 @@ export function Stories() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
               </div>
               <div className="mt-2 flex items-center justify-center gap-1">
-                <Avatar className="h-6 w-6 ring-2 ring-offset-1 ring-primary">
+                <Avatar className="h-6 w-6 ring-2 ring-offset-1 ring-blue-400/50">
                   <AvatarImage src={story.avatar || "/placeholder.svg"} alt={story.username} />
                   <AvatarFallback>{story.username[0]}</AvatarFallback>
                 </Avatar>
               </div>
-              <p className="text-xs text-center text-foreground font-medium mt-1 truncate">{story.username}</p>
+              <p className="text-xs text-center text-white font-medium mt-1 truncate">{story.username}</p>
             </div>
           ))}
         </div>
-      </Card>
+      </div>
 
       {/* Story Modal */}
       {selectedStory && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
-          <div className="relative w-full max-w-md aspect-[9/16] bg-black rounded-2xl overflow-hidden">
+          <div className="relative w-full max-w-md aspect-[9/16] bg-black rounded-3xl overflow-hidden shadow-2xl">
             <img
               src={mockStories.find((s) => s.id === selectedStory)?.image || "/placeholder.svg"}
               alt="Story"
@@ -123,9 +124,9 @@ export function Stories() {
             />
 
             {/* Header */}
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/40 to-transparent p-4 flex items-center justify-between">
+            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
+                <Avatar className="h-8 w-8 ring-2 ring-white/50">
                   <AvatarImage src={mockStories.find((s) => s.id === selectedStory)?.avatar || "/placeholder.svg"} />
                   <AvatarFallback>{mockStories.find((s) => s.id === selectedStory)?.username[0]}</AvatarFallback>
                 </Avatar>
@@ -141,7 +142,7 @@ export function Stories() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-white hover:bg-white/20"
+                className="text-white hover:bg-white/20 rounded-full"
                 onClick={() => setSelectedStory(null)}
               >
                 ✕
