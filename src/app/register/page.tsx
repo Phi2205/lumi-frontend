@@ -12,7 +12,7 @@ import { BackgroundImage } from "@/components/BackgroundImage"
 export default function SignupPage() {
   const { register, isLoading: authLoading } = useAuth()
   const router = useRouter()
-  const [username, setUsername] = useState("")
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -43,8 +43,8 @@ export default function SignupPage() {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {}
 
-    if (!username) {
-      newErrors.username = "Username is required"
+    if (!name) {
+      newErrors.name = "Name is required"
     }
 
     if (!email) {
@@ -78,7 +78,7 @@ export default function SignupPage() {
     setErrorMessage("")
 
     try {
-      await register(email, password, username)
+      await register(email, password, name)
       // Redirect to OTP verification page
       router.push(`/verify-otp?email=${encodeURIComponent(email)}`)
     } catch (error: any) {
@@ -126,18 +126,18 @@ export default function SignupPage() {
                 <h3 className="mb-6 text-center text-white font-light">Join Lumi</h3>
                 
                 <form onSubmit={handleSubmit} className="signin-form">
-                  {/* Username Field */}
+                  {/* Name Field */}
                   <div className="relative mb-4">
                     <input
                       type="text"
                       className="w-full h-[50px] bg-white/15 border border-transparent rounded-full pl-5 pr-5 text-white placeholder-white/80 transition-all duration-300 focus:outline-none focus:bg-white/10 focus:border-white/50 hover:bg-white/10 hover:border-white/50"
-                      placeholder="Username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="Name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       disabled={isLoading || authLoading}
                       required
                     />
-                    {errors.username && <p className="mt-1 text-sm text-red-300">{errors.username}</p>}
+                    {errors.name && <p className="mt-1 text-sm text-red-300">{errors.name}</p>}
                   </div>
 
                   {/* Email Field */}

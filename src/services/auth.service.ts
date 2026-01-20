@@ -3,6 +3,7 @@ import * as authApi from '@/apis/auth.api';
 export const loginUser = async (data: { email: string, password: string }) => {
     try {
         const response = await authApi.loginApi(data);
+
         return response.data;
     } catch (error) {
         throw error;
@@ -22,7 +23,7 @@ export const logoutUser = async () => {
     }
 }
 
-export const registerUser = async (data: { email: string, password: string, username: string }) => {
+export const registerUser = async (data: { email: string, password: string, name: string }) => {
     try {
         const response = await authApi.registerApi(data);
         return response.data;
