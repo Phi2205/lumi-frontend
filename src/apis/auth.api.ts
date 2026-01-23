@@ -30,3 +30,6 @@ export const verifyOtpApi = (data: VerifyPayload) =>
 
 export const resendOtpApi = (data: { email: string }) => 
   axiosInstance.post('/auth/resend-otp', data);
+
+export const refreshTokenApi = () => 
+  axiosInstance.post('/auth/refresh');

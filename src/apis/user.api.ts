@@ -1,5 +1,6 @@
 import { User } from "@/types/user.type";
 import axiosInstance from "./axiosInstance"
+import { ApiResponse } from "@/types/response.type";
 
 export interface FilterUserPayload {
   name: string;
@@ -8,7 +9,7 @@ export interface FilterUserPayload {
 };
 
 export interface FilterUserResponse {
-  data: User[];
+  users: User[];
   total: number;
   page: number;
   limit: number;
@@ -16,4 +17,7 @@ export interface FilterUserResponse {
 
 
 export const filterUserApi = (data: FilterUserPayload) =>
-  axiosInstance.get<FilterUserResponse>('/users', { params: data });
+  axiosInstance.get<ApiResponse<FilterUserResponse>>('/users', { params: data });
+
+export const getUserByUsernameApi = (username: string) =>
+  axiosInstance.get<ApiResponse<User>>(`/users/username/${username}`);

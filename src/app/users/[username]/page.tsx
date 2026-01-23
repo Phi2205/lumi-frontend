@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { useParams } from "next/navigation"
 import { MapPin, Link as LinkIcon, Mail, Calendar, Heart, MessageSquare, Share2, Send, ArrowLeft, Play } from "lucide-react"
@@ -11,6 +11,9 @@ import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { RightSidebar } from "@/components/RightSidebar"
 import { formatViews } from "@/utils/format"
+import { getUserByUsername } from "@/services/user.service"
+import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest } from "@/services/friendRequest.service"
+import { User, FriendshipStatus } from "@/types/user.type"
 
 interface Post {
   id: number
@@ -23,9 +26,124 @@ interface Post {
 export default function UserProfilePage() {
   const params = useParams()
   const username = params.username as string
-  const [isFollowing, setIsFollowing] = useState(false)
   const [activeTab, setActiveTab] = useState("home")
+  const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(false)
+  
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await getUserByUsername(username);
+        const user = response.data;
+        setUserProfile(user);
+      } catch (error) {
+        console.error("Fetch user failed:", error);
+      }
+    }
+    fetchUser()
+  }, [username]);
 
+  const handleAddFriend = async () => {
+    if (!userProfile?.id || isLoading) return;
+    try {
+      setIsLoading(true);
+      await sendFriendRequest(userProfile.id);
+      // 更新状态为 pending
+      setUserProfile(prev => prev ? { ...prev, friend_status: 'pending' } : null);
+    } catch (error) {
+      console.error("Send friend request failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAcceptRequest = async () => {
+    if (!userProfile?.friend_request_id || isLoading) return;
+    try {
+      setIsLoading(true);
+      await acceptFriendRequest(userProfile.friend_request_id);
+      // 更新状态为 friend
+      setUserProfile(prev => prev ? { ...prev, friend_status: 'friend' } : null);
+    } catch (error) {
+      console.error("Accept friend request failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRejectRequest = async () => {
+    if (!userProfile?.friend_request_id || isLoading) return;
+    try {
+      setIsLoading(true);
+      await rejectFriendRequest(userProfile.friend_request_id);
+      // 更新状态为 rejected
+      setUserProfile(prev => prev ? { ...prev, friend_status: 'rejected' } : null);
+    } catch (error) {
+      console.error("Reject friend request failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 根据状态获取按钮配置
+  const getButtonConfig = (status: FriendshipStatus | undefined) => {
+    console.log("status: ", status);
+    console.log(userProfile?.friend_status);
+    switch (status) {
+      case 'none':
+        return {
+          text: 'Add Friend',
+          onClick: handleAddFriend,
+          disabled: isLoading,
+          className: 'bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap'
+        };
+      case 'friend':
+        return {
+          text: 'Friends',
+          onClick: undefined,
+          disabled: true,
+          className: 'bg-white/10 whitespace-nowrap'
+        };
+      case 'pending':
+        return {
+          text: isLoading ? 'Sending...' : 'Request Sent',
+          onClick: undefined,
+          disabled: true,
+          className: 'bg-white/10 whitespace-nowrap'
+        };
+      case 'accepted':
+        // accepted 应该显示为 friend
+        return {
+          text: 'Friends',
+          onClick: undefined,
+          disabled: true,
+          className: 'bg-white/10 whitespace-nowrap'
+        };
+      case 'rejected':
+        return {
+          text: 'Add Friend',
+          onClick: handleAddFriend,
+          disabled: isLoading,
+          className: 'bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap'
+        };
+      case 'received_pending':
+        return {
+          text: isLoading ? 'Processing...' : 'Accept Request',
+          onClick: handleAcceptRequest,
+          disabled: isLoading,
+          className: 'bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap'
+        };
+      default:
+        return {
+          text: 'Add Friend',
+          onClick: handleAddFriend,
+          disabled: isLoading,
+          className: 'bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap'
+        };
+    }
+  };
+
+  const buttonConfig = getButtonConfig(userProfile?.friend_status);
   // Mock user data - In a real app, fetch this based on username
   const userDatabase: Record<string, any> = {
     "phi-duong": {
@@ -102,26 +220,19 @@ export default function UserProfilePage() {
   return (
     <div className="min-h-screen relative">
       {/* Background Image */}
-      <div 
-        className="fixed inset-0 -z-10"
-        style={{ 
-          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)'
-        }}
+      <div
+        className="fixed inset-0 -z-10 bg-[linear-gradient(135deg,#1e293b_0%,#0f172a_50%,#1e293b_100%)]"
       />
       
-      <div 
-        className="fixed inset-0 bg-cover bg-no-repeat bg-center -z-10"
-        style={{ 
-          backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(/bg12.jpg)`
-        }}
+      <div
+        className="fixed inset-0 bg-cover bg-no-repeat bg-center -z-10 bg-[linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45)),url(/bg12.jpg)]"
       />
-
       <Header />
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-
       <main className="md:ml-64 lg:mr-80 pt-4 pb-20 md:pb-4 relative z-10">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           {/* Back Button */}
+          {/* <Modal isOpen={true} onClose={() => {console.log("close")}} />   */}
           <div className="mb-4">
             <Button
               variant="ghost"
@@ -150,11 +261,11 @@ export default function UserProfilePage() {
         <GlassCard className="relative -mt-20 mb-8 p-8">
           <div className="flex flex-col md:flex-row md:items-end gap-6">
             {/* Avatar */}
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               <Avatar className="h-40 w-40 ring-4 ring-white/20 shadow-2xl">
-                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                <AvatarFallback className="text-4xl bg-gradient-to-br from-blue-400 to-cyan-400">
-                  {user.name[0]}
+                <AvatarImage src={userProfile?.avatar_url || "/placeholder.svg"} alt={userProfile?.name || ""} />
+                <AvatarFallback className="text-4xl bg-linear-to-br from-brand-primary to-brand-primary-dark">
+                  {userProfile?.name?.[0] || ""}
                 </AvatarFallback>
               </Avatar>
             </div>
@@ -163,43 +274,67 @@ export default function UserProfilePage() {
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold text-white">{user.name}</h1>
-                  <p className="text-cyan-300 text-lg">{user.username}</p>
+                  <h1 className="text-3xl font-bold text-white">{userProfile?.name || ""}</h1>
+                  <p className="text-brand-primary text-lg">{userProfile?.username || ""}</p>
                 </div>
                 {/* Action Buttons */}
-                <div className="flex gap-3">
-                  <GlassButton
-                    onClick={() => setIsFollowing(!isFollowing)}
-                    className={isFollowing ? "bg-white/10" : "bg-gradient-to-r from-blue-500 to-cyan-500"}
-                  >
-                    {isFollowing ? "Following" : "Follow"}
-                  </GlassButton>
+                <div className="flex gap-3 items-center">
+                  {userProfile?.friend_status === 'received_pending' && (
+                    <>
+                      <GlassButton
+                        type="button"
+                        onClick={handleAcceptRequest}
+                        disabled={isLoading}
+                        className="bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap"
+                      >
+                        {isLoading ? 'Processing...' : 'Accept'}
+                      </GlassButton>
+                      <GlassButton
+                        type="button"
+                        onClick={handleRejectRequest}
+                        disabled={isLoading}
+                        className="bg-white/10 hover:bg-white/20 whitespace-nowrap"
+                      >
+                        {isLoading ? 'Processing...' : 'Reject'}
+                      </GlassButton>
+                    </>
+                  )}
+                  {userProfile?.friend_status !== 'received_pending' && (
+                    <GlassButton
+                      type="button"
+                      onClick={buttonConfig.onClick}
+                      disabled={buttonConfig.disabled}
+                      className={buttonConfig.className}
+                    >
+                      {buttonConfig.text}
+                    </GlassButton>
+                  )}
                   <GlassButton className="bg-white/10 hover:bg-white/20" title="Send message">
-                    <Send className="w-5 h-5" />
+                    <Send className="w-6 h-6" />
                   </GlassButton>
                   <GlassButton className="bg-white/10 hover:bg-white/20" title="Share profile">
-                    <Share2 className="w-5 h-5" />
+                    <Share2 className="w-6 h-6" />
                   </GlassButton>
                 </div>
               </div>
 
-              <p className="text-white/80 text-base mb-4">{user.bio}</p>
+              <p className="text-white/80 text-base mb-4">{userProfile?.bio || ""}</p>
 
               {/* User Details */}
               <div className="flex flex-wrap gap-4 text-sm text-white/70">
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-cyan-400" />
-                  {user.location}
+                  <MapPin className="w-4 h-4 text-brand-primary" />
+                  {userProfile?.location || ""}
                 </div>
                 <div className="flex items-center gap-2">
-                  <LinkIcon className="w-4 h-4 text-cyan-400" />
-                  <a href="#" className="text-cyan-300 hover:text-cyan-200">
-                    {user.website}
+                  <LinkIcon className="w-4 h-4 text-brand-primary" />
+                  <a href="#" className="text-brand-primary hover:text-brand-primary-light">
+                    {userProfile?.website || ""}
                   </a>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-cyan-400" />
-                  {user.joinDate}
+                  <Calendar className="w-4 h-4 text-brand-primary" />
+                  {userProfile?.joinDate || ""}
                 </div>
               </div>
             </div>
@@ -212,8 +347,6 @@ export default function UserProfilePage() {
           <GlassStatCard
             label="Followers"
             value={`${(user.followers / 1000).toFixed(1)}K`}
-            change={`${isFollowing ? "+1" : ""}`}
-            changeType="up"
           />
           <GlassStatCard label="Following" value={user.following.toString()} />
         </div>
@@ -250,7 +383,7 @@ export default function UserProfilePage() {
               <div className="flex flex-col gap-2">
                 <a
                   href={`mailto:${user.email}`}
-                  className="flex items-center gap-2 text-white/70 hover:text-cyan-300 transition-colors"
+                  className="flex items-center gap-2 text-white/70 hover:text-brand-primary transition-colors"
                 >
                   <Mail className="w-4 h-4" />
                   {user.email}
@@ -266,7 +399,7 @@ export default function UserProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {userPosts.map((post) => (
               <div key={post.id} className="group overflow-hidden cursor-pointer relative">
-                <div className="relative w-full h-64 bg-gradient-to-br from-blue-400 to-cyan-400">
+                <div className="relative w-full h-64 bg-linear-to-br from-brand-primary to-brand-primary-dark">
                   <Image
                     src={post.image || "/placeholder.svg"}
                     alt="Post"

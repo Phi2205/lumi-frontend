@@ -36,7 +36,7 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
           limit: 10,
           page: 1
         })
-        setSearchResults(response.data || [])
+        setSearchResults(response.users || [])
       } catch (error) {
         console.error('Search failed:', error)
         setSearchResults([])
@@ -71,6 +71,8 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-2xl font-bold text-white">Tìm kiếm</h2>
             <button
+              type="button"
+              aria-label="Đóng tìm kiếm"
               onClick={onClose}
               className="md:hidden text-white/60 hover:text-white transition-colors"
             >
@@ -90,6 +92,8 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
             />
             {searchQuery && (
               <button
+                type="button"
+                aria-label="Xóa nội dung tìm kiếm"
                 onClick={clearSearch}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
               >
@@ -122,7 +126,7 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                 >
                   <Avatar className="h-10 w-10 ring-1 ring-white/20">
                     <AvatarImage src={user.avatar_url || "/placeholder.svg"} alt={user.username} />
-                    <AvatarFallback className="bg-gradient-to-br from-blue-400 to-cyan-400 text-sm">
+                  <AvatarFallback className="bg-linear-to-br from-blue-400 to-cyan-400 text-sm">
                       {user.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
