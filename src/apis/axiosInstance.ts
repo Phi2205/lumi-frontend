@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { refreshTokenApi } from './auth.api';
+import { Notification } from '@/lib/components/notification';
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL;
 // Tạo instance của axios
@@ -54,8 +55,14 @@ axiosInstance.interceptors.response.use(
                     localStorage.removeItem('user');
 
                     // Show toast notification
-                    // toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
-                    window.confirm('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                    Notification({
+                        isOpen: true,
+                        onClose: () => {},
+                        type: 'warning',
+                        title: 'Phiên đăng nhập đã hết hạn',
+                        message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'
+                    });
+                    // window.confirm('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
 
                     // Redirect to home page
                     window.location.href = '/';

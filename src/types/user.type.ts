@@ -8,7 +8,6 @@ export interface User {
   avatar_url?: string;
   bio?: string;
   friend_status?: FriendshipStatus;
-  friend_request_id?: string; // ID của friend request (nếu có)
   location?: string;
   website?: string;
   joinDate?: string;

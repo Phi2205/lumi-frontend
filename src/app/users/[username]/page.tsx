@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
 import { useParams } from "next/navigation"
 import { MapPin, Link as LinkIcon, Mail, Calendar, Heart, MessageSquare, Share2, Send, ArrowLeft, Play } from "lucide-react"
@@ -12,8 +12,9 @@ import { Sidebar } from "@/components/sidebar"
 import { RightSidebar } from "@/components/RightSidebar"
 import { formatViews } from "@/utils/format"
 import { getUserByUsername } from "@/services/user.service"
-import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest } from "@/services/friendRequest.service"
+import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, cancelFriendRequest } from "@/services/friendRequest.service"
 import { User, FriendshipStatus } from "@/types/user.type"
+import { ProfileSkeleton } from "@/components/skeleton"
 
 interface Post {
   id: number
@@ -29,15 +30,19 @@ export default function UserProfilePage() {
   const [activeTab, setActiveTab] = useState("home")
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
   
   useEffect(() => {
     const fetchUser = async () => {
       try {
+        setIsInitialLoading(true);
         const response = await getUserByUsername(username);
         const user = response.data;
         setUserProfile(user);
       } catch (error) {
         console.error("Fetch user failed:", error);
+      } finally {
+        setIsInitialLoading(false);
       }
     }
     fetchUser()
@@ -48,7 +53,7 @@ export default function UserProfilePage() {
     try {
       setIsLoading(true);
       await sendFriendRequest(userProfile.id);
-      // 更新状态为 pending
+      // Update status to pending
       setUserProfile(prev => prev ? { ...prev, friend_status: 'pending' } : null);
     } catch (error) {
       console.error("Send friend request failed:", error);
@@ -58,11 +63,11 @@ export default function UserProfilePage() {
   };
 
   const handleAcceptRequest = async () => {
-    if (!userProfile?.friend_request_id || isLoading) return;
+    if (!userProfile?.id || isLoading) return;
     try {
       setIsLoading(true);
-      await acceptFriendRequest(userProfile.friend_request_id);
-      // 更新状态为 friend
+      await acceptFriendRequest(userProfile.id);
+      // Update status to friend
       setUserProfile(prev => prev ? { ...prev, friend_status: 'friend' } : null);
     } catch (error) {
       console.error("Accept friend request failed:", error);
@@ -71,12 +76,26 @@ export default function UserProfilePage() {
     }
   };
 
-  const handleRejectRequest = async () => {
-    if (!userProfile?.friend_request_id || isLoading) return;
+  const handleCancelRequest = async () => {
+    if (!userProfile?.id || isLoading) return;
     try {
       setIsLoading(true);
-      await rejectFriendRequest(userProfile.friend_request_id);
-      // 更新状态为 rejected
+      await cancelFriendRequest(userProfile.id);
+      // Update status to none
+      setUserProfile(prev => prev ? { ...prev, friend_status: 'none' } : null);
+    } catch (error) {
+      console.error("Cancel friend request failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRejectRequest = async () => {
+    if (!userProfile?.id || isLoading) return;
+    try {
+      setIsLoading(true);
+      await rejectFriendRequest(userProfile.id);
+      // Update status to rejected
       setUserProfile(prev => prev ? { ...prev, friend_status: 'rejected' } : null);
     } catch (error) {
       console.error("Reject friend request failed:", error);
@@ -85,10 +104,9 @@ export default function UserProfilePage() {
     }
   };
 
-  // 根据状态获取按钮配置
+  // Get button configuration based on status
   const getButtonConfig = (status: FriendshipStatus | undefined) => {
-    console.log("status: ", status);
-    console.log(userProfile?.friend_status);
+    console.log(status);
     switch (status) {
       case 'none':
         return {
@@ -106,13 +124,13 @@ export default function UserProfilePage() {
         };
       case 'pending':
         return {
-          text: isLoading ? 'Sending...' : 'Request Sent',
-          onClick: undefined,
-          disabled: true,
-          className: 'bg-white/10 whitespace-nowrap'
+          text: isLoading ? 'Processing...' : 'Request Sent',
+          onClick: handleCancelRequest,
+          disabled: isLoading,
+          className: 'bg-white/10 hover:bg-white/20 whitespace-nowrap'
         };
       case 'accepted':
-        // accepted 应该显示为 friend
+        // accepted should display as friend
         return {
           text: 'Friends',
           onClick: undefined,
@@ -143,7 +161,19 @@ export default function UserProfilePage() {
     }
   };
 
-  const buttonConfig = getButtonConfig(userProfile?.friend_status);
+  // Calculate button config only after userProfile is loaded
+  const buttonConfig = useMemo(() => {
+    if (!userProfile || isInitialLoading) {
+      return {
+        text: 'Add Friend',
+        onClick: undefined,
+        disabled: true,
+        className: 'bg-white/10 whitespace-nowrap'
+      };
+    }
+    return getButtonConfig(userProfile.friend_status);
+  }, [userProfile, isLoading, isInitialLoading]);
+
   // Mock user data - In a real app, fetch this based on username
   const userDatabase: Record<string, any> = {
     "phi-duong": {
@@ -215,8 +245,6 @@ export default function UserProfilePage() {
   ]
 
 
-
-
   return (
     <div className="min-h-screen relative">
       {/* Background Image */}
@@ -238,15 +266,23 @@ export default function UserProfilePage() {
               variant="ghost"
               size="sm"
               className="text-white/70 hover:text-white hover:bg-white/10"
-              onClick={() => window.history.back()}
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.history.back();
+                }
+              }}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
           </div>
 
-        {/* Cover Photo */}
-        <GlassCard variant="lg" className="h-48 md:h-64 rounded-3xl overflow-hidden mb-0">
+          {isInitialLoading ? (
+            <ProfileSkeleton />
+          ) : (
+            <>
+              {/* Cover Photo */}
+              <GlassCard variant="lg" className="h-48 md:h-64 rounded-3xl overflow-hidden mb-0">
           <div className="relative w-full h-full">
             <Image
               src={user.cover || "/placeholder.svg"}
@@ -272,70 +308,80 @@ export default function UserProfilePage() {
 
             {/* User Info */}
             <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                <div>
-                  <h1 className="text-3xl font-bold text-white">{userProfile?.name || ""}</h1>
-                  <p className="text-brand-primary text-lg">{userProfile?.username || ""}</p>
-                </div>
-                {/* Action Buttons */}
-                <div className="flex gap-3 items-center">
-                  {userProfile?.friend_status === 'received_pending' && (
-                    <>
-                      <GlassButton
-                        type="button"
-                        onClick={handleAcceptRequest}
-                        disabled={isLoading}
-                        className="bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap"
-                      >
-                        {isLoading ? 'Processing...' : 'Accept'}
-                      </GlassButton>
-                      <GlassButton
-                        type="button"
-                        onClick={handleRejectRequest}
-                        disabled={isLoading}
-                        className="bg-white/10 hover:bg-white/20 whitespace-nowrap"
-                      >
-                        {isLoading ? 'Processing...' : 'Reject'}
-                      </GlassButton>
-                    </>
-                  )}
-                  {userProfile?.friend_status !== 'received_pending' && (
+              <div className="mb-4">
+                <h1 className="text-3xl font-bold text-white">{userProfile?.name || ""}</h1>
+                <p className="text-brand-primary text-lg">{userProfile?.username || ""}</p>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex gap-3 items-center flex-wrap">
+                {userProfile?.friend_status === 'received_pending' && (
+                  <>
                     <GlassButton
                       type="button"
-                      onClick={buttonConfig.onClick}
-                      disabled={buttonConfig.disabled}
-                      className={buttonConfig.className}
+                      onClick={handleAcceptRequest}
+                      disabled={isLoading}
+                      className="bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap"
                     >
-                      {buttonConfig.text}
+                      {isLoading ? 'Processing...' : 'Accept'}
                     </GlassButton>
-                  )}
-                  <GlassButton className="bg-white/10 hover:bg-white/20" title="Send message">
-                    <Send className="w-6 h-6" />
+                    <GlassButton
+                      type="button"
+                      onClick={handleRejectRequest}
+                      disabled={isLoading}
+                      className="bg-white/10 hover:bg-white/20 whitespace-nowrap"
+                    >
+                      {isLoading ? 'Processing...' : 'Reject'}
+                    </GlassButton>
+                  </>
+                )}
+                {userProfile?.friend_status !== 'received_pending' && buttonConfig && (
+                  <GlassButton
+                    type="button"
+                    onClick={buttonConfig.onClick}
+                    disabled={buttonConfig.disabled}
+                    className={buttonConfig.className}
+                  >
+                    {buttonConfig.text}
                   </GlassButton>
-                  <GlassButton className="bg-white/10 hover:bg-white/20" title="Share profile">
-                    <Share2 className="w-6 h-6" />
-                  </GlassButton>
-                </div>
+                )}
+                <GlassButton className="bg-white/10 hover:bg-white/20" title="Send message">
+                  <Send className="w-6 h-6" />
+                </GlassButton>
+                <GlassButton className="bg-white/10 hover:bg-white/20" title="Share profile">
+                  <Share2 className="w-6 h-6" />
+                </GlassButton>
               </div>
+            </div>
+          </div>
+        </GlassCard>
 
-              <p className="text-white/80 text-base mb-4">{userProfile?.bio || ""}</p>
+        {/* Bio & User Details Section */}
+        <GlassCard className="mb-8">
+          <div className="space-y-6">
+            {/* Bio */}
+            <div>
+              <h2 className="text-xl font-semibold text-white mb-3">Information</h2>
+              <p className="text-white/80 text-base leading-relaxed">
+                {userProfile?.bio || "Bio"}
+              </p>
+            </div>
 
-              {/* User Details */}
-              <div className="flex flex-wrap gap-4 text-sm text-white/70">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-brand-primary" />
-                  {userProfile?.location || ""}
-                </div>
-                <div className="flex items-center gap-2">
-                  <LinkIcon className="w-4 h-4 text-brand-primary" />
-                  <a href="#" className="text-brand-primary hover:text-brand-primary-light">
-                    {userProfile?.website || ""}
-                  </a>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-brand-primary" />
-                  {userProfile?.joinDate || ""}
-                </div>
+            {/* User Details */}
+            <div className="flex flex-wrap gap-4 text-sm text-white/70">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-brand-primary" />
+                {userProfile?.location || "Địa chỉ"}
+              </div>
+              <div className="flex items-center gap-2">
+                <LinkIcon className="w-4 h-4 text-brand-primary" />
+                <a href="#" className="text-brand-primary hover:text-brand-primary-light">
+                  {userProfile?.website || "website"}
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-brand-primary" />
+                {userProfile?.joinDate || "Ngày sinh"}
               </div>
             </div>
           </div>
@@ -431,6 +477,8 @@ export default function UserProfilePage() {
             ))}
           </div>
         </div>
+            </>
+          )}
         </div>
       </main>
 
