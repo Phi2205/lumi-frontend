@@ -1,11 +1,11 @@
 "use client"
 
-import { Bell, Search, Menu, LogOut, User, Settings } from "lucide-react"
+import { Bell, Menu, LogOut, User as UserIcon, Settings } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
+import Link from "next/link"
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -23,22 +23,14 @@ export function Header() {
     <header className="sticky top-0 z-40 backdrop-blur-3xl bg-white/5 border-b border-white/20">
       <div className="mx-auto flex h-16 max-w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
           <span className="text-3xl sm:text-4xl text-white font-normal" style={{ fontFamily: 'var(--font-dancing-script), cursive', letterSpacing: '0.5px', fontWeight: 600 }}>
             Lumi
           </span>
-        </div>
+        </Link>
 
-        {/* Search Bar - Desktop */}
-        <div className="hidden flex-1 max-w-md md:block">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
-            <Input
-              placeholder="Search posts, people..."
-              className="pl-10 rounded-full border-white/20 backdrop-blur-2xl bg-white/5 text-white placeholder:text-white/50"
-            />
-          </div>
-        </div>
+        {/* Spacer */}
+        <div className="flex-1"></div>
 
         {/* Right Section */}
         <div className="flex items-center gap-2 sm:gap-4">
@@ -76,7 +68,7 @@ export function Header() {
                       console.log('Navigate to profile')
                     }}
                   >
-                    <User className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
+                    <UserIcon className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
                     <span>Profile</span>
                   </button>
                   

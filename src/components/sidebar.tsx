@@ -1,5 +1,9 @@
-import { Home, BookOpen, Zap, MessageSquare, User, Settings } from "lucide-react"
+"use client"
+
+import { Home, BookOpen, Zap, MessageSquare, User, Settings, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { SearchPanel } from "@/components/SearchPanel"
+import { useState } from "react"
 
 interface SidebarProps {
   activeTab?: string
@@ -7,8 +11,11 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+
   const menuItems = [
     { id: "home", label: "Home", icon: Home },
+    { id: "search", label: "Tìm kiếm", icon: Search },
     { id: "blog", label: "Blog", icon: BookOpen },
     { id: "stories", label: "Stories", icon: Zap },
     { id: "messages", label: "Messages", icon: MessageSquare },
@@ -16,19 +23,36 @@ export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
     { id: "settings", label: "Settings", icon: Settings },
   ]
 
+  const handleMenuClick = (itemId: string) => {
+    if (itemId === "search") {
+      setIsSearchOpen(!isSearchOpen)
+    } else {
+      setIsSearchOpen(false)
+      onTabChange?.(itemId)
+    }
+  }
+
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] w-64 border-r border-white/20 backdrop-blur-3xl px-6 py-8 gap-2">
+      <aside className={`hidden md:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] border-r border-white/20 backdrop-blur-3xl py-8 gap-2 transition-all duration-300 ${
+        isSearchOpen ? 'w-20 px-3' : 'w-64 px-6'
+      }`}>
         <nav className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon
-            const isActive = activeTab === item.id
+            // Nếu đang mở search, chỉ search tab là active
+            // Nếu không mở search, tab nào match activeTab thì active
+            const isActive = isSearchOpen 
+              ? item.id === "search" 
+              : activeTab === item.id
             return (
               <Button
                 key={item.id}
                 variant={isActive ? "default" : "ghost"}
-                className={`w-full justify-start gap-3 rounded-lg transition-all ${
+                className={`w-full rounded-lg transition-all ${
+                  isSearchOpen ? 'justify-center px-0' : 'justify-start gap-3'
+                } ${
                   isActive 
                     ? "text-white shadow-lg" 
                     : "hover:bg-white/10 text-white/70 hover:text-white"
@@ -37,15 +61,19 @@ export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
                   backgroundColor: 'var(--brand-primary)',
                   borderColor: 'var(--brand-primary)'
                 } : {}}
-                onClick={() => onTabChange?.(item.id)}
+                onClick={() => handleMenuClick(item.id)}
+                title={isSearchOpen ? item.label : undefined}
               >
                 <Icon className="h-5 w-5" />
-                <span>{item.label}</span>
+                {!isSearchOpen && <span>{item.label}</span>}
               </Button>
             )
           })}
         </nav>
       </aside>
+
+      {/* Search Panel */}
+      <SearchPanel isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       {/* Mobile Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 flex md:hidden h-16 border-t border-white/20 backdrop-blur-3xl px-4">

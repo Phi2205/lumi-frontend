@@ -8,6 +8,8 @@ import { Sidebar } from "@/components/sidebar"
 import { RightSidebar } from "@/components/RightSidebar"
 import { Feed } from "@/components/Feed"
 import { MessagesView } from "@/components/messages/MessagesView"
+import { Modal } from "@/lib/components/modal"
+import { Loading } from "@/lib/components/glass-loading"
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("home")
@@ -100,7 +102,8 @@ export default function Home() {
 
       <Header />
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-
+      {/* <Modal isOpen={true} onClose={() => {console.log("close")}} /> */}
+      {/* {true && <Loading />} */}
       {/* Main Content Area */}
       {activeTab === "messages" ? (
         <MessagesView />
