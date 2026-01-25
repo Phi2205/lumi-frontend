@@ -20,6 +20,20 @@ interface StoryItem {
   hasViewed: boolean
   storyCount: number
   latest_story_media_url?: string
+  latest_story_media_type?: string
+}
+
+const cdnUrl = (publicId: string, mediaType: string) => {
+  console.log(publicId, mediaType);
+  if (mediaType == 'video') {
+    return `https://res.cloudinary.com/dibvkarvg/video/upload/so_0/${publicId}.m3u8`
+  } else {
+    return `https://res.cloudinary.com/dibvkarvg/image/upload/v1769332463/${publicId}.jpg`
+  }
+}
+
+const cdnUrlImage = (publicId: string) => {
+  return `https://res.cloudinary.com/dibvkarvg/image/upload/v1769332463/${publicId}.jpg`
 }
 
 // Dynamic import for HLS.js to avoid SSR issues
@@ -71,6 +85,7 @@ export function Stories() {
         hasViewed: false, // TODO: Implement viewed status from API if available
         storyCount: friend.story_count,
         latest_story_media_url: friend.latest_story_media_url || '',
+        latest_story_media_type: friend.latest_story_media_type || 'video',
       }))
       console.log(mappedStories)
       setStories(mappedStories)
@@ -341,7 +356,7 @@ export function Stories() {
                 >
                   <img
                     src={story.latest_story_media_url 
-                      ? `https://res.cloudinary.com/dibvkarvg/video/upload/so_0/${story.latest_story_media_url}.jpg`
+                      ? cdnUrl(story.latest_story_media_url || '', story.latest_story_media_type || 'video')
                       : story.image || "/placeholder.svg"}
                     alt={story.username}
                     className="h-full w-full object-cover group-hover:scale-105 transition-transform"
@@ -356,7 +371,7 @@ export function Stories() {
                       ringColor: 'color-mix(in srgb, var(--brand-primary) 50%, transparent)'
                     } as React.CSSProperties & { ringColor?: string }}
                   >
-                    <AvatarImage src={story.avatar || "/placeholder.svg"} alt={story.username} />
+                    <AvatarImage src={story.avatar || "/avatar-default.jpg"} alt={story.username} />
                     <AvatarFallback>{story.username[0]}</AvatarFallback>
                   </Avatar>
                 </div>
@@ -403,7 +418,7 @@ export function Stories() {
                     />
                   ) : (
                     <img
-                      src={currentStory.media_url || "/placeholder.svg"}
+                      src={cdnUrlImage(currentStory.media_url) || "/placeholder.svg"}
                       alt="Story"
                       className="w-full h-full object-cover"
                     />

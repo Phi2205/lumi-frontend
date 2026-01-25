@@ -15,6 +15,7 @@ export interface StoryFriend {
   story_count: number;
   lastest_story_time: string;
   latest_story_media_url?: string;
+  latest_story_media_type?: string;
 }
 
 export interface Story {
