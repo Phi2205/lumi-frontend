@@ -255,3 +255,35 @@ export const SkeletonFriendRequests = ({ count = 3, className = "" }: { count?: 
     ))}
   </div>
 );
+
+export const SkeletonStoryItem = ({ className = "" }: { className?: string }) => (
+  <div className={`flex-shrink-0 ${className}`}>
+    <Skeleton 
+      height="h-24" 
+      width="w-20" 
+      rounded="rounded-lg"
+      className="bg-white/10"
+    />
+    <div className="mt-2 flex items-center justify-center">
+      <Skeleton 
+        height="h-6" 
+        width="w-6" 
+        rounded="rounded-full"
+        className="bg-white/10"
+      />
+    </div>
+    <Skeleton 
+      height="h-3" 
+      width="w-16" 
+      className="mt-1 mx-auto bg-white/10 rounded"
+    />
+  </div>
+);
+
+export const SkeletonStories = ({ count = 5, className = "" }: { count?: number; className?: string }) => (
+  <div className={`flex gap-3 overflow-x-auto pb-2 ${className}`}>
+    {Array.from({ length: count }).map((_, i) => (
+      <SkeletonStoryItem key={i} />
+    ))}
+  </div>
+);

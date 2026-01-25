@@ -4,11 +4,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Eye, EyeOff, CheckSquare, Square } from 'lucide-react';
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { BackgroundImage } from "@/components/BackgroundImage";
 
 export default function LoginPage() {
-  const { login, isLoading: authLoading } = useAuth();
+  const { login, isLoading: authLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,6 +34,13 @@ export default function LoginPage() {
       window.removeEventListener('resize', setFullHeight);
     };
   }, []);
+
+  // Redirect to home if user is already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

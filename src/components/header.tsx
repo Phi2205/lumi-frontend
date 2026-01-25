@@ -42,7 +42,7 @@ export function Header() {
           {/* Avatar with Dropdown Menu */}
           <div className="hidden sm:block relative group">
             <Avatar className="h-9 w-9 cursor-pointer hover:ring-2 hover:ring-blue-400/50 transition-all ring-2 ring-blue-400/30">
-              <AvatarImage src="/placeholder.svg" alt="User" />
+              <AvatarImage src={user?.avatar_url || "/avatar-default.jpg"} alt="User" />
               <AvatarFallback>{user?.username?.[0] || user?.email?.[0] || "U"}</AvatarFallback>
             </Avatar>
             
@@ -52,7 +52,7 @@ export function Header() {
                 {/* User Info */}
                 <div className="px-4 py-3 border-b border-white/20 bg-white/5">
                   <p className="text-sm font-semibold text-white font-weight-600">
-                    {user?.username || "User"}
+                    {user?.name || "User"}
                   </p>
                   <p className="text-xs text-neutral-300 mt-0.5 truncate">
                     {user?.email || "user@example.com"}
