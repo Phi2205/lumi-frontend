@@ -26,7 +26,7 @@ interface StoryItem {
 const cdnUrl = (publicId: string, mediaType: string) => {
   console.log(publicId, mediaType);
   if (mediaType == 'video') {
-    return `https://res.cloudinary.com/dibvkarvg/video/upload/so_0/${publicId}.m3u8`
+    return `https://res.cloudinary.com/dibvkarvg/video/upload/so_0/${publicId}.jpg`
   } else {
     return `https://res.cloudinary.com/dibvkarvg/image/upload/v1769332463/${publicId}.jpg`
   }
