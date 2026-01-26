@@ -4,14 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useRouter } from 'next/navigation';
 import { loginUser, logoutUser, registerUser } from '@/services/auth.service';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-
-interface User {
-  id: string;
-  email: string;
-  username: string;
-  avatar_url: string | null;
-  bio: string | null;
-}
+import { User } from '@/types/user.type';
 
 interface AuthContextType {
   user: User | null;

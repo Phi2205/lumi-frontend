@@ -2,13 +2,16 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Eye, EyeOff, CheckSquare, Square } from 'lucide-react';
-import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { BackgroundImage } from "@/components/BackgroundImage";
+import { useDarkMode } from "@/hooks/useDarkMode";
+import { useBackgroundImage } from "@/hooks/useBackgroundImage";
+import { BackgroundRenderer } from "@/components/BackgroundRenderer";
 
 export default function LoginPage() {
-  const { login, isLoading: authLoading } = useAuth();
+  const { login, isLoading: authLoading, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,6 +19,8 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
+  const { isDarkMode, handleDarkModeToggle } = useDarkMode();
+  const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode);
 
   // Set full height on mount and window resize
   useEffect(() => {
@@ -32,6 +37,13 @@ export default function LoginPage() {
       window.removeEventListener('resize', setFullHeight);
     };
   }, []);
+
+  // Redirect to home if user is already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      router.push('/');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,9 +73,13 @@ export default function LoginPage() {
   return (
     <div 
       ref={containerRef}
-      className="relative"
+      className="relative min-h-screen"
     >
-      <BackgroundImage />
+      <BackgroundRenderer 
+        isDarkMode={isDarkMode} 
+        imageLoaded={imageLoaded} 
+        imageError={imageError}
+      />
       
       <section className="py-28">
         <div className="container mx-auto px-4">

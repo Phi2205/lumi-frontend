@@ -255,3 +255,122 @@ export const SkeletonFriendRequests = ({ count = 3, className = "" }: { count?: 
     ))}
   </div>
 );
+
+export const SkeletonStoryItem = ({ className = "" }: { className?: string }) => (
+  <div className={`flex-shrink-0 ${className}`}>
+    <Skeleton 
+      height="h-24" 
+      width="w-20" 
+      rounded="rounded-lg"
+      className="bg-white/10"
+    />
+    <div className="mt-2 flex items-center justify-center">
+      <Skeleton 
+        height="h-6" 
+        width="w-6" 
+        rounded="rounded-full"
+        className="bg-white/10"
+      />
+    </div>
+    <Skeleton 
+      height="h-3" 
+      width="w-16" 
+      className="mt-1 mx-auto bg-white/10 rounded"
+    />
+  </div>
+);
+
+export const SkeletonStories = ({ count = 5, className = "" }: { count?: number; className?: string }) => (
+  <div className={`flex gap-3 overflow-x-auto pb-2 ${className}`}>
+    {Array.from({ length: count }).map((_, i) => (
+      <SkeletonStoryItem key={i} />
+    ))}
+  </div>
+);
+
+// Story Page Skeleton Component
+export const StorySkeleton = () => (
+  <div 
+    className="relative w-full h-full bg-black/80 flex items-center justify-center"
+    style={{
+      width: '100%',
+      height: '100%'
+    }}
+  >
+    <div 
+      className="relative bg-black rounded-3xl overflow-hidden shadow-2xl"
+      style={{
+        height: '100%',
+        aspectRatio: '9/16',
+        maxHeight: '100%'
+      }}
+    >
+      {/* Main content skeleton */}
+      <Skeleton 
+        height="h-full" 
+        className="rounded-3xl bg-white/10" 
+        width="w-full"
+      />
+
+      {/* Header skeleton */}
+      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Skeleton 
+            height="h-8" 
+            width="w-8" 
+            rounded="rounded-full"
+            className="bg-white/20 ring-2 ring-white/50"
+          />
+          <div className="space-y-2">
+            <Skeleton 
+              height="h-4" 
+              width="w-24" 
+              className="bg-white/20 rounded"
+            />
+            <Skeleton 
+              height="h-3" 
+              width="w-20" 
+              className="bg-white/15 rounded"
+            />
+          </div>
+        </div>
+        <Skeleton 
+          height="h-8" 
+          width="w-8" 
+          rounded="rounded-full"
+          className="bg-white/20"
+        />
+      </div>
+
+      {/* Progress bars skeleton */}
+      <div className="absolute top-0 left-0 right-0 flex gap-1 p-2 h-1">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton
+            key={i}
+            height="h-0.5"
+            width="w-full"
+            className="bg-white/20 rounded-full"
+          />
+        ))}
+      </div>
+
+      {/* Navigation buttons skeleton */}
+      <div className="absolute left-4 top-1/2 -translate-y-1/2">
+        <Skeleton 
+          height="h-12" 
+          width="w-12" 
+          rounded="rounded-full"
+          className="bg-white/20"
+        />
+      </div>
+      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+        <Skeleton 
+          height="h-12" 
+          width="w-12" 
+          rounded="rounded-full"
+          className="bg-white/20"
+        />
+      </div>
+    </div>
+  </div>
+);

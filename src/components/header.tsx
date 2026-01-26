@@ -1,13 +1,19 @@
 "use client"
 
-import { Bell, Menu, LogOut, User as UserIcon, Settings } from "lucide-react"
+import { Bell, Menu, LogOut, Moon, User as UserIcon, Settings } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import Link from "next/link"
+import { SwitchMode } from "@/components/SwitchMode"
 
-export function Header() {
+interface HeaderProps {
+  isDarkMode: boolean
+  onDarkModeToggle: (checked: boolean) => void
+}
+
+export function Header({ isDarkMode, onDarkModeToggle }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { logout, user } = useAuth()
 
@@ -20,7 +26,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-3xl bg-white/5 border-b border-white/20">
+    <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-3xl bg-white/5 border-b border-white/20">
       <div className="mx-auto flex h-16 max-w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
@@ -42,7 +48,7 @@ export function Header() {
           {/* Avatar with Dropdown Menu */}
           <div className="hidden sm:block relative group">
             <Avatar className="h-9 w-9 cursor-pointer hover:ring-2 hover:ring-blue-400/50 transition-all ring-2 ring-blue-400/30">
-              <AvatarImage src="/placeholder.svg" alt="User" />
+              <AvatarImage src={user?.avatar_url || "/avatar-default.jpg"} alt="User" />
               <AvatarFallback>{user?.username?.[0] || user?.email?.[0] || "U"}</AvatarFallback>
             </Avatar>
             
@@ -52,7 +58,7 @@ export function Header() {
                 {/* User Info */}
                 <div className="px-4 py-3 border-b border-white/20 bg-white/5">
                   <p className="text-sm font-semibold text-white font-weight-600">
-                    {user?.username || "User"}
+                    {user?.name || "User"}
                   </p>
                   <p className="text-xs text-neutral-300 mt-0.5 truncate">
                     {user?.email || "user@example.com"}
@@ -71,6 +77,17 @@ export function Header() {
                     <UserIcon className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
                     <span>Profile</span>
                   </button>
+                  
+                  {/* Dark Mode Toggle */}
+                  <div className="w-full px-4 py-2.5 text-left text-sm text-white font-medium hover:bg-white/15 flex items-center justify-between transition-all duration-150 rounded-lg mx-1.5 group/item">
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <Moon className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
+                      <span>Dark Mode</span>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <SwitchMode isDarkMode={isDarkMode} onToggle={onDarkModeToggle} />
+                    </div>
+                  </div>
                   
                   <button
                     className="w-full px-4 py-2.5 text-left text-sm text-white font-medium hover:bg-white/15 flex items-center gap-3 transition-all duration-150 rounded-lg mx-1.5 group/item"

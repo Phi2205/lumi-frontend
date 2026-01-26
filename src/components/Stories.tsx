@@ -1,79 +1,141 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Plus, X, Upload, Image as ImageIcon, Video } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { createStory } from "@/services/story.service"
+import { createStory, getStoryFriends, getStories } from "@/services/story.service"
+import { formatTime } from "@/utils/format"
+import type { StoryFriend, Story as StoryApi } from "@/apis/story.api"
+import { playHlsPreview } from "@/lib/hls"
+import { SkeletonStories } from "@/components/skeleton"
+import { ModalStory } from "@/components/ModalStory"
 
-interface Story {
+interface StoryItem {
   id: string
   username: string
+  name: string
   avatar: string
   image: string
   timestamp: string
   hasViewed: boolean
+  storyCount: number
+  latest_story_media_url?: string
+  latest_story_media_type?: string
 }
 
-const mockStories: Story[] = [
-  {
-    id: "1",
-    username: "You",
-    avatar: "/placeholder.svg",
-    image: "/story-1.jpg",
-    timestamp: "Now",
-    hasViewed: true,
-  },
-  {
-    id: "2",
-    username: "Sarah Chen",
-    avatar: "/placeholder.svg",
-    image: "/story-2.jpg",
-    timestamp: "2h",
-    hasViewed: false,
-  },
-  {
-    id: "3",
-    username: "Mike Johnson",
-    avatar: "/placeholder.svg",
-    image: "/story-3.jpg",
-    timestamp: "4h",
-    hasViewed: true,
-  },
-  {
-    id: "4",
-    username: "Emma Davis",
-    avatar: "/placeholder.svg",
-    image: "/story-4.jpg",
-    timestamp: "6h",
-    hasViewed: false,
-  },
-  {
-    id: "5",
-    username: "Alex Rivera",
-    avatar: "/placeholder.svg",
-    image: "/story-5.jpg",
-    timestamp: "8h",
-    hasViewed: true,
-  },
-  {
-    id: "6",
-    username: "Julia Anderson",
-    avatar: "/placeholder.svg",
-    image: "/story-6.jpg",
-    timestamp: "10h",
-    hasViewed: false,
-  },
-]
+const cdnUrl = (publicId: string, mediaType: string) => {
+  console.log(publicId, mediaType);
+  if (mediaType == 'video') {
+    return `https://res.cloudinary.com/dibvkarvg/video/upload/so_0/${publicId}.jpg`
+  } else {
+    return `https://res.cloudinary.com/dibvkarvg/image/upload/v1769332463/${publicId}.jpg`
+  }
+}
+
+const cdnUrlImage = (publicId: string) => {
+  return `https://res.cloudinary.com/dibvkarvg/image/upload/v1769332463/${publicId}.jpg`
+}
+
+// Dynamic import for HLS.js to avoid SSR issues
+// Note: Make sure to install hls.js: npm install hls.js
+let Hls: any = null
+if (typeof window !== 'undefined') {
+  // @ts-ignore - hls.js module may not be installed yet
+  import('hls.js').then((module: any) => {
+    Hls = module.default
+  }).catch(() => {
+    console.warn('HLS.js not available. Please install: npm install hls.js')
+  })
+}
 
 export function Stories() {
+  const router = useRouter()
+  const [stories, setStories] = useState<StoryItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [selectedStory, setSelectedStory] = useState<string | null>(null)
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [userStories, setUserStories] = useState<StoryApi[]>([])
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0)
+  const [isLoadingUserStories, setIsLoadingUserStories] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const previewVideoRef = useRef<HTMLVideoElement>(null)
+  const previewRef = useRef<{ stop: () => void } | null>(null)
+  const cacheUserStories = useRef<Record<string, StoryApi[]>>({})
+
+  // Fetch stories from API
+  const fetchStories = async () => {
+    try {
+      setIsLoading(true)
+      const response = await getStoryFriends(1, 20)
+      const storyFriends: StoryFriend[] = response.data.items || []
+      console.log(storyFriends)
+      // Map StoryFriend to StoryItem format
+      const mappedStories: StoryItem[] = storyFriends.map((friend) => ({
+        id: friend.id,
+        username: friend.username,
+        name: friend.name,
+        avatar: friend.avatar_url || "/avatar-default.jpg",
+        image: friend.avatar_url || "/placeholder.svg", // Using avatar as placeholder for story image
+        timestamp: formatTime(friend.lastest_story_time),
+        hasViewed: false, // TODO: Implement viewed status from API if available
+        storyCount: friend.story_count,
+        latest_story_media_url: friend.latest_story_media_url || '',
+        latest_story_media_type: friend.latest_story_media_type || 'video',
+      }))
+      console.log(mappedStories)
+      setStories(mappedStories)
+    } catch (error) {
+      console.error("Fetch stories failed:", error)
+      setStories([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchStories()
+  }, [])
+
+  // Fetch user stories when a story is selected
+  useEffect(() => {
+    const fetchUserStories = async () => {
+      if (!selectedUserId) return
+      console.log(cacheUserStories.current)
+      // Check cache first
+      if (cacheUserStories.current[selectedUserId]) {
+        setUserStories(cacheUserStories.current[selectedUserId])
+        setCurrentStoryIndex(0)
+        return
+      }
+      
+      try {
+        setIsLoadingUserStories(true)
+        const response = await getStories(selectedUserId)
+        const storiesData = response.data.stories || []
+        
+        // Save to cache
+        cacheUserStories.current[selectedUserId] = storiesData
+        
+        setUserStories(storiesData)
+        setCurrentStoryIndex(0)
+      } catch (error) {
+        console.error("Fetch user stories failed:", error)
+        setUserStories([])
+      } finally {
+        setIsLoadingUserStories(false)
+      }
+    }
+
+    fetchUserStories()
+  }, [selectedUserId])
+
 
   const handleAddStoryClick = () => {
     setIsCreateModalOpen(true)
@@ -142,7 +204,8 @@ export function Stories() {
       setIsCreateModalOpen(false)
       setSelectedFile(null)
       setPreview(null)
-      // TODO: Refresh stories list
+      // Refresh stories list
+      await fetchStories()
     } catch (error: any) {
       console.error("Upload story error:", error)
       setUploadError(
@@ -166,6 +229,59 @@ export function Stories() {
       }
     }
   }
+
+  // Extract public_id from streaming_url
+  const extractPublicId = (streamingUrl: string): string | null => {
+    try {
+      // Format: https://res.cloudinary.com/dibvkarvg/video/upload/sp_auto/{publicId}.m3u8
+      const match = streamingUrl.match(/\/upload\/sp_auto\/([^\/]+)\.m3u8/)
+      if (match && match[1]) {
+        return match[1]
+      }
+      // Fallback: try to extract from other formats
+      const match2 = streamingUrl.match(/\/upload\/([^\/]+)\.m3u8/)
+      if (match2 && match2[1]) {
+        return match2[1]
+      }
+      return null
+    } catch {
+      return null
+    }
+  }
+
+  const onHover = async (userId: string) => {
+    try {
+      let storiesData: StoryApi[] = []
+      
+      // Check cache first
+      if (cacheUserStories.current[userId]) {
+        storiesData = cacheUserStories.current[userId]
+      } else {
+        // Fetch if not in cache
+        const response = await getStories(userId)
+        storiesData = response.data.stories || []
+        // Save to cache
+        cacheUserStories.current[userId] = storiesData
+      }
+      
+      if (storiesData.length > 0) {
+        const firstStory = storiesData[0]
+        if (firstStory.media_type === 'video' && firstStory.streaming_url) {
+          const publicId = extractPublicId(firstStory.streaming_url)
+          if (publicId && previewVideoRef.current) {
+            previewRef.current = playHlsPreview(previewVideoRef.current, publicId)
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch story for preview:", error)
+    }
+  }
+
+  const onLeave = () => {
+    previewRef.current?.stop()
+    previewRef.current = null
+  }
   
   return (
     <>
@@ -175,7 +291,16 @@ export function Stories() {
           {/* Add Story Card */}
           <div className="flex-shrink-0">
             <div 
-              className="relative h-24 w-20 rounded-lg overflow-hidden bg-gradient-to-br from-blue-500/30 to-cyan-500/30 border-2 border-white/30 flex items-center justify-center cursor-pointer hover:border-white/50 hover:bg-gradient-to-br hover:from-blue-500/40 hover:to-cyan-500/40 transition-all"
+              className="relative h-24 w-20 rounded-lg overflow-hidden border-2 border-white/30 flex items-center justify-center cursor-pointer hover:border-white/50 transition-all"
+              style={{
+                background: 'linear-gradient(to bottom right, color-mix(in srgb, var(--brand-primary) 30%, transparent), color-mix(in srgb, var(--brand-primary) 30%, transparent))'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to bottom right, color-mix(in srgb, var(--brand-primary) 40%, transparent), color-mix(in srgb, var(--brand-primary) 40%, transparent))'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(to bottom right, color-mix(in srgb, var(--brand-primary) 30%, transparent), color-mix(in srgb, var(--brand-primary) 30%, transparent))'
+              }}
               onClick={handleAddStoryClick}
             >
               <div className="flex flex-col items-center">
@@ -187,84 +312,89 @@ export function Stories() {
           </div>
 
           {/* Story Items */}
-          {mockStories.slice(1).map((story) => (
-            <div
-              key={story.id}
-              className="flex-shrink-0 cursor-pointer group"
-              onClick={() => setSelectedStory(story.id)}
-            >
+          {isLoading ? (
+            <SkeletonStories count={5} />
+          ) : stories.length > 0 ? (
+            stories.map((story) => (
               <div
-                className={`relative h-24 w-20 rounded-lg overflow-hidden ring-2 transition-all ${!story.hasViewed ? "ring-blue-400" : "ring-white/30"}`}
+                key={story.id}
+                className="flex-shrink-0 cursor-pointer group"
+                onMouseEnter={() => onHover(story.id)}
+                onMouseLeave={onLeave}
+                onClick={() => {
+                  router.push(`/stories/${story.username}`)
+                }}
               >
-                <img
-                  src={story.image || "/placeholder.svg"}
-                  alt={story.username}
-                  className="h-full w-full object-cover group-hover:scale-105 transition-transform"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                <div
+                  className={`relative h-24 w-20 rounded-lg overflow-hidden ring-2 transition-all ${!story.hasViewed ? "" : "ring-white/30"}`}
+                  style={!story.hasViewed ? { 
+                    '--tw-ring-color': 'var(--brand-primary)',
+                    ringColor: 'var(--brand-primary)'
+                  } as React.CSSProperties & { ringColor?: string } : {}}
+                >
+                  <img
+                    src={story.latest_story_media_url 
+                      ? cdnUrl(story.latest_story_media_url || '', story.latest_story_media_type || 'video')
+                      : story.image || "/placeholder.svg"}
+                    alt={story.username}
+                    className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                </div>
+                <div className="mt-2 flex items-center justify-center gap-1">
+                  <Avatar 
+                    className="h-6 w-6 ring-2 ring-offset-1"
+                    style={{ 
+                      '--tw-ring-color': 'color-mix(in srgb, var(--brand-primary) 50%, transparent)',
+                      ringColor: 'color-mix(in srgb, var(--brand-primary) 50%, transparent)'
+                    } as React.CSSProperties & { ringColor?: string }}
+                  >
+                    <AvatarImage src={story.avatar || "/avatar-default.jpg"} alt={story.username} />
+                    <AvatarFallback>{story.username[0]}</AvatarFallback>
+                  </Avatar>
+                </div>
+                <p className="text-xs text-center text-white font-medium mt-1 truncate">{story.name}</p>
               </div>
-              <div className="mt-2 flex items-center justify-center gap-1">
-                <Avatar className="h-6 w-6 ring-2 ring-offset-1 ring-blue-400/50">
-                  <AvatarImage src={story.avatar || "/placeholder.svg"} alt={story.username} />
-                  <AvatarFallback>{story.username[0]}</AvatarFallback>
-                </Avatar>
-              </div>
-              <p className="text-xs text-center text-white font-medium mt-1 truncate">{story.username}</p>
+            ))
+          ) : (
+            <div className="flex-shrink-0">
+              <p className="text-xs text-center text-white/50 font-medium">No stories</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
+      {/* Hidden video element for preview */}
+      <video
+        ref={previewVideoRef}
+        className="hidden"
+        style={{ display: 'none' }}
+      />
+
       {/* Story Modal */}
-      {selectedStory && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
-          <div className="relative w-full max-w-md aspect-[9/16] bg-black rounded-3xl overflow-hidden shadow-2xl">
-            <img
-              src={mockStories.find((s) => s.id === selectedStory)?.image || "/placeholder.svg"}
-              alt="Story"
-              className="w-full h-full object-cover"
-            />
-
-            {/* Header */}
-            <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8 ring-2 ring-white/50">
-                  <AvatarImage src={mockStories.find((s) => s.id === selectedStory)?.avatar || "/placeholder.svg"} />
-                  <AvatarFallback>{mockStories.find((s) => s.id === selectedStory)?.username[0]}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-white text-sm font-semibold">
-                    {mockStories.find((s) => s.id === selectedStory)?.username}
-                  </p>
-                  <p className="text-white/70 text-xs">
-                    {mockStories.find((s) => s.id === selectedStory)?.timestamp} ago
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-white hover:bg-white/20 rounded-full"
-                onClick={() => setSelectedStory(null)}
-              >
-                ✕
-              </Button>
-            </div>
-
-            {/* Progress Bars */}
-            <div className="absolute top-0 left-0 right-0 flex gap-1 p-2 h-1">
-              {mockStories.slice(1).map((_, index) => (
-                <div
-                  key={index}
-                  className={`flex-1 h-0.5 rounded-full ${
-                    index === (Number.parseInt(selectedStory) - 2) ? "bg-white" : "bg-white/30"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      <ModalStory
+        isOpen={!!selectedStory && !!selectedUserId}
+        storyFriend={selectedStory ? stories.find((s) => s.id === selectedStory) || null : null}
+        userStories={userStories}
+        currentStoryIndex={currentStoryIndex}
+        isLoadingUserStories={isLoadingUserStories}
+        onClose={() => {
+          setSelectedStory(null)
+          setSelectedUserId(null)
+          setUserStories([])
+          setCurrentStoryIndex(0)
+        }}
+        onPrevious={() => {
+          if (currentStoryIndex > 0) {
+            setCurrentStoryIndex(currentStoryIndex - 1)
+          }
+        }}
+        onNext={() => {
+          if (currentStoryIndex < userStories.length - 1) {
+            setCurrentStoryIndex(currentStoryIndex + 1)
+          }
+        }}
+      />
 
       {/* Create Story Modal */}
       {isCreateModalOpen && (
@@ -306,7 +436,16 @@ export function Stories() {
                     />
                     <Button
                       onClick={() => fileInputRef.current?.click()}
-                      className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 rounded-lg"
+                      className="text-white rounded-lg"
+                      style={{
+                        background: 'linear-gradient(to right, var(--brand-primary), var(--brand-primary-dark))'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(to right, var(--brand-primary-dark), var(--brand-primary))'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'linear-gradient(to right, var(--brand-primary), var(--brand-primary-dark))'
+                      }}
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       Select File
@@ -381,7 +520,20 @@ export function Stories() {
                     <Button
                       onClick={handleUpload}
                       disabled={isUploading}
-                      className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 rounded-lg disabled:opacity-50"
+                      className="flex-1 text-white rounded-lg disabled:opacity-50"
+                      style={{
+                        background: 'linear-gradient(to right, var(--brand-primary), var(--brand-primary-dark))'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isUploading) {
+                          e.currentTarget.style.background = 'linear-gradient(to right, var(--brand-primary-dark), var(--brand-primary))'
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isUploading) {
+                          e.currentTarget.style.background = 'linear-gradient(to right, var(--brand-primary), var(--brand-primary-dark))'
+                        }
+                      }}
                     >
                       {isUploading ? "Uploading..." : "Upload Story"}
                     </Button>
