@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Plus, X, Upload, Image as ImageIcon, Video } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -9,6 +10,7 @@ import { formatTime } from "@/utils/format"
 import type { StoryFriend, Story as StoryApi } from "@/apis/story.api"
 import { playHlsPreview } from "@/lib/hls"
 import { SkeletonStories } from "@/components/skeleton"
+import { ModalStory } from "@/components/ModalStory"
 
 interface StoryItem {
   id: string
@@ -49,6 +51,7 @@ if (typeof window !== 'undefined') {
 }
 
 export function Stories() {
+  const router = useRouter()
   const [stories, setStories] = useState<StoryItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedStory, setSelectedStory] = useState<string | null>(null)
@@ -62,7 +65,6 @@ export function Stories() {
   const [isUploading, setIsUploading] = useState(false)
   const [uploadError, setUploadError] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
   const previewRef = useRef<{ stop: () => void } | null>(null)
   const cacheUserStories = useRef<Record<string, StoryApi[]>>({})
@@ -134,29 +136,6 @@ export function Stories() {
     fetchUserStories()
   }, [selectedUserId])
 
-  // Setup HLS video player
-  useEffect(() => {
-    if (!videoRef.current || !userStories.length || !Hls) return
-
-    const currentStory = userStories[currentStoryIndex]
-    if (!currentStory || currentStory.media_type !== 'video') return
-
-    const streamUrl = currentStory.streaming_url
-    if (!streamUrl) return
-
-    if (Hls.isSupported()) {
-      const hls = new Hls()
-      hls.loadSource(streamUrl)
-      hls.attachMedia(videoRef.current)
-
-      return () => {
-        hls.destroy()
-      }
-    } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-      // iOS Safari
-      videoRef.current.src = streamUrl
-    }
-  }, [userStories, currentStoryIndex])
 
   const handleAddStoryClick = () => {
     setIsCreateModalOpen(true)
@@ -343,8 +322,7 @@ export function Stories() {
                 onMouseEnter={() => onHover(story.id)}
                 onMouseLeave={onLeave}
                 onClick={() => {
-                  setSelectedStory(story.id)
-                  setSelectedUserId(story.id)
+                  router.push(`/stories/${story.username}`)
                 }}
               >
                 <div
@@ -394,119 +372,29 @@ export function Stories() {
       />
 
       {/* Story Modal */}
-      {selectedStory && selectedUserId && (() => {
-        const storyFriend = stories.find((s) => s.id === selectedStory)
-        const currentStory = userStories[currentStoryIndex]
-        
-        if (!storyFriend) return null
-        
-        return (
-          <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
-            <div className="relative w-full max-w-md aspect-[9/16] bg-black rounded-3xl overflow-hidden shadow-2xl">
-              {isLoadingUserStories ? (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="text-white">Loading...</div>
-                </div>
-              ) : currentStory ? (
-                <>
-                  {currentStory.media_type === 'video' ? (
-                    <video
-                      ref={videoRef}
-                      className="w-full h-full object-cover"
-                      autoPlay
-                      playsInline
-                    />
-                  ) : (
-                    <img
-                      src={cdnUrlImage(currentStory.media_url) || "/placeholder.svg"}
-                      alt="Story"
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-
-                  {/* Header */}
-                  <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8 ring-2 ring-white/50">
-                        <AvatarImage src={storyFriend.avatar || "/avatar-default.jpg"} />
-                        <AvatarFallback>{storyFriend.username[0]}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="text-white text-sm font-semibold">
-                          {storyFriend.name}
-                        </p>
-                        <p className="text-white/70 text-xs">
-                          {formatTime(currentStory.created_at)}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-white hover:bg-white/20 rounded-full"
-                      onClick={() => {
-                        setSelectedStory(null)
-                        setSelectedUserId(null)
-                        setUserStories([])
-                        setCurrentStoryIndex(0)
-                        if (videoRef.current) {
-                          videoRef.current.src = ''
-                        }
-                      }}
-                    >
-                      ✕
-                    </Button>
-                  </div>
-
-                  {/* Progress Bars */}
-                  <div className="absolute top-0 left-0 right-0 flex gap-1 p-2 h-1">
-                    {userStories.map((_, index) => (
-                      <div
-                        key={index}
-                        className={`flex-1 h-0.5 rounded-full ${
-                          index === currentStoryIndex ? "bg-white" : "bg-white/30"
-                        }`}
-                      />
-                    ))}
-                  </div>
-
-                  {/* Navigation Buttons */}
-                  {userStories.length > 1 && (
-                    <>
-                      <button
-                        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all"
-                        onClick={() => {
-                          if (currentStoryIndex > 0) {
-                            setCurrentStoryIndex(currentStoryIndex - 1)
-                          }
-                        }}
-                        disabled={currentStoryIndex === 0}
-                      >
-                        ←
-                      </button>
-                      <button
-                        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-all"
-                        onClick={() => {
-                          if (currentStoryIndex < userStories.length - 1) {
-                            setCurrentStoryIndex(currentStoryIndex + 1)
-                          }
-                        }}
-                        disabled={currentStoryIndex === userStories.length - 1}
-                      >
-                        →
-                      </button>
-                    </>
-                  )}
-                </>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="text-white">No stories available</div>
-                </div>
-              )}
-            </div>
-          </div>
-        )
-      })()}
+      <ModalStory
+        isOpen={!!selectedStory && !!selectedUserId}
+        storyFriend={selectedStory ? stories.find((s) => s.id === selectedStory) || null : null}
+        userStories={userStories}
+        currentStoryIndex={currentStoryIndex}
+        isLoadingUserStories={isLoadingUserStories}
+        onClose={() => {
+          setSelectedStory(null)
+          setSelectedUserId(null)
+          setUserStories([])
+          setCurrentStoryIndex(0)
+        }}
+        onPrevious={() => {
+          if (currentStoryIndex > 0) {
+            setCurrentStoryIndex(currentStoryIndex - 1)
+          }
+        }}
+        onNext={() => {
+          if (currentStoryIndex < userStories.length - 1) {
+            setCurrentStoryIndex(currentStoryIndex + 1)
+          }
+        }}
+      />
 
       {/* Create Story Modal */}
       {isCreateModalOpen && (
