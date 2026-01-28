@@ -6,7 +6,7 @@ import { useParams } from "next/navigation"
 import { MapPin, Link as LinkIcon, Mail, Calendar, Heart, MessageSquare, Share2, Send, ArrowLeft, Play } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { GlassCard, GlassButton, GlassStatCard } from "@/lib/components"
+import { GlassCard, GlassButton, GlassStatCard, GlassCardVariant } from "@/lib/components"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { RightSidebar } from "@/components/RightSidebar"
@@ -15,6 +15,7 @@ import { getUserByUsername } from "@/services/user.service"
 import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, cancelFriendRequest } from "@/services/friendRequest.service"
 import { User, FriendshipStatus } from "@/types/user.type"
 import { ProfileSkeleton } from "@/components/skeleton"
+
 
 interface Post {
   id: number
@@ -390,19 +391,19 @@ export default function UserProfilePage() {
           {/* Back Button */}
           {/* <Modal isOpen={true} onClose={() => {console.log("close")}} />   */}
           <div className="mb-4">
-            <Button
+            <GlassButton
               variant="ghost"
               size="sm"
-              className="text-white/70 hover:text-white hover:bg-white/10"
+              className="text-white/70 hover:text-white hover:bg-white/10 flex items-center gap-2"
               onClick={() => {
                 if (typeof window !== 'undefined') {
                   window.history.back();
                 }
               }}
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
+            </GlassButton>
           </div>
 
           {isInitialLoading ? (
@@ -410,46 +411,46 @@ export default function UserProfilePage() {
           ) : (
             <>
               {/* Cover Photo */}
-              <GlassCard variant="lg" className="h-72 md:h-96 rounded-3xl overflow-hidden mb-0">
-                <div className="relative w-full h-full">
+              <GlassCard variant="lg" className="h-72 md:h-96 rounded-3xl overflow-hidden mb-0 p-0">
+                {/* <div className="relative w-full h-full"> */}
                   <Image
                     src={ "/bg12.jpg"}
                     alt="Profile cover"
                     fill
-                    className="object-cover"
+                    className="object-cover h-[50%]"
                   />
-                </div>
+                {/* </div> */}
               </GlassCard>
 
               {/* Profile Header Section */}
-              <GlassCard className="relative -mt-56 mb-8 p-8">
-                <div className="flex flex-col md:flex-row md:items-end gap-6">
+              <GlassCardVariant className="relative -mt-37 md:-mt-57 mb-8 p-4 md:p-8 !rounded-b-3xl">
+                <div className="flex flex-row items-end gap-4 md:gap-6">
                   {/* Avatar */}
                   <div className="shrink-0">
-                    <Avatar className="h-40 w-40 ring-4 ring-white/20 shadow-2xl">
+                    <Avatar className="h-20 w-20 md:h-40 md:w-40 ring-4 ring-white/20 shadow-2xl">
                       <AvatarImage src={userProfile?.avatar_url || "/placeholder.svg"} alt={userProfile?.name || ""} />
-                      <AvatarFallback className="text-4xl bg-linear-to-br from-brand-primary to-brand-primary-dark">
+                      <AvatarFallback className="text-xl md:text-4xl bg-linear-to-br from-brand-primary to-brand-primary-dark">
                         {userProfile?.name?.[0] || ""}
                       </AvatarFallback>
                     </Avatar>
                   </div>
 
                   {/* User Info */}
-                  <div className="flex-1">
-                    <div className="mb-4">
-                      <h1 className="text-3xl font-bold text-white">{userProfile?.name || ""}</h1>
-                      <p className="text-brand-primary text-lg">{userProfile?.username || ""}</p>
+                  <div className="flex-1 text-left">
+                    <div className="mb-3 md:mb-4">
+                      <h1 className="text-xl md:text-3xl font-bold text-white">{userProfile?.name || ""}</h1>
+                      <p className="text-brand-primary text-sm md:text-lg">{userProfile?.username || ""}</p>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3 items-center flex-wrap">
+                    <div className="flex gap-2 md:gap-3 items-center flex-wrap">
                       {userProfile?.friend_status === 'received_pending' && (
                         <>
                           <GlassButton
                             type="button"
                             onClick={handleAcceptRequest}
                             disabled={isLoading}
-                            className="bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap"
+                            className="bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap text-xs md:text-base"
                           >
                             {isLoading ? 'Processing...' : 'Accept'}
                           </GlassButton>
@@ -457,7 +458,7 @@ export default function UserProfilePage() {
                             type="button"
                             onClick={handleRejectRequest}
                             disabled={isLoading}
-                            className="bg-white/10 hover:bg-white/20 whitespace-nowrap"
+                            className="bg-white/10 hover:bg-white/20 whitespace-nowrap text-xs md:text-base"
                           >
                             {isLoading ? 'Processing...' : 'Reject'}
                           </GlassButton>
@@ -468,24 +469,27 @@ export default function UserProfilePage() {
                           type="button"
                           onClick={buttonConfig.onClick}
                           disabled={buttonConfig.disabled}
-                          className={buttonConfig.className}
+                          className={`${buttonConfig.className} text-xs md:text-base`}
                         >
                           {buttonConfig.text}
                         </GlassButton>
                       )}
                       <GlassButton className="bg-white/10 hover:bg-white/20" title="Send message">
-                        <Send className="w-6 h-6" />
+                        <Send className="w-4 h-4 md:w-6 md:h-6" />
                       </GlassButton>
                       <GlassButton className="bg-white/10 hover:bg-white/20" title="Share profile">
-                        <Share2 className="w-6 h-6" />
+                        <Share2 className="w-4 h-4 md:w-6 md:h-6" />
                       </GlassButton>
                     </div>
                   </div>
                 </div>
-              </GlassCard>
+              </GlassCardVariant>
 
               {/* Bio & User Details Section */}
-              <GlassCard className="mb-8">
+              <GlassCard
+                variant="lg"
+                className="mb-8"
+              >
                 <div className="space-y-6">
                   {/* Bio */}
                   <div>

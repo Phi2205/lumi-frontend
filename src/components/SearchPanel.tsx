@@ -125,7 +125,7 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                   className="w-full px-4 py-2 hover:bg-white/10 flex items-center gap-3 transition-all"
                 >
                   <Avatar className="h-10 w-10 ring-1 ring-white/20">
-                    <AvatarImage src={user.avatar_url || "/placeholder.svg"} alt={user.username} />
+                    <AvatarImage src={user.avatar_url || "/avatar-default.jpg"} alt={user.username} />
                   <AvatarFallback className="bg-linear-to-br from-blue-400 to-cyan-400 text-sm">
                       {user.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
