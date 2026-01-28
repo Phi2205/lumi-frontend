@@ -1,4 +1,5 @@
 import axiosInstance from './axiosInstance';
+import axios from 'axios';
 
 export interface LoginPayload {
   email: string;
@@ -31,5 +32,16 @@ export const verifyOtpApi = (data: VerifyPayload) =>
 export const resendOtpApi = (data: { email: string }) => 
   axiosInstance.post('/auth/resend-otp', data);
 
+// Axios instance riêng cho refresh token (không dùng interceptor chung)
+const baseURL = process.env.NEXT_PUBLIC_API_URL;
+
+const axiosRefresh = axios.create({
+  baseURL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 export const refreshTokenApi = () => 
-  axiosInstance.post('/auth/refresh');
+  axiosRefresh.post('/auth/refresh');

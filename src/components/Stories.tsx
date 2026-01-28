@@ -365,7 +365,7 @@ export function Stories() {
       </div>
 
       {/* Hidden video element for preview */}
-      <video
+                    <video
         ref={previewVideoRef}
         className="hidden"
         style={{ display: 'none' }}
@@ -379,21 +379,21 @@ export function Stories() {
         currentStoryIndex={currentStoryIndex}
         isLoadingUserStories={isLoadingUserStories}
         onClose={() => {
-          setSelectedStory(null)
-          setSelectedUserId(null)
-          setUserStories([])
-          setCurrentStoryIndex(0)
+                        setSelectedStory(null)
+                        setSelectedUserId(null)
+                        setUserStories([])
+                        setCurrentStoryIndex(0)
         }}
         onPrevious={() => {
-          if (currentStoryIndex > 0) {
-            setCurrentStoryIndex(currentStoryIndex - 1)
-          }
-        }}
+                          if (currentStoryIndex > 0) {
+                            setCurrentStoryIndex(currentStoryIndex - 1)
+                          }
+                        }}
         onNext={() => {
-          if (currentStoryIndex < userStories.length - 1) {
-            setCurrentStoryIndex(currentStoryIndex + 1)
-          }
-        }}
+                          if (currentStoryIndex < userStories.length - 1) {
+                            setCurrentStoryIndex(currentStoryIndex + 1)
+                          }
+                        }}
       />
 
       {/* Create Story Modal */}
