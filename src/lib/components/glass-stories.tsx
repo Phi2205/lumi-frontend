@@ -13,6 +13,12 @@ interface Story {
   hasViewed: boolean
 }
 
+interface GlassStoriesProps {
+  blur?: number
+  refraction?: number
+  depth?: number
+}
+
 const mockStories: Story[] = [
   {
     id: "1",
@@ -64,7 +70,11 @@ const mockStories: Story[] = [
   },
 ]
 
-export function GlassStories() {
+export function GlassStories({ 
+  blur = 20, 
+  refraction = 0.12, 
+  depth = 3 
+}: GlassStoriesProps) {
   const [selectedStory, setSelectedStory] = useState<string | null>(null)
 
   const getInitials = (name: string) => {
@@ -87,7 +97,7 @@ export function GlassStories() {
       >
 
         <div className="relative z-10 p-4 md:p-6">
-          <GlassCard variant="lg" className="mb-6">
+          <GlassCard variant="lg" className="mb-6" blur={blur} refraction={refraction} depth={depth}>
             <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
               {/* Add Story Card */}
               <div className="flex-shrink-0">

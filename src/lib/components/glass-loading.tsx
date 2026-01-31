@@ -1,6 +1,22 @@
 import React from 'react';
 
-export const Loading = ({ text = "Loading..." }) => {
+interface LoadingProps {
+  text?: string
+  blur?: number
+  refraction?: number
+  depth?: number
+}
+
+export const Loading = ({ 
+  text = "Loading...",
+  blur = 20,
+  refraction = 0.12,
+  depth = 5
+}: LoadingProps) => {
+  // Clamp values to valid ranges
+  const clampedBlur = Math.max(0, Math.min(100, blur))
+  const clampedRefraction = Math.max(0, Math.min(1, refraction))
+  const clampedDepth = Math.max(0, Math.min(10, depth))
   return (
     <div className="min-h-screen flex items-center justify-center">
       <style>{`
@@ -24,9 +40,12 @@ export const Loading = ({ text = "Loading..." }) => {
       `}</style>
 
       <div 
-        className="relative w-[280px] p-12 px-8 backdrop-blur-[20px] rounded-3xl"
+        className="relative w-[280px] p-12 px-8 rounded-3xl"
         style={{
-          WebkitBackdropFilter: 'blur(20px)',
+          backdropFilter: `blur(${clampedBlur}px)`,
+          WebkitBackdropFilter: `blur(${clampedBlur}px)`,
+          backgroundColor: `rgba(255, 255, 255, ${clampedRefraction})`,
+          boxShadow: `0 ${Math.ceil(clampedDepth * 3)}px ${Math.ceil(clampedDepth * 6)}px rgba(0, 0, 0, ${0.15 + clampedDepth * 0.05})`,
           animation: 'fadeIn 0.5s ease'
         }}
       >

@@ -8,9 +8,12 @@ interface GlassCardProps {
   variant?: "default" | "sm" | "lg"
   interactive?: boolean
   vibrant?: boolean
-  intensity?: "light" | "medium" | "strong" // Deprecated: dùng mobileIntensity và desktopIntensity thay thế
+  intensity?: "light" | "medium" | "strong"
   mobileIntensity?: "light" | "medium" | "strong"
   desktopIntensity?: "light" | "medium" | "strong"
+  blur?: number
+  refraction?: number
+  depth?: number
 }
 
 export function GlassCardVariant({ 
@@ -19,26 +22,30 @@ export function GlassCardVariant({
   variant = "default", 
   interactive = false,
   vibrant = false,
-  intensity, // Deprecated
+  intensity,
   mobileIntensity,
-  desktopIntensity
+  desktopIntensity,
+  blur = 20,
+  refraction = 0.12,
+  depth = 3
 }: GlassCardProps) {
-  // Map intensity to actual classes
+  // Clamp values to valid ranges
+  const clampedBlur = Math.max(0, Math.min(100, blur))
+  const clampedRefraction = Math.max(0, Math.min(1, refraction))
+  const clampedDepth = Math.max(0, Math.min(10, depth))
+
   const intensityMap = {
     light: "from-white/5 via-white/2 to-transparent dark:from-white/4 dark:via-white/1",
     medium: "from-white/10 via-white/5 to-transparent dark:from-white/8 dark:via-white/3",
     strong: "from-white/20 via-white/10 to-transparent dark:from-white/15 dark:via-white/8"
   }
 
-  // Desktop intensity map (thêm md: prefix)
   const desktopIntensityMap = {
     light: "md:from-white/5 md:via-white/2 md:to-transparent md:dark:from-white/4 md:dark:via-white/1",
     medium: "md:from-white/10 md:via-white/5 md:to-transparent md:dark:from-white/8 md:dark:via-white/3",
     strong: "md:from-white/20 md:via-white/10 md:to-transparent md:dark:from-white/15 md:dark:via-white/8"
   }
 
-  // Xác định intensity cho mobile và desktop
-  // Nếu có mobileIntensity/desktopIntensity thì dùng, nếu không thì fallback về intensity
   const finalMobileIntensity = mobileIntensity || intensity || "medium"
   const finalDesktopIntensity = desktopIntensity || intensity || "medium"
 
@@ -56,11 +63,17 @@ export function GlassCardVariant({
     ? "glass-interactive cursor-pointer" 
     : ""
 
-  // Combine mobile và desktop intensity classes
   const overlayClasses = `${intensityMap[finalMobileIntensity]} ${desktopIntensityMap[finalDesktopIntensity]}`
 
   return (
-    <div className={`${baseStyles} ${variantStyles[variant]} ${interactiveStyles} ${className}`}>
+    <div 
+      className={`${baseStyles} ${variantStyles[variant]} ${interactiveStyles} ${className}`}
+      style={{
+        backdropFilter: `blur(${clampedBlur}px)`,
+        backgroundColor: `rgba(255, 255, 255, ${clampedRefraction})`,
+        boxShadow: `0 ${Math.ceil(clampedDepth * 2)}px ${Math.ceil(clampedDepth * 4)}px rgba(0, 0, 0, ${0.1 + clampedDepth * 0.05})`
+      }}
+    >
       <div className="relative z-10">{children}</div>
     </div>
   )
