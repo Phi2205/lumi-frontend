@@ -1,8 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ConversationList, type Conversation } from "@/components/messages/ConversationList"
 import { ChatWindow, type Message } from "@/components/messages/ChatWindow"
+import { useDarkMode } from "@/hooks/useDarkMode"
+import { BackgroundRenderer } from "@/components/BackgroundRenderer"
+import { useBackgroundImage } from "@/hooks/useBackgroundImage"
+import { Header } from "@/components/header"
 
 const mockConversations: Conversation[] = [
   {
@@ -230,6 +234,8 @@ export default function MessagesPage() {
   const [selectedConversationId, setSelectedConversationId] = useState("1")
   const [conversations, setConversations] = useState(mockConversations)
   const [allMessages, setAllMessages] = useState(mockMessages)
+  const { isDarkMode, handleDarkModeToggle } = useDarkMode()
+  const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
 
   const selectedConversation = conversations.find((c) => c.id === selectedConversationId)
   const currentMessages = allMessages[selectedConversationId] || []
@@ -259,24 +265,16 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Gradient Background */}
-      <div className="fixed inset-0 -z-10">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'radial-gradient(ellipse 100% 80% at 50% 0%, rgba(59, 130, 246, 0.15) 0%, rgba(3, 0, 20, 0.8) 50%, #000000 100%)'
-          }}
-        />
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            background: 'radial-gradient(circle 600px at 20% 50%, rgba(34, 211, 238, 0.12) 0%, transparent 70%)'
-          }}
-        />
-      </div>
+      <BackgroundRenderer
+        isDarkMode={isDarkMode}
+        imageLoaded={imageLoaded}
+        imageError={imageError}
+      />
+      
+      <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
 
       {/* Instagram-style Layout */}
-      <div className="flex h-screen pt-16">
+      <div className="flex h-[calc(100vh-64px)] pt-16">
         {/* Left Sidebar - Conversation List */}
         <div className="hidden lg:flex w-full lg:w-80 flex-shrink-0 border-r border-white/10 overflow-hidden">
           <ConversationList
