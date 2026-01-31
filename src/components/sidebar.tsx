@@ -4,6 +4,8 @@ import { Home, BookOpen, Zap, MessageSquare, User, Settings, Search } from "luci
 import { Button } from "@/components/ui/button"
 import { SearchPanel } from "@/components/SearchPanel"
 import { useState } from "react"
+import Link from "next/link"
+import { useRouter, usePathname } from "next/navigation"
 
 interface SidebarProps {
   activeTab?: string
@@ -12,24 +14,36 @@ interface SidebarProps {
 
 export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
 
   const menuItems = [
-    { id: "home", label: "Home", icon: Home },
-    { id: "search", label: "Tìm kiếm", icon: Search },
-    { id: "blog", label: "Blog", icon: BookOpen },
-    { id: "stories", label: "Stories", icon: Zap },
-    { id: "messages", label: "Messages", icon: MessageSquare },
-    { id: "profile", label: "Profile", icon: User },
-    { id: "settings", label: "Settings", icon: Settings },
+    { id: "home", label: "Home", icon: Home, href: "/" },
+    { id: "search", label: "Tìm kiếm", icon: Search, href: null },
+    { id: "blog", label: "Blog", icon: BookOpen, href: "/blog" },
+    { id: "stories", label: "Stories", icon: Zap, href: "/stories" },
+    { id: "messages", label: "Messages", icon: MessageSquare, href: "/messages" },
+    { id: "profile", label: "Profile", icon: User, href: "/profile" },
+    { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
   ]
 
-  const handleMenuClick = (itemId: string) => {
+  const handleMenuClick = (itemId: string, href: string | null) => {
     if (itemId === "search") {
       setIsSearchOpen(!isSearchOpen)
     } else {
       setIsSearchOpen(false)
+      if (href) {
+        router.push(href)
+      }
       onTabChange?.(itemId)
     }
+  }
+
+  const isActive = (itemId: string, href: string | null) => {
+    if (isSearchOpen) return itemId === "search"
+    if (itemId === "home") return pathname === "/" || pathname === ""
+    if (href) return pathname === href
+    return activeTab === itemId
   }
 
   return (
@@ -41,27 +55,23 @@ export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
         <nav className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon
-            // Nếu đang mở search, chỉ search tab là active
-            // Nếu không mở search, tab nào match activeTab thì active
-            const isActive = isSearchOpen 
-              ? item.id === "search" 
-              : activeTab === item.id
+            const itemIsActive = isActive(item.id, item.href)
             return (
               <Button
                 key={item.id}
-                variant={isActive ? "default" : "ghost"}
+                variant={itemIsActive ? "default" : "ghost"}
                 className={`w-full rounded-lg transition-all ${
                   isSearchOpen ? 'justify-center px-0' : 'justify-start gap-3'
                 } ${
-                  isActive 
+                  itemIsActive 
                     ? "text-white shadow-lg" 
                     : "hover:bg-white/10 text-white/70 hover:text-white"
                 }`}
-                style={isActive ? {
+                style={itemIsActive ? {
                   backgroundColor: 'var(--brand-primary)',
                   borderColor: 'var(--brand-primary)'
                 } : {}}
-                onClick={() => handleMenuClick(item.id)}
+                onClick={() => handleMenuClick(item.id, item.href)}
                 title={isSearchOpen ? item.label : undefined}
               >
                 <Icon className="h-5 w-5" />
@@ -80,22 +90,22 @@ export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
         <div className="flex w-full items-center justify-around">
           {menuItems.slice(0, 5).map((item) => {
             const Icon = item.icon
-            const isActive = activeTab === item.id
+            const itemIsActive = isActive(item.id, item.href)
             return (
               <Button
                 key={item.id}
                 variant="ghost"
                 size="icon"
                 className={`rounded-lg transition-all ${
-                  isActive 
+                  itemIsActive 
                     ? "text-white" 
                     : "text-white/60 hover:text-white hover:bg-white/10"
                 }`}
-                style={isActive ? {
+                style={itemIsActive ? {
                   backgroundColor: 'var(--brand-primary)',
                   borderColor: 'var(--brand-primary)'
                 } : {}}
-                onClick={() => onTabChange?.(item.id)}
+                onClick={() => handleMenuClick(item.id, item.href)}
               >
                 <Icon className="h-5 w-5" />
               </Button>
