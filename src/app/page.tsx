@@ -24,52 +24,53 @@ export default function Home() {
 
   useEffect(() => {
     if (!isLoading && !user) {
-      router.push("/login")
+      // router.push("/login")
+      // isLoading = true;
     }
   }, [user, isLoading, router])
 
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen relative overflow-hidden">
-        {isDarkMode ? (
-          <>
-            <div
-              className="fixed inset-0 -z-10 transition-all duration-1000"
-              style={{
-                background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(3, 0, 20, 0.8) 0%, #030014 50%, #020010 100%)'
-              }}
-            />
-            <div
-              className="fixed inset-0 -z-10 opacity-40 transition-opacity duration-1000"
-              style={{
-                background: 'radial-gradient(ellipse 60% 40% at 20% 30%, rgba(182, 196, 162, 0.15) 0%, transparent 70%)'
-              }}
-            />
-            <div
-              className="fixed inset-0 -z-10 opacity-[0.03]"
-              style={{
-                backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 400 400\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'4\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
-                backgroundSize: '200px 200px'
-              }}
-            />
-          </>
-        ) : (
-          <div
-            className="fixed inset-0 -z-10"
-            style={{
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(/bg12.jpg)`,
-              backgroundSize: 'cover',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center',
-            }}
-          />
-        )}
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-white/90 text-sm font-medium tracking-wide">Loading...</div>
-        </div>
-      </div>
-    )
-  }
+  // if (isLoading || !user) {
+  //   return (
+  //     <div className="min-h-screen relative overflow-hidden">
+  //       {isDarkMode ? (
+  //         <>
+  //           <div
+  //             className="fixed inset-0 -z-10 transition-all duration-1000"
+  //             style={{
+  //               background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(3, 0, 20, 0.8) 0%, #030014 50%, #020010 100%)'
+  //             }}
+  //           />
+  //           <div
+  //             className="fixed inset-0 -z-10 opacity-40 transition-opacity duration-1000"
+  //             style={{
+  //               background: 'radial-gradient(ellipse 60% 40% at 20% 30%, rgba(182, 196, 162, 0.15) 0%, transparent 70%)'
+  //             }}
+  //           />
+  //           <div
+  //             className="fixed inset-0 -z-10 opacity-[0.03]"
+  //             style={{
+  //               backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 400 400\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'4\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
+  //               backgroundSize: '200px 200px'
+  //             }}
+  //           />
+  //         </>
+  //       ) : (
+  //         <div
+  //           className="fixed inset-0 -z-10"
+  //           style={{
+  //             backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(/bg12.jpg)`,
+  //             backgroundSize: 'cover',
+  //             backgroundRepeat: 'no-repeat',
+  //             backgroundPosition: 'center',
+  //           }}
+  //         />
+  //       )}
+  //       <div className="flex items-center justify-center min-h-screen">
+  //         <div className="text-white/90 text-sm font-medium tracking-wide">Loading...</div>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="min-h-screen relative overflow-hidden">
