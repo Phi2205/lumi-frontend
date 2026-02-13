@@ -30,7 +30,7 @@ export function PostCard({ post, onLike }: PostCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
 
   return (
-    <div className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:bg-white/8 overflow-hidden mb-4">
+    <div className="backdrop-blur-2xl bg-gradient-to-br from-white/12 to-white/8 border border-white/25 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:from-white/16 hover:to-white/12 hover:-translate-y-1 overflow-hidden mb-4 glass-card">
       {/* Post Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="flex items-center gap-3">

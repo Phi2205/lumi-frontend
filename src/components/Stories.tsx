@@ -286,7 +286,7 @@ export function Stories() {
   return (
     <>
       {/* Stories Container */}
-      <div className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:bg-white/8 mb-6 p-4">
+      <div className="backdrop-blur-2xl bg-gradient-to-br from-white/12 to-white/8 border border-white/25 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:from-white/16 hover:to-white/12 mb-6 p-4 glass-card">
         <div className="flex gap-3 overflow-x-auto pb-2">
           {/* Add Story Card */}
           <div className="flex-shrink-0">

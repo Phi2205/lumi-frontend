@@ -166,7 +166,7 @@ export function Feed() {
 
       {/* Create Post Card */}
       <div
-        className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:bg-white/8 p-4 cursor-pointer"
+        className="backdrop-blur-2xl bg-gradient-to-br from-white/12 to-white/8 border border-white/25 rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:from-white/16 hover:to-white/12 hover:-translate-y-1 p-4 cursor-pointer glass-card"
         onClick={() => setIsCreateOpen(true)}
         role="button"
         tabIndex={0}
