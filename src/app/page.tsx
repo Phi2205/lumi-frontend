@@ -23,11 +23,11 @@ export default function Home() {
   const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
 
   // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push("/login")
-    }
-  }, [user, isLoading, router])
+  // useEffect(() => {
+  //   if (!isLoading && !user) {
+  //     router.push("/login")
+  //   }
+  // }, [user, isLoading, router])
 
   // Show loading or nothing while checking auth or redirecting
   if (isLoading || !user) {
