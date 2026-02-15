@@ -9,3 +9,12 @@ export const createPost = async (content: string, media: PostMediaItem[]) => {
         throw error;
     }
 }
+
+export const getUnseenPosts = async (limit: number, page: number) => {
+    try {
+        const response = await postApi.getUnseenPosts(limit, page);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

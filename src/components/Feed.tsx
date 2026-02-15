@@ -2,7 +2,8 @@
 
 import { PostCard, type Post } from "./PostCard"
 import { Stories } from "./Stories"
-import { useState } from "react"
+import { SkeletonFeed } from "@/components/skeleton"
+import { useEffect, useState, useRef } from "react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -10,73 +11,111 @@ import { ImageIcon } from "lucide-react"
 import { Modal } from "@/lib/components/modal"
 import { createPost } from "@/services/post.service"
 import type { PostMediaItem, PostMediaType } from "@/apis/post.api"
+import * as postService from "@/services/post.service"
+import { useAuth } from "@/contexts/AuthContext"
 
-const mockPosts: Post[] = [
-  {
-    id: "1",
-    author: {
-      name: "Sarah Chen",
-      avatar: "/placeholder.svg",
-    },
-    timestamp: "2 hours ago",
-    content:
-      "Just finished an amazing hike in the mountains! The views were absolutely breathtaking. Can't wait to explore more trails this season.",
-    image: "/bg3.jpg",
-    likes: 234,
-    comments: 12,
-    hasLiked: false,
-  },
-  {
-    id: "2",
-    author: {
-      name: "Mike Johnson",
-      avatar: "/placeholder.svg",
-    },
-    timestamp: "4 hours ago",
-    content:
-      "Excited to announce that I've just launched my new project! Check it out and let me know what you think. Your feedback means a lot to me.",
-    image: "/bg3.jpg",
-    likes: 567,
-    comments: 34,
-    hasLiked: false,
-  },
-  {
-    id: "3",
-    author: {
-      name: "Emma Davis",
-      avatar: "/placeholder.svg",
-    },
-    timestamp: "6 hours ago",
-    content:
-      "Coffee and creativity - the perfect combination for a productive morning! What's your go-to productivity hack?",
-    image: "/bg3.jpg",
-    likes: 189,
-    comments: 8,
-    hasLiked: true,
-  },
-  {
-    id: "4",
-    author: {
-      name: "Alex Rivera",
-      avatar: "/placeholder.svg",
-    },
-    timestamp: "8 hours ago",
-    content:
-      "Grateful for amazing friends who celebrate wins and support through challenges. Here's to the people who make life better!",
-    image: "/bg3.jpg",
-    likes: 445,
-    comments: 22,
-    hasLiked: false,
-  },
-]
 
 export function Feed() {
-  const [posts, setPosts] = useState(mockPosts)
+  const { user } = useAuth()
+  const [posts, setPosts] = useState<Post[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [draftContent, setDraftContent] = useState("")
   const [draftMedia, setDraftMedia] = useState<Array<PostMediaItem & { previewUrl: string }>>([])
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number>(0)
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const loaderRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    // If initially loading or fetching more, we don't need to re-attach observer yet, 
+    // BUT we must ensure we attach it when loading finishes.
+    // Actually, always observing loaderRef is safer, conditional logic inside callback.
+    if (isLoading || isFetchingMore) return; 
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          loadMorePosts();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "100px",  // Adjust margin if needed, user previously had 200px
+        threshold: 0
+      }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isLoading, isFetchingMore]);
+
+  const loadMorePosts = async () => {
+    if (isFetchingMore) return;
+    setIsFetchingMore(true);
+    try {
+      const response = await postService.getUnseenPosts(5, 1);
+      const newItems = response.data.items;
+
+      if (newItems.length === 0) {
+        return;
+      }
+
+      setPosts(prev => [...prev, ...newItems.map((post: any) => ({
+        id: post.id,
+        user: {
+          name: post.user?.name || "You",
+          avatar: post.user?.avatar_url || "/placeholder.svg",
+        }, 
+        timestamp: post.created_at,
+        content: post.content,
+        media: post.post_media,
+        likes: post.like_count,
+        comments: post.comment_count,
+        shares: post.share_count,
+        hasLiked: false,
+      }))]);
+      
+    } catch (error) {
+      console.error("Error loading more posts:", error);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }
+
+  const fetchPosts = async () => {
+    setIsLoading(true)
+    try {
+      const response = await postService.getUnseenPosts(5, 1);
+      // console.log("response", response);
+
+      setPosts(response.data.items.map((post) => ({
+        id: post.id,
+        user: {
+          name: post.user?.name || "You",
+          avatar: post.user?.avatar_url || "/placeholder.svg",
+        },
+        timestamp: post.created_at,
+        content: post.content,
+        media: post.post_media,
+        likes: post.like_count,
+        comments: post.comment_count,
+        shares: post.share_count,
+        hasLiked: false,
+      })));
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      setIsLoading(false)
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
   const handleLike = (postId: string) => {
     setPosts(
@@ -135,19 +174,18 @@ export function Feed() {
       )
       const created = res.data
 
-      const firstImage = created.post_media.find((m) => m.media_type === "image")?.media_url
-
       const uiPost: Post = {
         id: created.id,
-        author: {
+        user: {
           name: created.user?.name || created.user?.username || "You",
           avatar: created.user?.avatar_url || "/placeholder.svg",
         },
         timestamp: "just now",
         content: created.content,
-        image: firstImage,
+        media: created.post_media,
         likes: 0,
         comments: 0,
+        shares: 0,
         hasLiked: false,
       }
 
@@ -178,7 +216,7 @@ export function Feed() {
           {/* User Input Section */}
           <div className="flex gap-3">
             <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-blue-400/50">
-              <AvatarImage src="/placeholder.svg" alt="You" />
+              <AvatarImage src={user?.avatar_url || "/avatar-default.jpg"} alt="You" />
               <AvatarFallback>Y</AvatarFallback>
             </Avatar>
             <Input
@@ -344,10 +382,20 @@ export function Feed() {
 
       {/* Feed Posts */}
       <div className="space-y-2">
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} onLike={handleLike} />
-        ))}
+        {isLoading ? (
+          <SkeletonFeed count={5} />
+        ) : (
+          <>
+            {posts.map((post) => (
+              <div key={post.id} id={post.id}>
+                <PostCard post={post} onLike={handleLike} />
+              </div>
+            ))}
+            {isFetchingMore && <SkeletonFeed count={1} />}
+          </>
+        )}
       </div>
+      <div ref={loaderRef} className="h-10" />
     </div>
   )
 }

@@ -374,3 +374,49 @@ export const StorySkeleton = () => (
     </div>
   </div>
 );
+
+export const SkeletonPostCard = ({ className = "" }: { className?: string }) => (
+  <div className={`backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl overflow-hidden mb-4 ${className}`}>
+    {/* Header */}
+    <div className="flex items-center justify-between p-4 border-b border-white/10">
+      <div className="flex items-center gap-3">
+        <Skeleton width="w-12" height="h-12" rounded="rounded-full" />
+        <div className="space-y-2">
+          <Skeleton width="w-32" height="h-4" rounded="rounded" />
+          <Skeleton width="w-20" height="h-3" rounded="rounded" />
+        </div>
+      </div>
+      <Skeleton width="w-8" height="h-8" rounded="rounded-lg" />
+    </div>
+
+    {/* Content */}
+    <div className="p-4">
+      <SkeletonText lines={2} className="mb-4" />
+      
+      {/* Media */}
+      <Skeleton width="w-full" height="h-64" className="rounded-xl" />
+    </div>
+
+    {/* Stats */}
+    <div className="flex items-center justify-between px-4 py-2 border-t border-b border-white/10">
+      <Skeleton height="h-3" width="w-16" />
+      <Skeleton height="h-3" width="w-16" />
+      <Skeleton height="h-3" width="w-16" />
+    </div>
+
+    {/* Actions */}
+    <div className="flex items-center gap-2 p-4">
+      <Skeleton height="h-10" width="w-full" className="flex-1 rounded-lg" />
+      <Skeleton height="h-10" width="w-full" className="flex-1 rounded-lg" />
+      <Skeleton height="h-10" width="w-full" className="flex-1 rounded-lg" />
+    </div>
+  </div>
+);
+
+export const SkeletonFeed = ({ count = 3 }: { count?: number }) => (
+  <div className="w-full">
+    {Array.from({ length: count }).map((_, i) => (
+      <SkeletonPostCard key={i} />
+    ))}
+  </div>
+);
