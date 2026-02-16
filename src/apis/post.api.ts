@@ -39,12 +39,30 @@ export interface Post {
   like_count: number;
   comment_count: number;
   share_count: number;
+  has_liked: boolean;
   user: PostUser;
   post_media: PostMedia[];
 }
 
 export interface PostFeedResponse {
   items: Post[];
+  pagination: Pagination;
+}
+
+export interface Comment {
+  id: string;
+  user_id: string;
+  post_id: string;
+  content: string;
+  depth: number;
+  parent_id: string | null;
+  created_at: string;
+  user: PostUser;
+  replies: Comment[];
+}
+
+export interface CommentResponse {
+  items: Comment[];
   pagination: Pagination;
 }
 
@@ -72,4 +90,18 @@ export const getUnseenPosts = (limit: number, page: number) => {
     },
   });
 };
+
+export const likePost = (postId: string) => {
+  return axiosInstance.post<ApiResponse<Comment>>(`/posts/${postId}/like`);
+}
+
+
+export const getComments = (postId: string, limit: number, page: number) => {
+  return axiosInstance.get<ApiResponse<CommentResponse>>(`/posts/${postId}/comments`, {
+    params: {
+      limit,
+      page,
+    },
+  });
+}
 

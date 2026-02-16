@@ -23,7 +23,7 @@ export interface Post {
   likes: number
   comments: number
   shares: number
-  hasLiked?: boolean
+  has_liked?: boolean
 }
 
 export interface PostMedia {
@@ -153,7 +153,7 @@ export function PostCard({ post, onLike }: PostCardProps) {
 
       {/* Post Actions */}
       <div className="flex items-center gap-2 p-4">
-        <LikeButton postId={post.id} liked={post.hasLiked || false} count={post.likes} onLike={onLike} />
+        <LikeButton postId={post.id} liked={post.has_liked || false} count={post.likes} onLike={onLike} />
         <Button
           variant="ghost"
           size="sm"

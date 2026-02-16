@@ -76,7 +76,7 @@ export function Feed() {
         likes: post.like_count,
         comments: post.comment_count,
         shares: post.share_count,
-        hasLiked: false,
+        has_liked: post.has_liked,
       }))]);
       
     } catch (error) {
@@ -104,7 +104,7 @@ export function Feed() {
         likes: post.like_count,
         comments: post.comment_count,
         shares: post.share_count,
-        hasLiked: false,
+        has_liked: post.has_liked,
       })));
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -118,9 +118,10 @@ export function Feed() {
   }, []);
 
   const handleLike = (postId: string) => {
+    postService.likePost(postId);
     setPosts(
       posts.map((post) =>
-        post.id === postId ? { ...post, hasLiked: !post.hasLiked, likes: post.likes + (post.hasLiked ? -1 : 1) } : post,
+        post.id === postId ? { ...post, has_liked: !post.has_liked, likes: post.likes + (post.has_liked ? -1 : 1) } : post,
       ),
     )
   }
@@ -186,7 +187,7 @@ export function Feed() {
         likes: 0,
         comments: 0,
         shares: 0,
-        hasLiked: false,
+        has_liked: false,
       }
 
       setPosts([uiPost, ...posts])

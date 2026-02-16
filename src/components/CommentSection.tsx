@@ -3,53 +3,51 @@
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
-
-interface Comment {
-  id: string
-  author: string
-  avatar: string
-  content: string
-  timestamp: string
-}
+import { useState, useEffect } from "react"
+import { StoryAvatar } from "./ui/avatar"
+import { useAuth } from "@/contexts/AuthContext"
+import { Comment } from "@/apis/post.api"
+import { postComments } from "@/services/post.service"
 
 interface CommentSectionProps {
   postId: string
 }
 
-const mockComments: Comment[] = [
-  {
-    id: "1",
-    author: "Alex Rivera",
-    avatar: "/placeholder.svg",
-    content: "This is amazing! Love this so much.",
-    timestamp: "2h ago",
-  },
-  {
-    id: "2",
-    author: "Emma Davis",
-    avatar: "/placeholder.svg",
-    content: "Couldn't agree more with you on this one!",
-    timestamp: "1h ago",
-  },
-]
 
 export function CommentSection({ postId }: CommentSectionProps) {
-  const [comments, setComments] = useState(mockComments)
+  const [comments, setComments] = useState<Comment[]>([])
   const [newComment, setNewComment] = useState("")
+  const {user} = useAuth()
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      const response = await postComments(postId, 10, 1)
+      console.log("response: ", response.data.items)
+      setComments(response.data.items)
+    }
+    fetchComments()
+  }, [postId])
 
   const handleAddComment = () => {
-    if (newComment.trim()) {
-      const comment: Comment = {
-        id: String(comments.length + 1),
-        author: "You",
-        avatar: "/placeholder.svg",
-        content: newComment,
-        timestamp: "just now",
-      }
-      setComments([...comments, comment])
-      setNewComment("")
-    }
+    // if (newComment.trim()) {
+    //   const comment: Comment = {
+    //     id: String(comments.length + 1),
+    //     user_id: user?.id || "",
+    //     post_id: postId,
+    //     content: newComment,
+    //     depth: 0,
+    //     created_at: new Date().toISOString(),
+    //     user: {
+    //       id: user?.id || "",
+    //       username: user?.username || "",
+    //       name: user?.name || "",
+    //       avatar_url: user?.avatar_url || "",
+    //     },
+    //     replies: [],
+    //   }
+    //   setComments([...comments, comment])
+    //   setNewComment("")
+    // }
   }
 
   return (
@@ -58,14 +56,11 @@ export function CommentSection({ postId }: CommentSectionProps) {
       <div className="space-y-3 max-h-64 overflow-y-auto">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-3">
-            <Avatar className="h-8 w-8 flex-shrink-0 ring-2 ring-blue-400/50">
-              <AvatarImage src={comment.avatar || "/placeholder.svg"} alt={comment.author} />
-              <AvatarFallback>{comment.author[0]}</AvatarFallback>
-            </Avatar>
+            <StoryAvatar className="w-10 h-10" src={comment.user.avatar_url || "/avatar-default.jpg"} alt={comment.user.name} />
             <div className="flex-1 backdrop-blur-2xl bg-white/5 border border-white/15 rounded-lg p-3">
-              <p className="font-semibold text-sm text-white">{comment.author}</p>
+              <p className="font-semibold text-sm text-white">{comment.user.name}</p>
               <p className="text-sm text-white/90">{comment.content}</p>
-              <p className="text-xs text-white/50 mt-1">{comment.timestamp}</p>
+              <p className="text-xs text-white/50 mt-1">{comment.created_at}</p>
             </div>
           </div>
         ))}
@@ -73,10 +68,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
 
       {/* Add Comment */}
       <div className="flex gap-2 pt-2 border-t border-white/10">
-        <Avatar className="h-8 w-8 flex-shrink-0 ring-2 ring-blue-400/50">
-          <AvatarImage src="/placeholder.svg" alt="You" />
-          <AvatarFallback>Y</AvatarFallback>
-        </Avatar>
+        <StoryAvatar className="w-10 h-10" src={user?.avatar_url || "/avatar-default.jpg"} alt={user?.name || "You"} />
         <div className="flex-1 flex gap-2">
           <Input
             placeholder="Write a comment..."

@@ -18,3 +18,21 @@ export const getUnseenPosts = async (limit: number, page: number) => {
         throw error;
     }
 }
+
+export const likePost = async (postId: string) => {
+    try {
+        const response = await postApi.likePost(postId);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const postComments = async (postId: string, limit: number, page: number) => {
+    try {
+        const response = await postApi.getComments(postId, limit, page);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
