@@ -12,6 +12,7 @@ interface ModalProps {
   footer?: React.ReactNode;
   maxWidthClassName?: string; // vd: "max-w-[560px]"
   closeOnOverlayClick?: boolean;
+  className?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -23,6 +24,7 @@ export const Modal: React.FC<ModalProps> = ({
   footer,
   maxWidthClassName = "max-w-[560px]",
   closeOnOverlayClick = true,
+  className,
 }) => {
   const [mounted, setMounted] = useState(false);
 
@@ -52,14 +54,14 @@ export const Modal: React.FC<ModalProps> = ({
     <>
       <div
         onClick={closeOnOverlayClick ? onClose : undefined}
-        className="fixed inset-0 bg-black/50 backdrop-blur-[8px] z-[100]"
+        className={`fixed inset-0 bg-black/50 z-[100]`}
         style={{
           WebkitBackdropFilter: "blur(8px)",
           animation: "fadeIn 0.3s ease",
         }}
       />
 
-      <div className="fixed inset-0 z-[101] p-5">
+      <div className={`fixed inset-0 z-[101] p-5 ${className}`}>
         <style>{`
           @keyframes fadeIn {
             from { opacity: 0; }
@@ -87,9 +89,9 @@ export const Modal: React.FC<ModalProps> = ({
           <svg className="absolute inset-0 w-full h-full pointer-events-none">
             <defs>
               <linearGradient id="modalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{ stopColor: "rgba(255,255,255,0.12)" }} />
-                <stop offset="50%" style={{ stopColor: "rgba(255,255,255,0.06)" }} />
-                <stop offset="100%" style={{ stopColor: "rgba(255,255,255,0.03)" }} />
+                <stop offset="0%" style={{ stopColor: "rgba(30,30,30,0.98)" }} />
+                <stop offset="50%" style={{ stopColor: "rgba(20,20,20,0.98)" }} />
+                <stop offset="100%" style={{ stopColor: "rgba(10,10,10,0.99)" }} />
               </linearGradient>
             </defs>
             <rect x="0" y="0" width="100%" height="100%" rx="24" fill="url(#modalGrad)" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
@@ -98,7 +100,7 @@ export const Modal: React.FC<ModalProps> = ({
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="absolute top-4 right-4 w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center cursor-pointer transition-all duration-300 ease z-[1] hover:bg-white/20"
+            className="absolute top-4 right-4 w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center cursor-pointer transition-all duration-300 ease z-[50] hover:bg-white/20 hover:scale-110 active:scale-95"
           >
             <svg width={20} height={20} viewBox="0 0 20 20" fill="rgba(255,255,255,0.8)">
               <path

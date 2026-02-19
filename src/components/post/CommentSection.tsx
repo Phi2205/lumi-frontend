@@ -12,6 +12,8 @@ import { Comment } from "@/apis/post.api"
 import { postComments, sendComment } from "@/services/post.service"
 import { SkeletonComments } from "@/components/skeleton"
 import { useCommentRealtime } from "@/socket/comment/useCommentRealtime"
+import { deleteComment } from "@/services/post.service"
+import { Modal } from "@/lib/components/modal"
 
 interface CommentSectionProps {
   postId: string
@@ -54,6 +56,19 @@ export const insertCommentToTree = (
   return insertRecursively(comments);
 };
 
+export const removeCommentFromTree = (
+  comments: Comment[],
+  commentId: string
+): Comment[] => {
+  console.log("commentId: ", commentId)
+  return comments
+    .filter((c) => c.id !== commentId)
+    .map((c) => ({
+      ...c,
+      replies: c.replies ? removeCommentFromTree(c.replies, commentId) : [],
+    }))
+}
+
 
 export function CommentSection({ postId }: CommentSectionProps) {
   const [comments, setComments] = useState<Comment[]>([])
@@ -67,14 +82,24 @@ export function CommentSection({ postId }: CommentSectionProps) {
   const [isFetchingMore, setIsFetchingMore] = useState(false)
   const observerTarget = useRef<HTMLDivElement>(null)
   const {user} = useAuth()
+  
+  // Delete Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
+
     // 🔥 callback ổn định (rất quan trọng)
   const handleReceive = useCallback((comment: Comment) => {
     console.log("comment: ", comment)
     setComments((prev) => insertCommentToTree(prev, comment));
   }, []);
 
+  const handleDelete = useCallback((data: {post_id: string, comment_id: string}) => {
+    console.log("comment: ", data)
+    setComments((prev) => removeCommentFromTree(prev, data.comment_id));
+  }, []);
+
   // 🔥 gắn realtime
-  useCommentRealtime(postId, handleReceive);
+  useCommentRealtime(postId, handleReceive, handleDelete);
 
   // Initial Fetch
   useEffect(() => {
@@ -154,6 +179,23 @@ export function CommentSection({ postId }: CommentSectionProps) {
     }
   }
 
+  const handleDeleteComment = (commentId: string) => {
+    setCommentToDelete(commentId)
+    setDeleteModalOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!commentToDelete) return
+    try {
+      await deleteComment(postId, commentToDelete)
+    } catch (error) {
+      console.error("Failed to delete comment", error)
+    } finally {
+      setDeleteModalOpen(false)
+      setCommentToDelete(null)
+    }
+  }
+
   return (
     <div className="border-t border-white/10 backdrop-blur-none bg-white/3 px-4 py-4 space-y-4">
       {/* Existing Comments */}
@@ -171,7 +213,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
             <>
               {isSubmitting && <SkeletonComments count={1} />}
               {comments.map((comment) => (
-                <CommentItem key={comment.id} comment={comment} depth={0} />
+                <CommentItem key={comment.id} comment={comment} depth={0} onDelete={handleDeleteComment} />
               ))}
               
               {/* Load More Trigger & Indicator */}
@@ -212,6 +254,29 @@ export function CommentSection({ postId }: CommentSectionProps) {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Comment"
+        description=""
+        maxWidthClassName="max-w-md"
+        footer={
+          <div className="flex justify-end gap-3">
+            <Button variant="secondary" onClick={() => setDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              Delete
+            </Button>
+          </div>
+        }
+      >
+        <p className="text-white/80">
+          This will permanently remove the comment and all its replies.
+        </p>
+      </Modal>
     </div>
   )
 }

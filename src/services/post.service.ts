@@ -54,3 +54,13 @@ export const getReplies = async (postId: string, commentId: string, limit: numbe
         throw error;
     }
 }
+
+export const deleteComment = async (postId: string, commentId: string) => {
+    try {
+        const response = await postApi.deleteComment(postId, commentId);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+

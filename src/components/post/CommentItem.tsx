@@ -84,9 +84,10 @@ interface CommentItemProps {
     comment: Comment;
     depth?: number;
     isLast?: boolean;
+    onDelete: (commentId: string) => void;
 }
 
-export function CommentItem({ comment, depth = 0, isLast = false }: CommentItemProps) {
+export function CommentItem({ comment, depth = 0, isLast = false, onDelete }: CommentItemProps) {
   const [liked, setLiked] = useState(false);
   const [likeOffset, setLikeOffset] = useState(0);
   const [baseLikes] = useState(() => Math.floor(Math.random() * 22) + 1);
@@ -211,6 +212,18 @@ export function CommentItem({ comment, depth = 0, isLast = false }: CommentItemP
                 </ActionBtn>
                 <div className="w-0.5 h-0.5 rounded-full bg-white/20" />
                 <span className="text-xs text-white/30 ml-2 font-medium">{formatTime(comment.created_at)}</span>
+                
+                {user?.id === comment.user_id && (
+                    <>
+                        <div className="w-0.5 h-0.5 rounded-full bg-white/20 ml-2" />
+                        <button 
+                            onClick={() => onDelete(comment.id)}
+                            className="text-xs font-semibold text-white/40 hover:text-red-400 transition-colors ml-1"
+                        >
+                            Delete
+                        </button>
+                    </>
+                )}
              </div>
 
              {/* Reply Box */}
@@ -264,6 +277,7 @@ export function CommentItem({ comment, depth = 0, isLast = false }: CommentItemP
                        comment={reply} 
                        depth={depth + 1}
                        isLast={idx === currentReplies.length - 1} 
+                       onDelete={onDelete}
                     />
                  ))}
                  

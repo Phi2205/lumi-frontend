@@ -122,3 +122,7 @@ export const addComment = (postId: string, content: string, parentId?: string) =
   });
 }
 
+export const deleteComment = (postId: string, commentId: string) => {
+  return axiosInstance.delete(`/posts/${postId}/comments/${commentId}`);
+}
+
