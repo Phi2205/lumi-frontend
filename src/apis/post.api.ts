@@ -59,6 +59,7 @@ export interface Comment {
   created_at: string;
   user: PostUser;
   replies: Comment[];
+  has_replies: boolean;
 }
 
 export interface CommentResponse {
@@ -102,6 +103,22 @@ export const getComments = (postId: string, limit: number, page: number) => {
       limit,
       page,
     },
+  });
+}
+
+export const getReplies = (postId: string, commentId: string, limit: number, page: number) => {
+  return axiosInstance.get<ApiResponse<CommentResponse>>(`/posts/${postId}/comments/${commentId}/replies`, {
+    params: {
+      limit,
+      page,
+    },
+  });
+}
+
+export const addComment = (postId: string, content: string, parentId?: string) => {
+  return axiosInstance.post<ApiResponse<Comment>>(`/posts/${postId}/comments`, {
+    content,
+    parentId,
   });
 }
 

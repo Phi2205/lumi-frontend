@@ -2,9 +2,10 @@ import { useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 import { SendButton } from "@/components/ui/SendButton";
 import { Comment } from "@/apis/post.api";
-import { StoryAvatar } from "./ui/avatar";
+import { StoryAvatar } from "@/components/ui/avatar";
 import { formatTime } from "@/utils/format";
 import { useAuth } from "@/contexts/AuthContext";
+import { sendComment, getReplies } from "@/services/post.service";
 
 /* ─────────────────────────────────────────────────────────
    HELPERS
@@ -92,14 +93,76 @@ export function CommentItem({ comment, depth = 0, isLast = false }: CommentItemP
   const [showReplyBox, setShowReplyBox] = useState(false);
   const [replyText, setReplyText] = useState("");
   const { user } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Reply specific states
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isLoadingReplies, setIsLoadingReplies] = useState(false);
+  const [page, setPage] = useState(1);
+  
+  // Use prop directly, safeguard if current value is undefined
+  const currentReplies = comment.replies || [];
+  const [hasMore, setHasMore] = useState(comment.has_replies && currentReplies.length === 0);
 
-  const hasReplies = comment.replies && comment.replies.length > 0;
+  const hasReplies = currentReplies.length > 0;
   const totalLikes = baseLikes + likeOffset;
+
+  const handleFetchReplies = async () => {
+    try {
+        setIsLoadingReplies(true);
+        const limit = 5;
+        const response = await getReplies(comment.post_id, comment.id, limit, page);
+        if (response && response.data && response.data.items) {
+          if (!comment.replies) comment.replies = [];
+          console.log("response: ", response.data)
+          
+            // Append new items to the existing array reference
+            response.data.items.forEach(item => comment.replies.push(item));
+            console.log("comment.replies: ", comment.replies)
+            setPage(prev => prev + 1);
+            setHasMore(response.data.pagination.page < response.data.pagination.totalPages);
+        }
+    } catch (error) {
+        console.error("Failed to fetch replies", error);
+    } finally {
+        setIsLoadingReplies(false);
+    }
+  };
+
+  const toggleReplies = async () => {
+    const repliesCount = comment.replies?.length || 0;
+    if (!isExpanded && repliesCount === 0 && comment.has_replies) {
+        await handleFetchReplies();
+    }
+    setIsExpanded(prev => !prev);
+  }
 
   const handleLike = () => {
     setLikeOffset(prev => liked ? prev - 1 : prev + 1);
     setLiked(prev => !prev);
   };
+
+  const handleReplyComment = async () => {
+    if (replyText.trim()) {
+      try {
+        setIsSubmitting(true)
+        const response = await sendComment(comment.post_id, replyText, comment.id)
+        console.log("response: ", response.data)
+        
+        // Push single item
+        if (!comment.replies) comment.replies = [];
+        comment.replies.push(response.data);
+        
+        if (!isExpanded) setIsExpanded(true);
+        setReplyText("")
+        setShowReplyBox(false)
+      } catch (error) {
+        console.error("Failed to add comment", error)
+      } finally {
+        setIsSubmitting(false)
+      }
+    }
+  }
 
   return (
     <div className="relative group">
@@ -163,14 +226,19 @@ export function CommentItem({ comment, depth = 0, isLast = false }: CommentItemP
                       placeholder={`Reply to ${comment.user.name}…`}
                       value={replyText}
                       onChange={e => setReplyText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleReplyComment();
+                        }
+                      }}
                       className="w-full bg-white/5 border border-white/10 rounded-[24px] pl-4 pr-12 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-white/20 focus:bg-white/10 transition-all resize-none min-h-[48px] overflow-hidden"
                     />
                     <div className="absolute right-1.5 bottom-1">
                         <SendButton 
                             size="md"
-                            // TODO: Implement reply logic here
-                            onClick={() => console.log("Reply:", replyText)}
-                            disabled={!replyText.trim()}
+                            onClick={handleReplyComment}
+                            disabled={!replyText.trim() || isSubmitting}
                         />
                     </div>
                 </div>
@@ -180,7 +248,7 @@ export function CommentItem({ comment, depth = 0, isLast = false }: CommentItemP
        </div>
 
        {/* 2. Replies Container */}
-       {hasReplies && (
+       {isExpanded && (
           <div className="flex relative">
              {/* Spacer Column for Vertical Line */}
              <div className="w-[36px] min-h-full relative shrink-0 flex justify-center">
@@ -190,17 +258,41 @@ export function CommentItem({ comment, depth = 0, isLast = false }: CommentItemP
              
              {/* Replies List */}
              <div className="flex-1 flex flex-col gap-5 pt-3 relative">
-                 {comment.replies.map((reply, idx) => (
+                 {currentReplies.map((reply, idx) => (
                     <CommentItem 
                        key={reply.id} 
                        comment={reply} 
                        depth={depth + 1}
-                       isLast={idx === comment.replies.length - 1} 
+                       isLast={idx === currentReplies.length - 1} 
                     />
                  ))}
+                 
+                 {hasMore && (
+                    <button 
+                        onClick={handleFetchReplies}
+                        disabled={isLoadingReplies}
+                        className="text-xs font-semibold text-white/50 hover:text-white/80 text-left mt-1 w-fit transition-colors"
+                    >
+                        {isLoadingReplies ? "Loading..." : "Load more replies"}
+                    </button>
+                 )}
              </div>
           </div>
        )}
+       
+        {/* Toggle Replies Button (if hidden but has replies, or if loaded) */}
+        {!isExpanded && (comment.has_replies || currentReplies.length > 0) && (
+            <div className="flex gap-3 mt-2">
+                 <div className="w-[36px] shrink-0" /> {/* Spacer */}
+                 <button 
+                    onClick={toggleReplies}
+                    className="text-xs font-bold text-white/60 hover:text-white/90 transition-colors flex items-center gap-2"
+                 >
+                    <div className="w-6 h-[1px] bg-white/20" />
+                    {isLoadingReplies ? "Loading..." : "View replies"}
+                 </button>
+            </div>
+        )}
     </div>
   );
 }

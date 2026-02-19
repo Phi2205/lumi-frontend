@@ -1,13 +1,13 @@
 "use client"
 
-import { PostCard, type Post } from "./PostCard"
+import { PostCard, type Post } from "./post/PostCard"
 import { Stories } from "./Stories"
 import { SkeletonFeed } from "@/components/skeleton"
 import { useEffect, useState, useRef } from "react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { ImageIcon } from "lucide-react"
+import { ImageIcon, Ghost, Loader2 } from "lucide-react"
 import { Modal } from "@/lib/components/modal"
 import { createPost } from "@/services/post.service"
 import type { PostMediaItem, PostMediaType } from "@/apis/post.api"
@@ -25,13 +25,14 @@ export function Feed() {
   const [draftMedia, setDraftMedia] = useState<Array<PostMediaItem & { previewUrl: string }>>([])
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number>(0)
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [hideLoader, setHideLoader] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     // If initially loading or fetching more, we don't need to re-attach observer yet, 
     // BUT we must ensure we attach it when loading finishes.
     // Actually, always observing loaderRef is safer, conditional logic inside callback.
-    if (isLoading || isFetchingMore) return; 
+    if (isLoading || isFetchingMore || hideLoader) return; 
 
     const observer = new IntersectionObserver(
       entries => {
@@ -41,7 +42,7 @@ export function Feed() {
       },
       {
         root: null,
-        rootMargin: "100px",  // Adjust margin if needed, user previously had 200px
+        rootMargin: "100px",  // Adjust margin if needed
         threshold: 0
       }
     );
@@ -51,7 +52,23 @@ export function Feed() {
     }
 
     return () => observer.disconnect();
-  }, [isLoading, isFetchingMore]);
+  }, [isLoading, isFetchingMore, hideLoader]);
+
+  // Reset hideLoader when scrolling away from bottom
+  useEffect(() => {
+    if (!hideLoader) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+      // If user scrolls up (distance to bottom > 300px), show loader again so it can trigger next time they scroll down
+      if (scrollHeight - scrollTop - clientHeight > 300) {
+        setHideLoader(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hideLoader]);
 
   const loadMorePosts = async () => {
     if (isFetchingMore) return;
@@ -61,6 +78,7 @@ export function Feed() {
       const newItems = response.data.items;
 
       if (newItems.length === 0) {
+        setHideLoader(true);
         return;
       }
 
@@ -78,6 +96,9 @@ export function Feed() {
         shares: post.share_count,
         has_liked: post.has_liked,
       }))]);
+      
+      // If we successfully loaded posts, ensure loader is visible for next batch
+      setHideLoader(false);
       
     } catch (error) {
       console.error("Error loading more posts:", error);
@@ -198,8 +219,15 @@ export function Feed() {
     }
   }
 
+  const handleWheel = (e: any) => {
+    console.log("handleWheel", e.deltaY)
+    if (hideLoader && e.deltaY > 0) {
+      setHideLoader(false)
+    }
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" onWheel={handleWheel}>
       {/* Stories Section */}
       <Stories />
 
@@ -382,9 +410,19 @@ export function Feed() {
       </Modal>
 
       {/* Feed Posts */}
-      <div className="space-y-2">
+      <div className="space-y-4">
         {isLoading ? (
           <SkeletonFeed count={5} />
+        ) : posts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
+            <div className="bg-white/5 p-6 rounded-full mb-4 backdrop-blur-xl border border-white/10 shadow-lg ring-1 ring-white/5">
+              <Ghost className="w-10 h-10 text-white/40" />
+            </div>
+            <h3 className="text-xl font-semibold text-white/90 mb-2">No posts yet</h3>
+            <p className="text-white/50 max-w-[280px] leading-relaxed">
+              Your feed is quiet for now. Follow more people or create a new post to get started!
+            </p>
+          </div>
         ) : (
           <>
             {posts.map((post) => (
@@ -396,7 +434,15 @@ export function Feed() {
           </>
         )}
       </div>
-      <div ref={loaderRef} className="h-10" />
+      <div 
+        ref={loaderRef} 
+        className={`flex items-center justify-center p-4 py-6 ${hideLoader ? 'hidden' : ''}`}
+      >
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-sm">
+          <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+          <span className="text-sm font-medium text-white/60">Loading more...</span>
+        </div>
+      </div>
     </div>
   )
 }

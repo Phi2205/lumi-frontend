@@ -36,3 +36,21 @@ export const postComments = async (postId: string, limit: number, page: number) 
         throw error;
     }
 }
+
+export const sendComment = async (postId: string, content: string, parentId?: string) => {
+    try {
+        const response = await postApi.addComment(postId, content, parentId);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getReplies = async (postId: string, commentId: string, limit: number, page: number) => {
+    try {
+        const response = await postApi.getReplies(postId, commentId, limit, page);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
