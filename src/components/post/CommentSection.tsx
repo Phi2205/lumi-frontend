@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { SendButton } from "@/components/ui/SendButton"
 import { Input } from "@/components/ui/input"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import TextareaAutosize from "react-textarea-autosize"
 import { StoryAvatar } from "@/components/ui/avatar"
 import { CommentItem } from "./CommentItem"
@@ -11,10 +11,49 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Comment } from "@/apis/post.api"
 import { postComments, sendComment } from "@/services/post.service"
 import { SkeletonComments } from "@/components/skeleton"
+import { useCommentRealtime } from "@/socket/comment/useCommentRealtime"
 
 interface CommentSectionProps {
   postId: string
 }
+
+export const insertCommentToTree = (
+  comments: Comment[],
+  newComment: Comment
+): Comment[] => {
+  // Nếu là comment root
+  if (!newComment.parent_id) {
+    return [newComment,...comments];
+  }
+
+  const insertRecursively = (nodes: Comment[]): Comment[] => {
+    return nodes.map((node) => {
+      if (node.id === newComment.parent_id) {
+        if (!node.replies) node.replies = [];
+        return {
+          ...node,
+          has_replies: true,
+          replies: [
+            ...node.replies,
+            { ...newComment, replies: [] },
+          ],
+        };
+      }
+
+      if (node.replies.length > 0) {
+        return {
+          ...node,
+          replies: insertRecursively(node.replies),
+        };
+      }
+
+      return node;
+    });
+  };
+
+  return insertRecursively(comments);
+};
+
 
 export function CommentSection({ postId }: CommentSectionProps) {
   const [comments, setComments] = useState<Comment[]>([])
@@ -27,8 +66,15 @@ export function CommentSection({ postId }: CommentSectionProps) {
   const [hasMore, setHasMore] = useState(true)
   const [isFetchingMore, setIsFetchingMore] = useState(false)
   const observerTarget = useRef<HTMLDivElement>(null)
-
   const {user} = useAuth()
+    // 🔥 callback ổn định (rất quan trọng)
+  const handleReceive = useCallback((comment: Comment) => {
+    console.log("comment: ", comment)
+    setComments((prev) => insertCommentToTree(prev, comment));
+  }, []);
+
+  // 🔥 gắn realtime
+  useCommentRealtime(postId, handleReceive);
 
   // Initial Fetch
   useEffect(() => {
@@ -98,7 +144,7 @@ export function CommentSection({ postId }: CommentSectionProps) {
         setIsSubmitting(true)
         const response = await sendComment(postId, newComment)
         console.log("response: ", response.data)
-        setComments([response.data, ...comments])
+        // setComments([response.data, ...comments])
         setNewComment("")
       } catch (error) {
         console.error("Failed to add comment", error)

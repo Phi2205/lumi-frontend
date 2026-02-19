@@ -150,8 +150,8 @@ export function CommentItem({ comment, depth = 0, isLast = false }: CommentItemP
         console.log("response: ", response.data)
         
         // Push single item
-        if (!comment.replies) comment.replies = [];
-        comment.replies.push(response.data);
+        // if (!comment.replies) comment.replies = [];
+        // comment.replies.push(response.data);
         
         if (!isExpanded) setIsExpanded(true);
         setReplyText("")
