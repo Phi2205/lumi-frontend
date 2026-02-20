@@ -42,6 +42,8 @@ export interface Post {
   has_liked: boolean;
   user: PostUser;
   post_media: PostMedia[];
+  original_post_id: string;
+  original_post: Post;
 }
 
 export interface PostFeedResponse {
@@ -64,6 +66,18 @@ export interface Comment {
 
 export interface CommentResponse {
   items: Comment[];
+  pagination: Pagination;
+}
+
+export interface Like {
+  user_id: string;
+  post_id: string;
+  created_at: string;
+  user: PostUser;
+}
+
+export interface LikeResponse {
+  items: Like[];
   pagination: Pagination;
 }
 
@@ -96,6 +110,14 @@ export const likePost = (postId: string) => {
   return axiosInstance.post<ApiResponse<Comment>>(`/posts/${postId}/like`);
 }
 
+export const getLikes = (postId: string, limit: number, page: number) => {
+  return axiosInstance.get<ApiResponse<CommentResponse>>(`/posts/${postId}/likes`, {
+    params: {
+      limit,
+      page,
+    },
+  });
+}
 
 export const getComments = (postId: string, limit: number, page: number) => {
   return axiosInstance.get<ApiResponse<CommentResponse>>(`/posts/${postId}/comments`, {
@@ -125,4 +147,10 @@ export const addComment = (postId: string, content: string, parentId?: string) =
 export const deleteComment = (postId: string, commentId: string) => {
   return axiosInstance.delete(`/posts/${postId}/comments/${commentId}`);
 }
+
+export const sharePost = (postId: string, content: string) => {
+  return axiosInstance.post<ApiResponse<Post>>(`/posts/${postId}/share`,{originalPostId: postId, content});
+}
+
+
 

@@ -10,9 +10,28 @@ import { Button } from "@/components/ui/button"
 import { ImageIcon, Ghost, Loader2 } from "lucide-react"
 import { Modal } from "@/lib/components/modal"
 import { createPost } from "@/services/post.service"
-import type { PostMediaItem, PostMediaType } from "@/apis/post.api"
+import type { PostMediaItem, PostMediaType, Post as ApiPost } from "@/apis/post.api"
 import * as postService from "@/services/post.service"
 import { useAuth } from "@/contexts/AuthContext"
+
+function mapPost(post: ApiPost): Post {
+  return {
+    id: post.id,
+    user: {
+      name: post.user?.name || "You",
+      avatar_url: post.user?.avatar_url || "/avatar-default.jpg",
+    },
+    timestamp: post.created_at,
+    content: post.content,
+    media: post.post_media,
+    likes: post.like_count,
+    comments: post.comment_count,
+    shares: post.share_count,
+    has_liked: post.has_liked,
+    original_post_id: post.original_post_id,
+    original_post: post.original_post ? mapPost(post.original_post) : undefined,
+  }
+}
 
 
 export function Feed() {
@@ -82,20 +101,7 @@ export function Feed() {
         return;
       }
 
-      setPosts(prev => [...prev, ...newItems.map((post: any) => ({
-        id: post.id,
-        user: {
-          name: post.user?.name || "You",
-          avatar: post.user?.avatar_url || "/placeholder.svg",
-        }, 
-        timestamp: post.created_at,
-        content: post.content,
-        media: post.post_media,
-        likes: post.like_count,
-        comments: post.comment_count,
-        shares: post.share_count,
-        has_liked: post.has_liked,
-      }))]);
+      setPosts(prev => [...prev, ...newItems.map(mapPost)]);
       
       // If we successfully loaded posts, ensure loader is visible for next batch
       setHideLoader(false);
@@ -113,20 +119,7 @@ export function Feed() {
       const response = await postService.getUnseenPosts(5, 1);
       // console.log("response", response);
 
-      setPosts(response.data.items.map((post) => ({
-        id: post.id,
-        user: {
-          name: post.user?.name || "You",
-          avatar: post.user?.avatar_url || "/placeholder.svg",
-        },
-        timestamp: post.created_at,
-        content: post.content,
-        media: post.post_media,
-        likes: post.like_count,
-        comments: post.comment_count,
-        shares: post.share_count,
-        has_liked: post.has_liked,
-      })));
+      setPosts(response.data.items.map(mapPost));
     } catch (error) {
       console.error("Error fetching posts:", error);
     } finally {
@@ -200,7 +193,7 @@ export function Feed() {
         id: created.id,
         user: {
           name: created.user?.name || created.user?.username || "You",
-          avatar: created.user?.avatar_url || "/placeholder.svg",
+          avatar_url: created.user?.avatar_url || "/avatar-default.jpg",
         },
         timestamp: "just now",
         content: created.content,
