@@ -4,29 +4,32 @@ import { Home, BookOpen, Zap, MessageSquare, User, Settings, Search } from "luci
 import { Button } from "@/components/ui/button"
 import { SearchPanel } from "@/components/SearchPanel"
 import { useState, useRef, useEffect, useCallback } from "react"
+import { useRouter, usePathname } from "next/navigation"
 
 interface SidebarProps {
   activeTab?: string
   onTabChange?: (tab: string) => void
 }
 
+const menuItems = [
+  { id: "home", label: "Home", icon: Home },
+  { id: "search", label: "Tìm kiếm", icon: Search },
+  { id: "blog", label: "Blog", icon: BookOpen },
+  { id: "stories", label: "Stories", icon: Zap },
+  { id: "messages", label: "Messages", icon: MessageSquare },
+  { id: "profile", label: "Profile", icon: User },
+  { id: "settings", label: "Settings", icon: Settings },
+]
+
+const mobileItems = menuItems.slice(0, 5)
+
 export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
+  const router = useRouter()
+  const pathname = usePathname()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({})
   const mobileNavRef = useRef<HTMLDivElement>(null)
   const [animatingTab, setAnimatingTab] = useState<string | null>(null)
-
-  const menuItems = [
-    { id: "home", label: "Home", icon: Home },
-    { id: "search", label: "Tìm kiếm", icon: Search },
-    { id: "blog", label: "Blog", icon: BookOpen },
-    { id: "stories", label: "Stories", icon: Zap },
-    { id: "messages", label: "Messages", icon: MessageSquare },
-    { id: "profile", label: "Profile", icon: User },
-    { id: "settings", label: "Settings", icon: Settings },
-  ]
-
-  const mobileItems = menuItems.slice(0, 5)
 
   // Update sliding indicator position
   const updateIndicator = useCallback(() => {
@@ -42,7 +45,7 @@ export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
       left: btnRect.left - navRect.left + btnRect.width / 2 - 16,
       width: 32,
     })
-  }, [activeTab, mobileItems])
+  }, [activeTab])
 
   useEffect(() => {
     updateIndicator()
@@ -60,8 +63,14 @@ export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
   const handleMenuClick = (itemId: string) => {
     if (itemId === "search") {
       setIsSearchOpen(!isSearchOpen)
+    } else if (itemId === "messages") {
+      setIsSearchOpen(false)
+      router.push("/messages")
     } else {
       setIsSearchOpen(false)
+      if (pathname !== "/") {
+        router.push(`/?tab=${itemId}`)
+      }
       onTabChange?.(itemId)
     }
   }
@@ -85,7 +94,7 @@ export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
 
       {/* Desktop Sidebar */}
       <aside className={`hidden md:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] border-r border-white/20 backdrop-blur-3xl py-8 gap-2 transition-all duration-300 ${
-        isSearchOpen ? 'w-20 px-3' : 'w-64 px-6'
+        (isSearchOpen || activeTab === "messages") ? 'w-20 px-3' : 'w-64 px-6'
       }`}>
         <nav className="space-y-2">
           {menuItems.map((item) => {
@@ -98,7 +107,7 @@ export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
                 key={item.id}
                 variant={isActive ? "default" : "ghost"}
                 className={`w-full rounded-lg transition-all duration-200 ${
-                  isSearchOpen ? 'justify-center px-0' : 'justify-start gap-3'
+                  (isSearchOpen || activeTab === "messages") ? 'justify-center px-0' : 'justify-start gap-3'
                 } ${
                   isActive 
                     ? "text-white shadow-lg scale-[1.02]" 
@@ -109,10 +118,10 @@ export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
                   borderColor: 'var(--brand-primary)'
                 } : {}}
                 onClick={() => handleMenuClick(item.id)}
-                title={isSearchOpen ? item.label : undefined}
+                title={(isSearchOpen || activeTab === "messages") ? item.label : undefined}
               >
                 <Icon className="h-5 w-5" />
-                {!isSearchOpen && <span>{item.label}</span>}
+                {!(isSearchOpen || activeTab === "messages") && <span>{item.label}</span>}
               </Button>
             )
           })}
@@ -149,7 +158,16 @@ export function Sidebar({ activeTab = "home", onTabChange }: SidebarProps) {
                     ? "text-white" 
                     : "text-white/50 hover:text-white/80"
                 }`}
-                onClick={() => onTabChange?.(item.id)}
+                onClick={() => {
+                  if (item.id === "messages") {
+                    router.push("/messages")
+                  } else {
+                    if (pathname !== "/") {
+                      router.push(`/?tab=${item.id}`)
+                    }
+                    onTabChange?.(item.id)
+                  }
+                }}
               >
                 <div
                   style={isBouncing && isActive ? { animation: 'tabBounce 0.4s ease' } : {}}

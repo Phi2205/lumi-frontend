@@ -2,8 +2,6 @@
 
 import { Search } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { useState } from "react"
 
 export interface Conversation {
@@ -28,55 +26,92 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
   const filtered = conversations.filter((conv) => conv.name.toLowerCase().includes(searchQuery.toLowerCase()))
 
   return (
-    <div className="flex flex-col h-full border-r border-border bg-card">
+    <div className="flex flex-col h-full w-full relative overflow-hidden">
+
+
       {/* Search Header */}
-      <div className="p-4 border-b border-border">
+      <div 
+        className="p-4 border-b backdrop-blur-[20px] relative z-10"
+        style={{
+          backgroundColor: 'rgba(255, 255, 255, 0.06)',
+          borderColor: 'rgba(255, 255, 255, 0.1)'
+        }}
+      >
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-300" />
+          <input
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 rounded-full border-border bg-secondary text-foreground placeholder:text-muted-foreground"
+            className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-white placeholder-white/50 focus:outline-none transition-all"
+            style={{
+              backdropFilter: 'blur(18px)',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
+            }}
           />
         </div>
       </div>
 
       {/* Conversations List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto relative z-10 space-y-1.5 p-2 scroll-glass">
         {filtered.map((conversation) => (
-          <Button
+          <button
             key={conversation.id}
-            variant="ghost"
-            className={`w-full justify-start gap-3 rounded-none px-4 py-3 h-auto border-b border-border last:border-b-0 ${
-              selectedId === conversation.id ? "bg-secondary text-foreground" : "hover:bg-secondary/50 text-foreground"
-            }`}
             onClick={() => onSelect?.(conversation.id)}
+            className={`w-full text-left gap-3 px-3 py-3 rounded-xl transition-all group cursor-pointer flex items-center`}
+            style={selectedId === conversation.id ? {
+              backdropFilter: 'blur(20px)',
+              backgroundColor: 'rgba(59, 130, 246, 0.25)',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              boxShadow: '0 8px 16px rgba(59, 130, 246, 0.15)'
+            } : {
+              backdropFilter: 'blur(16px)',
+              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.08)'
+            }}
           >
             <div className="relative flex-shrink-0">
-              <Avatar className="h-12 w-12">
+              <Avatar className="h-12 w-12 border-2" style={{
+                borderColor: selectedId === conversation.id ? 'rgba(59, 130, 246, 0.6)' : 'rgba(255, 255, 255, 0.15)'
+              }}>
                 <AvatarImage src={conversation.avatar || "/placeholder.svg"} alt={conversation.name} />
-                <AvatarFallback>{conversation.name[0]}</AvatarFallback>
+                <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-500 text-white font-semibold">{conversation.name[0]}</AvatarFallback>
               </Avatar>
               {conversation.isOnline && (
-                <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-card" />
+                <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-400 ring-2 ring-white/80 animate-pulse" />
               )}
             </div>
             <div className="flex-1 text-left min-w-0">
-              <div className="flex items-center justify-between">
-                <p className={`font-medium truncate ${conversation.unread ? "font-semibold" : ""}`}>
+              <div className="flex items-center justify-between mb-0.5">
+                <p className={`text-sm font-medium truncate transition-colors ${
+                  selectedId === conversation.id 
+                    ? 'text-white' 
+                    : 'text-white/90 group-hover:text-white'
+                }`}>
                   {conversation.name}
                 </p>
-                <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">{conversation.timestamp}</span>
+                <span className={`text-xs ml-2 flex-shrink-0 transition-colors ${
+                  conversation.unread 
+                    ? 'text-cyan-300 font-semibold' 
+                    : 'text-white/50'
+                }`}>
+                  {conversation.timestamp}
+                </span>
               </div>
-              <p
-                className={`text-sm truncate ${conversation.unread ? "font-medium text-foreground" : "text-muted-foreground"}`}
-              >
+              <p className={`text-xs truncate transition-colors ${
+                conversation.unread 
+                  ? 'font-medium text-white/80' 
+                  : 'text-white/50 group-hover:text-white/70'
+              }`}>
                 {conversation.lastMessage}
               </p>
             </div>
-            {conversation.unread && <div className="h-2.5 w-2.5 rounded-full bg-primary flex-shrink-0" />}
-          </Button>
+            {conversation.unread && (
+              <div className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex-shrink-0 animate-pulse" />
+            )}
+          </button>
         ))}
       </div>
     </div>

@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { RightSidebar } from "@/components/RightSidebar"
 import { Feed } from "@/components/Feed"
-import { MessagesView } from "@/components/messages/MessagesView"
 import { useDarkMode } from "@/hooks/useDarkMode"
 import { useBackgroundImage } from "@/hooks/useBackgroundImage"
 import { BackgroundRenderer } from "@/components/BackgroundRenderer"
@@ -17,11 +16,20 @@ interface HomeLayoutProps {
 }
 
 export function HomeLayout({ children }: HomeLayoutProps) {
-  const [activeTab, setActiveTab] = useState("home")
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "home")
   const { user, isLoading } = useAuth()
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
   const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
+
+  // Sync activeTab with query param if it changes
+  useEffect(() => {
+    const tab = searchParams.get("tab")
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab)
+    }
+  }, [searchParams, activeTab])
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -85,20 +93,16 @@ export function HomeLayout({ children }: HomeLayoutProps) {
       <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {activeTab === "messages" ? (
-        <MessagesView />
-      ) : (
-        <main className={`md:ml-64 lg:mr-80 pt-20 pb-20 md:pb-4 relative z-10 transition-all duration-300 ${isDarkMode ? 'backdrop-blur-[0.5px]' : ''
-          }`}>
-          <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-            {activeTab === "home" && (
-              <Feed />
-            )}
-          </div>
-        </main>
-      )}
+      <main className={`${activeTab === "messages" ? "md:ml-20" : "md:ml-64"} lg:mr-80 pt-20 pb-20 md:pb-4 relative z-10 transition-all duration-300 ${isDarkMode ? 'backdrop-blur-[0.5px]' : ''
+        }`}>
+        <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
+          {activeTab === "home" && (
+            <Feed />
+          )}
+        </div>
+      </main>
 
-      {activeTab !== "messages" && <RightSidebar />}
+      <RightSidebar />
 
       {/* Modal overlay slot */}
       {children}

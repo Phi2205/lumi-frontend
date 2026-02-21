@@ -177,9 +177,9 @@ export function MessagesView() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-64px)] gap-0">
+    <div className="flex h-[calc(100vh-120px)] gap-0 border border-white/10 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl mx-1 sm:mx-4 my-2">
       {/* Conversation List */}
-      <div className="hidden sm:flex w-full sm:w-80 flex-shrink-0">
+      <div className="hidden sm:flex w-full sm:w-[400px] flex-shrink-0">
         <ConversationList
           conversations={conversations}
           selectedId={selectedConversationId}
