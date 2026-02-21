@@ -1,87 +1,142 @@
 "use client"
 
-import { PostCard, type Post } from "./PostCard"
+import { PostCard, type Post } from "./post/PostCard"
 import { Stories } from "./Stories"
-import { useState } from "react"
+import { SkeletonFeed } from "@/components/skeleton"
+import { useEffect, useState, useRef } from "react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { ImageIcon } from "lucide-react"
+import { ImageIcon, Ghost, Loader2 } from "lucide-react"
 import { Modal } from "@/lib/components/modal"
+import { GlassButton } from "@/lib/components/glass-button"
 import { createPost } from "@/services/post.service"
-import type { PostMediaItem, PostMediaType } from "@/apis/post.api"
+import type { PostMediaItem, PostMediaType, Post as ApiPost } from "@/apis/post.api"
+import * as postService from "@/services/post.service"
+import { useAuth } from "@/contexts/AuthContext"
 
-const mockPosts: Post[] = [
-  {
-    id: "1",
-    author: {
-      name: "Sarah Chen",
-      avatar: "/placeholder.svg",
+function mapPost(post: ApiPost): Post {
+  return {
+    id: post.id,
+    user: {
+      name: post.user?.name || "You",
+      avatar_url: post.user?.avatar_url || "/avatar-default.jpg",
     },
-    timestamp: "2 hours ago",
-    content:
-      "Just finished an amazing hike in the mountains! The views were absolutely breathtaking. Can't wait to explore more trails this season.",
-    image: "/bg3.jpg",
-    likes: 234,
-    comments: 12,
-    hasLiked: false,
-  },
-  {
-    id: "2",
-    author: {
-      name: "Mike Johnson",
-      avatar: "/placeholder.svg",
-    },
-    timestamp: "4 hours ago",
-    content:
-      "Excited to announce that I've just launched my new project! Check it out and let me know what you think. Your feedback means a lot to me.",
-    image: "/bg3.jpg",
-    likes: 567,
-    comments: 34,
-    hasLiked: false,
-  },
-  {
-    id: "3",
-    author: {
-      name: "Emma Davis",
-      avatar: "/placeholder.svg",
-    },
-    timestamp: "6 hours ago",
-    content:
-      "Coffee and creativity - the perfect combination for a productive morning! What's your go-to productivity hack?",
-    image: "/bg3.jpg",
-    likes: 189,
-    comments: 8,
-    hasLiked: true,
-  },
-  {
-    id: "4",
-    author: {
-      name: "Alex Rivera",
-      avatar: "/placeholder.svg",
-    },
-    timestamp: "8 hours ago",
-    content:
-      "Grateful for amazing friends who celebrate wins and support through challenges. Here's to the people who make life better!",
-    image: "/bg3.jpg",
-    likes: 445,
-    comments: 22,
-    hasLiked: false,
-  },
-]
+    timestamp: post.created_at,
+    content: post.content,
+    media: post.post_media,
+    likes: post.like_count,
+    comments: post.comment_count,
+    shares: post.share_count,
+    has_liked: post.has_liked,
+    original_post_id: post.original_post_id,
+    original_post: post.original_post ? mapPost(post.original_post) : undefined,
+  }
+}
+
 
 export function Feed() {
-  const [posts, setPosts] = useState(mockPosts)
+  const { user } = useAuth()
+  const [posts, setPosts] = useState<Post[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [draftContent, setDraftContent] = useState("")
   const [draftMedia, setDraftMedia] = useState<Array<PostMediaItem & { previewUrl: string }>>([])
   const [selectedMediaIndex, setSelectedMediaIndex] = useState<number>(0)
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [hideLoader, setHideLoader] = useState(false);
+  const loaderRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    // If initially loading or fetching more, we don't need to re-attach observer yet, 
+    // BUT we must ensure we attach it when loading finishes.
+    // Actually, always observing loaderRef is safer, conditional logic inside callback.
+    if (isLoading || isFetchingMore || hideLoader) return; 
+
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting) {
+          loadMorePosts();
+        }
+      },
+      {
+        root: null,
+        rootMargin: "100px",  // Adjust margin if needed
+        threshold: 0
+      }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isLoading, isFetchingMore, hideLoader]);
+
+  // Reset hideLoader when scrolling away from bottom
+  useEffect(() => {
+    if (!hideLoader) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+      // If user scrolls up (distance to bottom > 300px), show loader again so it can trigger next time they scroll down
+      if (scrollHeight - scrollTop - clientHeight > 300) {
+        setHideLoader(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hideLoader]);
+
+  const loadMorePosts = async () => {
+    if (isFetchingMore) return;
+    setIsFetchingMore(true);
+    try {
+      const response = await postService.getUnseenPosts(5, 1);
+      const newItems = response.data.items;
+
+      if (newItems.length === 0) {
+        setHideLoader(true);
+        return;
+      }
+
+      setPosts(prev => [...prev, ...newItems.map(mapPost)]);
+      
+      // If we successfully loaded posts, ensure loader is visible for next batch
+      setHideLoader(false);
+      
+    } catch (error) {
+      console.error("Error loading more posts:", error);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }
+
+  const fetchPosts = async () => {
+    setIsLoading(true)
+    try {
+      const response = await postService.getUnseenPosts(5, 1);
+      // console.log("response", response);
+
+      setPosts(response.data.items.map(mapPost));
+    } catch (error) {
+      console.error("Error fetching posts:", error);
+    } finally {
+      setIsLoading(false)
+    }
+  };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
   const handleLike = (postId: string) => {
+    postService.likePost(postId);
     setPosts(
       posts.map((post) =>
-        post.id === postId ? { ...post, hasLiked: !post.hasLiked, likes: post.likes + (post.hasLiked ? -1 : 1) } : post,
+        post.id === postId ? { ...post, has_liked: !post.has_liked, likes: post.likes + (post.has_liked ? -1 : 1) } : post,
       ),
     )
   }
@@ -135,20 +190,19 @@ export function Feed() {
       )
       const created = res.data
 
-      const firstImage = created.post_media.find((m) => m.media_type === "image")?.media_url
-
       const uiPost: Post = {
         id: created.id,
-        author: {
+        user: {
           name: created.user?.name || created.user?.username || "You",
-          avatar: created.user?.avatar_url || "/placeholder.svg",
+          avatar_url: created.user?.avatar_url || "/avatar-default.jpg",
         },
         timestamp: "just now",
         content: created.content,
-        image: firstImage,
+        media: created.post_media,
         likes: 0,
         comments: 0,
-        hasLiked: false,
+        shares: 0,
+        has_liked: false,
       }
 
       setPosts([uiPost, ...posts])
@@ -159,8 +213,15 @@ export function Feed() {
     }
   }
 
+  const handleWheel = (e: any) => {
+    console.log("handleWheel", e.deltaY)
+    if (hideLoader && e.deltaY > 0) {
+      setHideLoader(false)
+    }
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" onWheel={handleWheel}>
       {/* Stories Section */}
       <Stories />
 
@@ -178,7 +239,7 @@ export function Feed() {
           {/* User Input Section */}
           <div className="flex gap-3">
             <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-blue-400/50">
-              <AvatarImage src="/placeholder.svg" alt="You" />
+              <AvatarImage src={user?.avatar_url || "/avatar-default.jpg"} alt="You" />
               <AvatarFallback>Y</AvatarFallback>
             </Avatar>
             <Input
@@ -192,10 +253,10 @@ export function Feed() {
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between gap-2 pl-13">
-            <Button
+            <GlassButton
               variant="ghost"
               size="sm"
-              className="gap-2 text-white/60 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+              className="flex items-center gap-2"
               onClick={(e) => {
                 e.stopPropagation()
                 setIsCreateOpen(true)
@@ -203,9 +264,11 @@ export function Feed() {
             >
               <ImageIcon className="h-4 w-4" />
               Photo
-            </Button>
-            <Button
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 rounded-lg shadow-lg"
+            </GlassButton>
+            <GlassButton
+              variant="primary"
+              size="sm"
+              className="bg-[var(--brand-primary)]/80 hover:bg-[var(--brand-primary)] border-[var(--brand-primary)]/40 text-black/80 font-semibold"
               onClick={(e) => {
                 e.stopPropagation()
                 setIsCreateOpen(true)
@@ -213,7 +276,7 @@ export function Feed() {
               disabled
             >
               Post
-            </Button>
+            </GlassButton>
           </div>
         </div>
       </div>
@@ -343,10 +406,38 @@ export function Feed() {
       </Modal>
 
       {/* Feed Posts */}
-      <div className="space-y-2">
-        {posts.map((post) => (
-          <PostCard key={post.id} post={post} onLike={handleLike} />
-        ))}
+      <div className="space-y-4">
+        {isLoading ? (
+          <SkeletonFeed count={5} />
+        ) : posts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
+            <div className="bg-white/5 p-6 rounded-full mb-4 backdrop-blur-xl border border-white/10 shadow-lg ring-1 ring-white/5">
+              <Ghost className="w-10 h-10 text-white/40" />
+            </div>
+            <h3 className="text-xl font-semibold text-white/90 mb-2">No posts yet</h3>
+            <p className="text-white/50 max-w-[280px] leading-relaxed">
+              Your feed is quiet for now. Follow more people or create a new post to get started!
+            </p>
+          </div>
+        ) : (
+          <>
+            {posts.map((post) => (
+              <div key={post.id} id={post.id}>
+                <PostCard post={post} onLike={handleLike} />
+              </div>
+            ))}
+            {isFetchingMore && <SkeletonFeed count={1} />}
+          </>
+        )}
+      </div>
+      <div 
+        ref={loaderRef} 
+        className={`flex items-center justify-center p-4 py-6 ${hideLoader ? 'hidden' : ''}`}
+      >
+        <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-sm">
+          <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
+          <span className="text-sm font-medium text-white/60">Loading more...</span>
+        </div>
       </div>
     </div>
   )

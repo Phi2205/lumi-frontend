@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Geist, Geist_Mono, Dancing_Script } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { AuthProviderWrapper } from "@/components/providers/AuthProviderWrapper"
+import { SocketProvider } from "@/contexts/SocketContext"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -38,14 +39,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  modal,
 }: Readonly<{
   children: React.ReactNode
+  modal: React.ReactNode
 }>) {
   return (
     <html lang="en">
       <body className={`font-sans antialiased ${dancingScript.variable}`}>
         <AuthProviderWrapper>
-          {children}
+          <SocketProvider>
+            {children}
+            {modal}
+          </SocketProvider>
         </AuthProviderWrapper>
         <Analytics />
       </body>

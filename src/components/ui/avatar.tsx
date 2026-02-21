@@ -50,4 +50,45 @@ function AvatarFallback({
   )
 }
 
-export { Avatar, AvatarImage, AvatarFallback }
+
+interface StoryAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
+  src?: string
+  alt?: string
+  hasStory?: boolean
+  isSeen?: boolean
+}
+
+function StoryAvatar({
+  src,
+  alt = "Avatar",
+  hasStory = false,
+  isSeen = false,
+  className,
+  ...props
+}: StoryAvatarProps) {
+  return (
+    <div
+      className={cn(
+        "relative flex shrink-0 rounded-full transition-all duration-300",
+        hasStory && "p-[3px] bg-gradient-to-tr from-yellow-400 via-orange-500 to-purple-600",
+        hasStory && isSeen && "bg-neutral-600 bg-none",
+        className
+      )}
+      {...props}
+    >
+      <div className={cn("size-full rounded-full bg-background p-[2px]", !hasStory && "p-0")}>
+        <Avatar className="size-full overflow-hidden">
+          <AvatarImage
+            src={src}
+            alt={alt}
+            className="size-full object-cover transition-transform duration-500 ease-in-out hover:scale-110"
+          />
+          <AvatarFallback>{alt?.slice(0, 2).toUpperCase()}</AvatarFallback>
+        </Avatar>
+      </div>
+    </div>
+  )
+}
+
+export { Avatar, AvatarImage, AvatarFallback, StoryAvatar }
+
