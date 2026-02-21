@@ -9,6 +9,7 @@ import ImagePreview from "@/components/ui/ImagePreview"
 import { LikeButton } from "../LikeButton"
 import { CommentSection } from "./CommentSection"
 import { LikesModal } from "./LikesModal"
+import { ShareModal } from "./ShareModal"
 import { useState } from "react"
 import { formatTime } from "@/utils/format"
 
@@ -170,6 +171,7 @@ function SharedPostPreview({ post }: { post: Post }) {
 export function PostCard({ post, onLike }: PostCardProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [showLikes, setShowLikes] = useState(false)
+  const [showShare, setShowShare] = useState(false)
   const isShared = post.original_post != null
 
   return (
@@ -215,15 +217,15 @@ export function PostCard({ post, onLike }: PostCardProps) {
       </div>
 
       {/* Post Stats */}
-      <div className="flex items-center justify-between px-4 py-2 border-t border-b border-white/10 text-xs text-white/50">
+      <div className="flex items-center justify-around px-4 py-2 border-t border-b border-white/10 text-xs text-white/50">
         <button
           onClick={() => setShowLikes(true)}
-          className="mx-16 hover:text-white/80 hover:underline underline-offset-2 transition-colors cursor-pointer"
+          className="hover:text-white/80 hover:underline underline-offset-2 transition-colors cursor-pointer"
         >
           {post.likes} likes
         </button>
-        <span className="mx-16">{post.comments} comments</span>
-        <span className="mx-16">{post.shares} shares</span>
+        <span className="">{post.comments} comments</span>
+        <span className="">{post.shares} shares</span>
       </div>
 
       {/* Post Actions */}
@@ -241,6 +243,7 @@ export function PostCard({ post, onLike }: PostCardProps) {
           variant="ghost"
           size="sm"
           className="flex-1 gap-2 text-white/60 hover:text-green-400 hover:bg-green-500/10 rounded-lg transition-all"
+          onClick={() => setShowShare(true)}
         >
           <Share2 className="h-4 w-4" />
           Share
@@ -256,6 +259,14 @@ export function PostCard({ post, onLike }: PostCardProps) {
           postId={post.id}
           totalLikes={post.likes}
           onClose={() => setShowLikes(false)}
+        />
+      )}
+
+      {/* Share Modal */}
+      {showShare && (
+        <ShareModal
+          post={post}
+          onClose={() => setShowShare(false)}
         />
       )}
     </div>

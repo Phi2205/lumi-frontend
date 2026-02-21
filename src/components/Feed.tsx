@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ImageIcon, Ghost, Loader2 } from "lucide-react"
 import { Modal } from "@/lib/components/modal"
+import { GlassButton } from "@/lib/components/glass-button"
 import { createPost } from "@/services/post.service"
 import type { PostMediaItem, PostMediaType, Post as ApiPost } from "@/apis/post.api"
 import * as postService from "@/services/post.service"
@@ -252,10 +253,10 @@ export function Feed() {
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between gap-2 pl-13">
-            <Button
+            <GlassButton
               variant="ghost"
               size="sm"
-              className="gap-2 text-white/60 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
+              className="flex items-center gap-2"
               onClick={(e) => {
                 e.stopPropagation()
                 setIsCreateOpen(true)
@@ -263,9 +264,11 @@ export function Feed() {
             >
               <ImageIcon className="h-4 w-4" />
               Photo
-            </Button>
-            <Button
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 rounded-lg shadow-lg"
+            </GlassButton>
+            <GlassButton
+              variant="primary"
+              size="sm"
+              className="bg-[var(--brand-primary)]/80 hover:bg-[var(--brand-primary)] border-[var(--brand-primary)]/40 text-black/80 font-semibold"
               onClick={(e) => {
                 e.stopPropagation()
                 setIsCreateOpen(true)
@@ -273,7 +276,7 @@ export function Feed() {
               disabled
             >
               Post
-            </Button>
+            </GlassButton>
           </div>
         </div>
       </div>

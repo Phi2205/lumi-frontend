@@ -73,3 +73,20 @@ export const deleteComment = async (postId: string, commentId: string) => {
     }
 }
 
+export const sharePost = async (postId: string, content: string) => {
+    try {
+        const response = await postApi.sharePost(postId, content);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getPostById = async (postId: string) => {
+    try {
+        const response = await postApi.getPostById(postId);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

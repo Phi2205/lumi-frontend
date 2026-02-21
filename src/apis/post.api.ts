@@ -106,6 +106,10 @@ export const getUnseenPosts = (limit: number, page: number) => {
   });
 };
 
+export const getPostById = (postId: string) => {
+  return axiosInstance.get<ApiResponse<Post>>(`/posts/${postId}`);
+}
+
 export const likePost = (postId: string) => {
   return axiosInstance.post<ApiResponse<Comment>>(`/posts/${postId}/like`);
 }

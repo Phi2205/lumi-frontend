@@ -15,7 +15,7 @@ export function GlassButton({
   children,
   ...props
 }: GlassButtonProps) {
-  const baseStyles = "backdrop-blur-[20px] bg-gradient-to-br from-white/8 via-white/4 to-white/2 border border-white/15 font-medium transition-all duration-300 ease-out rounded-2xl active:scale-[0.98] hover:border-white/25"
+  const baseStyles = "cursor-pointer backdrop-blur-[20px] bg-gradient-to-br from-white/8 via-white/4 to-white/2 border border-white/15 font-medium transition-all duration-300 ease-out rounded-2xl active:scale-[0.98] hover:border-white/25"
 
   const variantStyles = {
     primary: "bg-gradient-to-br from-brand-primary/20 via-brand-primary/12 to-brand-primary/8 border-brand-primary/25 text-white hover:from-brand-primary/25 hover:via-brand-primary/15 hover:to-brand-primary/10 hover:border-brand-primary/35",
