@@ -7,6 +7,7 @@ import { LikeButton } from "./LikeButton"
 import { CommentSection } from "./CommentSection"
 import { useState } from "react"
 import { GlassButton } from "@/lib/components/glass-button"
+import { ImageCarousel } from "./ImageCarousel"
 
 export interface Post {
   id: string
@@ -17,6 +18,7 @@ export interface Post {
   timestamp: string
   content: string
   image?: string
+  images?: string[]
   likes: number
   comments: number
   hasLiked?: boolean
@@ -107,18 +109,20 @@ export function PostCard({ post, onLike, isDarkMode = true }: PostCardProps) {
         </GlassButton>
       </div>
 
-      {/* Post Image - Full width, prominent */}
-      {post.image && (
-        <div className="relative overflow-hidden bg-black/20 aspect-square">
+      {/* Post Images - Carousel */}
+      {(post.images && post.images.length > 0) ? (
+        <ImageCarousel images={post.images} isDarkMode={isDarkMode} />
+      ) : post.image ? (
+        <div className="relative overflow-hidden bg-black/20 aspect-square group">
           <img
-            src={post.image || "/placeholder.svg"}
+            src={post.image}
             alt="Post"
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
           {/* Image overlay gradient on hover */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
-      )}
+      ) : null}
 
       {/* Post Content */}
       <div className="p-4">
