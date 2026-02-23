@@ -22,6 +22,7 @@ const mockPosts: Post[] = [
     content:
       "Just finished an amazing hike in the mountains! The views were absolutely breathtaking. Can't wait to explore more trails this season.",
     image: "/bg3.jpg",
+    images: ["/bg3.jpg", "/bg12.jpg", "/bg7.jpg"],
     likes: 234,
     comments: 12,
     hasLiked: false,
@@ -36,6 +37,7 @@ const mockPosts: Post[] = [
     content:
       "Excited to announce that I've just launched my new project! Check it out and let me know what you think. Your feedback means a lot to me.",
     image: "/bg3.jpg",
+    images: ["/bg3.jpg", "/bg8.jpg", "/bg9.jpg", "/bg10.jpg"],
     likes: 567,
     comments: 34,
     hasLiked: false,
@@ -50,6 +52,7 @@ const mockPosts: Post[] = [
     content:
       "Coffee and creativity - the perfect combination for a productive morning! What's your go-to productivity hack?",
     image: "/bg3.jpg",
+    images: ["/bg3.jpg", "/bg6.jpg", "/bg11.jpg", "/bg2.jpg", "/bg4.jpg"],
     likes: 189,
     comments: 8,
     hasLiked: true,
@@ -64,6 +67,7 @@ const mockPosts: Post[] = [
     content:
       "Grateful for amazing friends who celebrate wins and support through challenges. Here's to the people who make life better!",
     image: "/bg3.jpg",
+    images: ["/bg3.jpg", "/bg5.jpg", "/bg1.jpg"],
     likes: 445,
     comments: 22,
     hasLiked: false,
