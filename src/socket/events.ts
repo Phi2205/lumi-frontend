@@ -6,7 +6,8 @@ export const SocketEvents = {
 
   // message
   SEND_MESSAGE: "send_message",
-  RECEIVE_MESSAGE: "receive_message",
+  NEW_MESSAGE: "new_message",
+  CONVERSATION_UPDATED: "conversation_updated",
 
   // notification
   RECEIVE_NOTIFICATION: "receive_notification",

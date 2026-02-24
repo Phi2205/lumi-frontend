@@ -1,29 +1,100 @@
 "use client"
 
 import { Search } from "lucide-react"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { useState } from "react"
+import { Avatar, AvatarImage, AvatarFallback, StoryAvatar } from "@/components/ui/avatar"
+import { useState, memo, useDeferredValue, useMemo } from "react"
 
-export interface Conversation {
+export interface ParticipantUI {
+  id: string
+  name: string
+  avatar_url: string
+}
+
+export interface ConversationUI {
   id: string
   name: string
   avatar: string
   lastMessage: string
   timestamp: string
   unread: boolean
+  unreadCount: number
   isOnline: boolean
+  participants: ParticipantUI[]
 }
 
 interface ConversationListProps {
-  conversations: Conversation[]
-  selectedId?: string
+  conversations: ConversationUI[]
+  selectedId?: string | null
   onSelect?: (id: string) => void
+  loading?: boolean
 }
 
-export function ConversationList({ conversations, selectedId, onSelect }: ConversationListProps) {
-  const [searchQuery, setSearchQuery] = useState("")
+const ConversationItem = memo(({ 
+  conversation, 
+  selectedId, 
+  onSelect 
+}: { 
+  conversation: ConversationUI, 
+  selectedId?: string | null, 
+  onSelect?: (id: string) => void 
+}) => {
+  const isSelected = selectedId === conversation.id;
+  
+  return (
+    <button
+      onClick={() => onSelect?.(conversation.id)}
+      className={`w-full text-left gap-3 px-3 py-3 rounded-xl transition-[background-color,border-color,box-shadow,transform] duration-200 group cursor-pointer flex items-center border transform translate-z-0 ${
+        isSelected 
+          ? 'bg-brand-primary/20 border-brand-primary/40 shadow-lg shadow-brand-primary/5' 
+          : 'bg-white/5 border-white/5 hover:bg-white/10'
+      }`}
+    >
+      <div className="relative flex-shrink-0">
+        <StoryAvatar className="w-12 h-12" src={conversation.avatar || "/avatar-default.jpg"} alt={conversation.name} hasStory={false}/>
+        {conversation.isOnline && (
+          <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-400 ring-2 ring-zinc-900" />
+        )}
+      </div>
+      <div className="flex-1 text-left min-w-0">
+        <div className="flex items-center justify-between mb-0.5">
+          <p className={`text-sm font-semibold truncate transition-colors ${
+            isSelected ? 'text-white' : 'text-white group-hover:text-white'
+          }`}>
+            {conversation.name}
+          </p>
+          <span className={`text-xs ml-2 flex-shrink-0 transition-colors ${
+            conversation.unread ? 'text-cyan-300 font-bold' : 'text-white/80'
+          }`}>
+            {conversation.timestamp}
+          </span>
+        </div>
+        <p className={`text-xs truncate transition-colors ${
+          conversation.unread ? 'font-semibold text-white' : 'text-white/70 group-hover:text-white/90'
+        }`}>
+          {conversation.lastMessage}
+        </p>
+      </div>
+      {conversation.unread && conversation.unreadCount > 0 && (
+        <div className="min-w-[20px] h-5 px-1.5 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-cyan-500/20">
+          <span className="text-[10px] font-bold text-white tabular-nums">
+            {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
+          </span>
+        </div>
+      )}
+    </button>
+  );
+});
 
-  const filtered = conversations.filter((conv) => conv.name.toLowerCase().includes(searchQuery.toLowerCase()))
+ConversationItem.displayName = "ConversationItem";
+
+export function ConversationList({ conversations, selectedId, onSelect, loading }: ConversationListProps) {
+  const [searchQuery, setSearchQuery] = useState("")
+  const deferredQuery = useDeferredValue(searchQuery)
+
+  const filtered = useMemo(() => 
+    conversations.filter((conv) => conv.name.toLowerCase().includes(deferredQuery.toLowerCase())),
+    [conversations, deferredQuery]
+  )
 
   return (
     <div className="flex flex-col h-full w-full relative overflow-hidden">
@@ -31,11 +102,7 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
 
       {/* Search Header */}
       <div 
-        className="p-4 border-b backdrop-blur-[20px] relative z-10"
-        style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.06)',
-          borderColor: 'rgba(255, 255, 255, 0.1)'
-        }}
+        className="p-4 border-b backdrop-blur-md relative z-10 bg-white/5 border-white/10"
       >
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-300" />
@@ -43,76 +110,44 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
             placeholder="Search conversations..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-white placeholder-white/50 focus:outline-none transition-all"
-            style={{
-              backdropFilter: 'blur(18px)',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)'
-            }}
+            className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-white placeholder-white/50 focus:outline-none transition-all bg-white/10 border border-white/10"
           />
         </div>
       </div>
 
       {/* Conversations List */}
-      <div className="flex-1 overflow-y-auto relative z-10 space-y-1.5 p-2 scroll-glass">
-        {filtered.map((conversation) => (
-          <button
-            key={conversation.id}
-            onClick={() => onSelect?.(conversation.id)}
-            className={`w-full text-left gap-3 px-3 py-3 rounded-xl transition-all group cursor-pointer flex items-center`}
-            style={selectedId === conversation.id ? {
-              backdropFilter: 'blur(20px)',
-              backgroundColor: 'rgba(59, 130, 246, 0.25)',
-              border: '1px solid rgba(59, 130, 246, 0.4)',
-              boxShadow: '0 8px 16px rgba(59, 130, 246, 0.15)'
-            } : {
-              backdropFilter: 'blur(16px)',
-              backgroundColor: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid rgba(255, 255, 255, 0.08)'
-            }}
-          >
-            <div className="relative flex-shrink-0">
-              <Avatar className="h-12 w-12 border-2" style={{
-                borderColor: selectedId === conversation.id ? 'rgba(59, 130, 246, 0.6)' : 'rgba(255, 255, 255, 0.15)'
-              }}>
-                <AvatarImage src={conversation.avatar || "/placeholder.svg"} alt={conversation.name} />
-                <AvatarFallback className="bg-gradient-to-br from-cyan-500 to-blue-500 text-white font-semibold">{conversation.name[0]}</AvatarFallback>
-              </Avatar>
-              {conversation.isOnline && (
-                <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-400 ring-2 ring-white/80 animate-pulse" />
-              )}
-            </div>
-            <div className="flex-1 text-left min-w-0">
-              <div className="flex items-center justify-between mb-0.5">
-                <p className={`text-sm font-medium truncate transition-colors ${
-                  selectedId === conversation.id 
-                    ? 'text-white' 
-                    : 'text-white/90 group-hover:text-white'
-                }`}>
-                  {conversation.name}
-                </p>
-                <span className={`text-xs ml-2 flex-shrink-0 transition-colors ${
-                  conversation.unread 
-                    ? 'text-cyan-300 font-semibold' 
-                    : 'text-white/50'
-                }`}>
-                  {conversation.timestamp}
-                </span>
+      <div 
+        className="flex-1 overflow-y-auto relative z-10 space-y-1.5 p-2 scroll-glass"
+        style={{ contentVisibility: 'auto' } as any}
+      >
+        {loading ? (
+          // Skeleton loader
+          Array.from({ length: 10 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 border border-white/5 animate-pulse"
+            >
+              <div className="h-12 w-12 rounded-full bg-white/10 flex-shrink-0" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-2/3 bg-white/10 rounded" />
+                <div className="h-2 w-full bg-white/5 rounded" />
               </div>
-              <p className={`text-xs truncate transition-colors ${
-                conversation.unread 
-                  ? 'font-medium text-white/80' 
-                  : 'text-white/50 group-hover:text-white/70'
-              }`}>
-                {conversation.lastMessage}
-              </p>
             </div>
-            {conversation.unread && (
-              <div className="h-2.5 w-2.5 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 flex-shrink-0 animate-pulse" />
-            )}
-          </button>
-        ))}
+          ))
+        ) : filtered.length > 0 ? (
+          filtered.map((conversation) => (
+            <ConversationItem 
+              key={conversation.id}
+              conversation={conversation}
+              selectedId={selectedId}
+              onSelect={onSelect}
+            />
+          ))
+        ) : (
+          <div className="p-4 text-center text-white/40 text-sm">
+            No conversations found
+          </div>
+        )}
       </div>
     </div>
   )

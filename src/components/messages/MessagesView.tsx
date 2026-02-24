@@ -1,179 +1,63 @@
 "use client"
 
-import { useState } from "react"
-import { ConversationList, type Conversation } from "./ConversationList"
-import { ChatWindow, type Message } from "./ChatWindow"
-
-const mockConversations: Conversation[] = [
-  {
-    id: "1",
-    name: "Sarah Chen",
-    avatar: "/placeholder.svg",
-    lastMessage: "That sounds great! When are you free?",
-    timestamp: "2m",
-    unread: true,
-    isOnline: true,
-  },
-  {
-    id: "2",
-    name: "Mike Johnson",
-    avatar: "/placeholder.svg",
-    lastMessage: "Check out my latest post!",
-    timestamp: "1h",
-    unread: false,
-    isOnline: true,
-  },
-  {
-    id: "3",
-    name: "Emma Davis",
-    avatar: "/placeholder.svg",
-    lastMessage: "Thanks for the invitation!",
-    timestamp: "3h",
-    unread: false,
-    isOnline: false,
-  },
-  {
-    id: "4",
-    name: "Alex Rivera",
-    avatar: "/placeholder.svg",
-    lastMessage: "See you this weekend!",
-    timestamp: "5h",
-    unread: false,
-    isOnline: true,
-  },
-  {
-    id: "5",
-    name: "Julia Anderson",
-    avatar: "/placeholder.svg",
-    lastMessage: "Let's catch up soon!",
-    timestamp: "1d",
-    unread: true,
-    isOnline: false,
-  },
-]
-
-const mockMessages: { [key: string]: Message[] } = {
-  "1": [
-    {
-      id: "1",
-      sender: "Sarah Chen",
-      senderAvatar: "/placeholder.svg",
-      content: "Hey! How's everything going?",
-      timestamp: "10:30 AM",
-      isOwn: false,
-    },
-    {
-      id: "2",
-      sender: "You",
-      senderAvatar: "/placeholder.svg",
-      content: "Pretty good! Just finished a project. You?",
-      timestamp: "10:32 AM",
-      isOwn: true,
-    },
-    {
-      id: "3",
-      sender: "Sarah Chen",
-      senderAvatar: "/placeholder.svg",
-      content: "Amazing! We should celebrate with coffee ☕",
-      timestamp: "10:33 AM",
-      isOwn: false,
-    },
-    {
-      id: "4",
-      sender: "You",
-      senderAvatar: "/placeholder.svg",
-      content: "That sounds great! When are you free?",
-      timestamp: "10:35 AM",
-      isOwn: true,
-    },
-  ],
-  "2": [
-    {
-      id: "1",
-      sender: "Mike Johnson",
-      senderAvatar: "/placeholder.svg",
-      content: "Check out my latest post!",
-      timestamp: "1:15 PM",
-      isOwn: false,
-    },
-    {
-      id: "2",
-      sender: "You",
-      senderAvatar: "/placeholder.svg",
-      content: "Will do! Sounds exciting.",
-      timestamp: "1:20 PM",
-      isOwn: true,
-    },
-  ],
-  "3": [
-    {
-      id: "1",
-      sender: "Emma Davis",
-      senderAvatar: "/placeholder.svg",
-      content: "Thanks so much for the invitation!",
-      timestamp: "2:45 PM",
-      isOwn: false,
-    },
-    {
-      id: "2",
-      sender: "You",
-      senderAvatar: "/placeholder.svg",
-      content: "Of course! Looking forward to it.",
-      timestamp: "3:00 PM",
-      isOwn: true,
-    },
-  ],
-  "4": [
-    {
-      id: "1",
-      sender: "Alex Rivera",
-      senderAvatar: "/placeholder.svg",
-      content: "See you this weekend!",
-      timestamp: "4:20 PM",
-      isOwn: false,
-    },
-  ],
-  "5": [
-    {
-      id: "1",
-      sender: "Julia Anderson",
-      senderAvatar: "/placeholder.svg",
-      content: "Let's catch up soon!",
-      timestamp: "Yesterday",
-      isOwn: false,
-    },
-  ],
-}
+import { useState, useEffect } from "react"
+import { ConversationList } from "./ConversationList"
+import { ChatWindow } from "./ChatWindow"
+import { useConversations } from "@/hooks/chat/useConversations"
+import { useMessages } from "@/hooks/chat/useMessages"
+import { useSocketContext } from "@/contexts/SocketContext"
+import { useChatRealtime } from "@/socket/chat/useChatRealtime"
 
 export function MessagesView() {
-  const [selectedConversationId, setSelectedConversationId] = useState("1")
-  const [conversations, setConversations] = useState(mockConversations)
-  const [allMessages, setAllMessages] = useState(mockMessages)
+  const { conversations, setConversations, loading: loadingConvs } = useConversations();
+  const [selectedConversationId, setSelectedConversationId] = useState<string | undefined>();
+  const socket = useSocketContext();
+
+  // Redirect to first conversation if none selected
+  useEffect(() => {
+    if (!selectedConversationId && conversations.length > 0) {
+      setSelectedConversationId(conversations[0].id);
+    }
+  }, [conversations, selectedConversationId]);
+
+  const { 
+    messages, 
+    appendRealtimeMessage
+  } = useMessages(selectedConversationId);
+  
+  const { sendMessage } = useChatRealtime({
+    conversationId: selectedConversationId,
+    onNewMessageReceived: appendRealtimeMessage
+  });
 
   const selectedConversation = conversations.find((c) => c.id === selectedConversationId)
-  const currentMessages = allMessages[selectedConversationId] || []
+
+  // Listen for conversation list updates (last message, unread count, etc.)
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleConversationUpdated = (data: { conversationId: string; lastMessage: any }) => {
+      setConversations(prev => prev.map(conv => {
+        if (conv.id === data.conversationId) {
+          return {
+            ...conv,
+            lastMessage: data.lastMessage.content,
+            timestamp: "now",
+            unread: conv.id !== selectedConversationId
+          };
+        }
+        return conv;
+      }));
+    };
+
+    socket.on("conversation_updated", handleConversationUpdated);
+    return () => {
+      socket.off("conversation_updated", handleConversationUpdated);
+    };
+  }, [socket, selectedConversationId, setConversations]);
 
   const handleSendMessage = (content: string) => {
-    const newMessage: Message = {
-      id: String(currentMessages.length + 1),
-      sender: "You",
-      senderAvatar: "/placeholder.svg",
-      content,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      isOwn: true,
-    }
-
-    setAllMessages((prev) => ({
-      ...prev,
-      [selectedConversationId]: [...(prev[selectedConversationId] || []), newMessage],
-    }))
-
-    // Update conversation's last message
-    setConversations((prev) =>
-      prev.map((conv) =>
-        conv.id === selectedConversationId ? { ...conv, lastMessage: content, timestamp: "now", unread: false } : conv,
-      ),
-    )
+    sendMessage(content);
   }
 
   return (
@@ -182,20 +66,25 @@ export function MessagesView() {
       <div className="hidden sm:flex w-full sm:w-[400px] flex-shrink-0">
         <ConversationList
           conversations={conversations}
-          selectedId={selectedConversationId}
+          selectedId={selectedConversationId || ""}
           onSelect={setSelectedConversationId}
+          loading={loadingConvs}
         />
       </div>
 
       {/* Chat Window */}
-      {selectedConversation && (
+      {selectedConversation ? (
         <div className="flex-1 flex flex-col min-w-0">
           <ChatWindow
             conversationName={selectedConversation.name}
             conversationAvatar={selectedConversation.avatar}
-            messages={currentMessages}
+            messages={messages}
             onSendMessage={handleSendMessage}
           />
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-white/60 font-medium">
+          Select a conversation to start chatting
         </div>
       )}
     </div>
