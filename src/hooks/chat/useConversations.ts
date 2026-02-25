@@ -7,7 +7,7 @@ import { useChatRealtime } from "@/socket/chat/useChatRealtime";
 export const useConversations = () => {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<ConversationUI[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadConversations = useCallback(async () => {
@@ -21,20 +21,20 @@ export const useConversations = () => {
 
     try {
       const response = await getConversationsService(1, 50, controller.signal);
-      
+
       let conversationsData: any[] = [];
       if (response && response.success && response.data) {
-        conversationsData = Array.isArray(response.data) 
-          ? response.data 
+        conversationsData = Array.isArray(response.data)
+          ? response.data
           : (response.data.items || response.data.conversations || []);
       } else if (Array.isArray(response)) {
         conversationsData = response;
       }
 
-      const mapped = conversationsData.map((conv: any) => 
+      const mapped = conversationsData.map((conv: any) =>
         mapConversationToUI(conv, user.id)
       );
-      
+
       setConversations(mapped);
     } catch (err: any) {
       if (err.name !== "AbortError" && err.code !== "ERR_CANCELED") {
@@ -66,22 +66,44 @@ export const useConversations = () => {
     }));
   }, []);
 
-  const markAsRead = useCallback((conversationId: string) => {
+  const handleUserReadMessage = useCallback((data: any) => {
     setConversations(prev => prev.map(conv => {
-      if (conv.id === conversationId) {
+      if (conv.id === data.conversation_id) {
         return {
           ...conv,
-          unread: false,
-          unreadCount: 0
+          participants: conv.participants.map(p =>
+            p.id === data.user_id
+              ? { ...p, lastSeenMessageId: data.last_seen_message_id }
+              : p
+          )
         };
       }
       return conv;
     }));
   }, []);
 
+  const markAsRead = useCallback((conversationId: string, lastMessageId?: string) => {
+    setConversations(prev => prev.map(conv => {
+      if (conv.id === conversationId && user) {
+        return {
+          ...conv,
+          unread: false,
+          unreadCount: 0,
+          participants: conv.participants.map(p =>
+            p.id === user.id
+              ? { ...p, lastSeenMessageId: lastMessageId || p.lastSeenMessageId }
+              : p
+          )
+        };
+      }
+      return conv;
+    }));
+  }, [user]);
+
   // Realtime conversation updates
   useChatRealtime({
-    onConversationUpdate: handleConversationUpdate
+    onConversationUpdate: handleConversationUpdate,
+    onUserReadMessage: handleUserReadMessage
   });
 
 

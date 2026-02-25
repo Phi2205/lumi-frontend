@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { 
-  X, Minus, Send, Mic, Image as ImageIcon, 
-  Smile, ThumbsUp, ChevronDown, MoreHorizontal, 
+import { useState, useEffect } from "react"
+import {
+  X, Minus, Send, Mic, Image as ImageIcon,
+  Smile, ThumbsUp, ChevronDown, MoreHorizontal,
   Sticker, Gift, Ghost
 } from "lucide-react"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarImage, AvatarFallback, StoryAvatar } from "@/components/ui/avatar"
 import { GlassButton } from "@/lib/components/glass-button"
 import { useMessages } from "@/hooks/chat/useMessages"
 import { useAuth } from "@/contexts/AuthContext"
@@ -20,26 +20,39 @@ interface MiniChatProps {
   onClose: () => void
   onMinimize?: () => void
   isMinimized?: boolean
+  initialShowTooltip?: boolean
 }
 
-export function MiniChat({ 
-  conversationId, 
-  recipientId, 
-  recipientName, 
-  recipientAvatar, 
+export function MiniChat({
+  conversationId,
+  recipientId,
+  recipientName,
+  recipientAvatar,
   onClose,
   onMinimize,
-  isMinimized = false
+  isMinimized = false,
+  initialShowTooltip = false
 }: MiniChatProps) {
   const [inputValue, setInputValue] = useState("")
+  const [showIncomingTooltip, setShowIncomingTooltip] = useState(initialShowTooltip)
+
+  // Auto-hide initial tooltip
+  useEffect(() => {
+    if (initialShowTooltip) {
+      const timer = setTimeout(() => setShowIncomingTooltip(false), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [initialShowTooltip])
+
   const { messages, appendRealtimeMessage, loading } = useMessages(conversationId)
   const { sendMessage } = useChatRealtime({
     conversationId,
     onNewMessageReceived: (msg) => {
-      // Tin nhắn realtime sẽ được hook useMessages xử lý bên trong nếu chúng ta truyền callback
-      // Nhưng ở đây MiniChat đang dùng hook useMessages độc lập.
-      // Để đồng bộ nhất, ta nên để useMessages xử lý append.
       appendRealtimeMessage(msg);
+      if (isMinimized) {
+        setShowIncomingTooltip(true)
+        setTimeout(() => setShowIncomingTooltip(false), 3000)
+      }
     }
   })
   const { user } = useAuth()
@@ -51,29 +64,37 @@ export function MiniChat({
     }
   }
 
+  const lastMessage = messages[0]?.content || "Chưa có tin nhắn"
+
   if (isMinimized) {
     return (
       <div className="relative group pointer-events-auto" onClick={onMinimize}>
-        <div className="absolute -top-1 -right-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div 
+        <div className="absolute -top-1 -right-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div
             onClick={(e) => { e.stopPropagation(); onClose(); }}
-            className="w-5 h-5 bg-zinc-800 border border-white/20 rounded-full flex items-center justify-center cursor-pointer hover:bg-zinc-700 hover:scale-110 transition-all"
+            className="w-5 h-5 bg-zinc-800 border border-white/20 rounded-full flex items-center justify-center cursor-pointer hover:bg-zinc-700 hover:scale-110 transition-all shadow-lg"
           >
             <X className="w-3 h-3 text-white" />
           </div>
         </div>
-        
+
         <div className="relative cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl">
-          <Avatar className="h-14 w-14 ring-2 ring-white/20 ring-offset-2 ring-offset-black/20 hover:ring-brand-primary/50 transition-all">
-            <AvatarImage src={recipientAvatar || "/avatar-default.jpg"} />
-            <AvatarFallback className="bg-zinc-800 text-white text-lg">{recipientName[0]}</AvatarFallback>
-          </Avatar>
+          <StoryAvatar className="w-12 h-12" src={recipientAvatar || "/avatar-default.jpg"} />
           <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-[#1c1c1c]" />
         </div>
 
-        {/* Name Tooltip */}
-        <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-zinc-900 border border-white/10 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-xl">
-           <span className="text-xs font-semibold text-white tracking-wide">{recipientName}</span>
+        {/* Message Tooltip (Bubble style) */}
+        <div className={`absolute right-[calc(100%+12px)] top-1/2 -translate-y-1/2 px-4 py-3 bg-white border border-white/20 rounded-2xl whitespace-nowrap transition-all pointer-events-none shadow-2xl min-w-[120px] max-w-[240px] ${showIncomingTooltip ? "opacity-100 translate-x-0" : "opacity-0 group-hover:opacity-100"
+          }`}>
+          {/* Triangle Arrow */}
+          <div className="absolute top-1/2 right-[-8px] -translate-y-1/2 w-0 h-0 border-t-[8px] border-t-transparent border-b-[8px] border-b-transparent border-l-[8px] border-l-white"></div>
+
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-bold text-zinc-900 leading-tight">{recipientName}</span>
+            <span className="text-[13px] text-zinc-500 font-medium truncate leading-normal">
+              {lastMessage}
+            </span>
+          </div>
         </div>
       </div>
     )
@@ -99,10 +120,7 @@ export function MiniChat({
       <div className="h-16 flex items-center justify-between px-5 border-b border-white/10 shrink-0 relative z-10">
         <div className="flex items-center gap-3 group cursor-pointer">
           <div className="relative">
-            <Avatar className="h-10 w-10 ring-1 ring-white/10">
-              <AvatarImage src={recipientAvatar || "/avatar-default.jpg"} />
-              <AvatarFallback className="bg-zinc-800 text-white">{recipientName[0]}</AvatarFallback>
-            </Avatar>
+            <StoryAvatar className="w-12 h-12" src={recipientAvatar || "/avatar-default.jpg"} hasStory={false} />
             <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-500 ring-2 ring-[#141414]" />
           </div>
           <div className="flex flex-col">
@@ -111,13 +129,13 @@ export function MiniChat({
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <div 
+          <div
             onClick={onMinimize}
             className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center cursor-pointer transition-all duration-300 hover:bg-white/20 hover:scale-110 active:scale-95"
           >
             <Minus className="h-4 w-4 text-white/80" />
           </div>
-          <div 
+          <div
             onClick={onClose}
             className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center cursor-pointer transition-all duration-300 hover:bg-red-500/20 hover:scale-110 active:scale-95"
           >
@@ -131,11 +149,10 @@ export function MiniChat({
         {/* Message groups */}
         {messages.map((msg, idx) => (
           <div key={msg.id} className={`flex flex-col ${msg.isOwn ? 'items-end' : 'items-start'} animate-in fade-in duration-400`}>
-            <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-[14px] leading-[1.5] shadow-md ${
-              msg.isOwn 
-                ? 'bg-brand-primary text-white font-medium border border-white/10' 
-                : 'bg-white/10 backdrop-blur-md text-white border border-white/5 font-normal'
-            }`}>
+            <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-[14px] leading-[1.5] shadow-md ${msg.isOwn
+              ? 'bg-brand-primary text-white font-medium border border-white/10'
+              : 'bg-white/10 backdrop-blur-md text-white border border-white/5 font-normal'
+              }`}>
               {msg.content}
             </div>
             {msg.isOwn && (
@@ -194,7 +211,7 @@ export function MiniChat({
             <p className="text-xs text-white/40 mt-1">Các bạn là bạn bè</p>
           </div>
           <p className="text-[11px] text-white/30 px-6 mt-2 leading-relaxed italic border-t border-white/5 pt-4">
-             🔒 Tin nhắn được mã hóa đầu cuối. <span className="text-brand-primary cursor-pointer hover:underline not-italic">Tìm hiểu thêm</span>
+            🔒 Tin nhắn được mã hóa đầu cuối. <span className="text-brand-primary cursor-pointer hover:underline not-italic">Tìm hiểu thêm</span>
           </p>
         </div>
       </div>
@@ -203,16 +220,16 @@ export function MiniChat({
       <div className="p-3 pt-2 shrink-0 relative z-10">
         <div className="flex items-center gap-1.5">
           <div className="flex items-center shrink-0">
-             <div className="p-1.5 hover:bg-white/10 rounded-lg transition-all cursor-pointer">
+            <div className="p-1.5 hover:bg-white/10 rounded-lg transition-all cursor-pointer">
               <ImageIcon className="h-5 w-5 text-brand-primary" />
-             </div>
-             <div className="p-1.5 hover:bg-white/10 rounded-lg transition-all cursor-pointer">
+            </div>
+            <div className="p-1.5 hover:bg-white/10 rounded-lg transition-all cursor-pointer">
               <Sticker className="h-5 w-5 text-brand-primary" />
-             </div>
+            </div>
           </div>
 
           <div className="flex-1 flex items-center bg-black/40 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 focus-within:border-brand-primary/50 transition-all min-w-0">
-            <input 
+            <input
               placeholder="Aa..."
               className="bg-transparent border-none outline-none text-[14px] flex-1 text-white placeholder-white/20 min-w-0"
               value={inputValue}
@@ -224,9 +241,9 @@ export function MiniChat({
 
           <div className="shrink-0">
             {inputValue.trim() ? (
-               <div className="p-2 bg-brand-primary hover:bg-brand-primary-light rounded-full shadow-lg transition-all cursor-pointer" onClick={handleSend}>
+              <div className="p-2 bg-brand-primary hover:bg-brand-primary-light rounded-full shadow-lg transition-all cursor-pointer" onClick={handleSend}>
                 <Send className="h-4 w-4 text-white" />
-               </div>
+              </div>
             ) : (
               <div className="p-2 hover:bg-white/10 rounded-lg transition-all cursor-pointer">
                 <ThumbsUp className="h-5 w-5 text-brand-primary" />

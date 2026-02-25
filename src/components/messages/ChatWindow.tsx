@@ -2,10 +2,12 @@
 
 import { SendIcon, Phone, Video, MoreHorizontal } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
-import { useState, memo } from "react"
+import { useState, memo, useEffect } from "react"
 import { GlassButton } from "@/lib/components/glass-button"
 import { GlassInput } from "@/lib/components/glass-input"
 import { GlassCard } from "@/lib/components/glass-card"
+import { Participant } from "@/apis/conversation.api"
+import { ParticipantUI } from "./ConversationList"
 
 export interface MessageUI {
   id: string
@@ -23,13 +25,39 @@ interface ChatWindowProps {
   messages: MessageUI[]
   onSendMessage?: (content: string) => void
   isDarkMode?: boolean
+  participants: ParticipantUI[]
+  currentUserId?: string
+  onMessageViewed?: (messageId: string) => void
 }
 
-const MessageItem = memo(({ message, isDarkMode }: { message: MessageUI, isDarkMode: boolean }) => {
+const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, onMessageViewed }: { message: MessageUI, isDarkMode: boolean, participants: ParticipantUI[], currentUserId?: string, onMessageViewed?: (id: string) => void }) => {
+  const itemRef = useEffect(() => {
+    // Chỉ gửi event nếu là tin nhắn của người khác và ID tin nhắn lớn hơn ID đã xem cuối cùng của mình
+    const myInfo = participants.find(p => p.id === currentUserId);
+    const myLastSeenId = myInfo?.lastSeenMessageId;
+
+    if (!onMessageViewed || message.isOwn || (myLastSeenId && message.id <= myLastSeenId)) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          onMessageViewed(message.id);
+          observer.disconnect(); // Chỉ gửi một lần
+        }
+      },
+      { threshold: 0.5 } // 50% tin nhắn hiện ra thì tính là đã xem
+    );
+
+    const currentEl = document.getElementById(`msg-${message.id}`);
+    if (currentEl) observer.observe(currentEl);
+
+    return () => observer.disconnect();
+  }, [message.id, onMessageViewed, message.isOwn, participants, currentUserId]);
+
   return (
-    <div className={`flex gap-3 ${message.isOwn ? "flex-row-reverse" : "flex-row"} animate-in fade-in duration-400`}>
+    <div id={`msg-${message.id}`} className={`flex gap-3 ${message.isOwn ? "flex-row-reverse" : "flex-row"} animate-in fade-in duration-400`}>
       {!message.isOwn && (
-        <Avatar 
+        <Avatar
           className="h-9 w-9 flex-shrink-0 border"
           style={{
             borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
@@ -41,18 +69,17 @@ const MessageItem = memo(({ message, isDarkMode }: { message: MessageUI, isDarkM
       )}
       <div className={`flex flex-col gap-1.5 max-w-[80%] ${message.isOwn ? "items-end" : "items-start"}`}>
         <div
-          className={`rounded-2xl px-4 py-2.5 text-[14px] leading-[1.5] shadow-sm transition-all ${
-            message.isOwn 
-              ? 'bg-brand-primary text-white font-medium border border-white/10' 
-              : isDarkMode 
-                ? 'bg-zinc-800/80 text-white border border-white/5 font-normal'
-                : 'bg-white/90 text-gray-900 border border-gray-200 font-normal'
-          }`}
+          className={`rounded-2xl px-4 py-2.5 text-[14px] leading-[1.5] shadow-sm transition-all ${message.isOwn
+            ? 'bg-brand-primary text-white font-medium border border-white/10'
+            : isDarkMode
+              ? 'bg-zinc-800/80 text-white border border-white/5 font-normal'
+              : 'bg-white/90 text-gray-900 border border-gray-200 font-normal'
+            }`}
         >
           <p>{message.content}</p>
         </div>
         <div className="flex items-center gap-1.5 px-1">
-          <span 
+          <span
             className="text-[11px] uppercase tracking-wider font-semibold"
             style={{
               color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.5)'
@@ -61,11 +88,29 @@ const MessageItem = memo(({ message, isDarkMode }: { message: MessageUI, isDarkM
             {message.timestamp}
           </span>
           {message.isOwn && (
-            <div className="flex items-center">
-              {message.isRead ? (
-                <div className="flex">
+            <div className="flex items-center mt-1">
+              <div className="flex -space-x-1.5 ml-1">
+                {participants
+                  .filter(p => p.id !== currentUserId && p.lastSeenMessageId && message.id <= p.lastSeenMessageId)
+                  .map((p) => (
+                    <Avatar
+                      key={p.id}
+                      className="h-4 w-4 ring-1 ring-white/20 border-none"
+                      title={p.name}
+                    >
+                      <AvatarImage src={p.avatar_url || "/placeholder.svg"} />
+                      <AvatarFallback className="text-[6px] bg-zinc-800 text-white">
+                        {p.name[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+              </div>
+              {/* Fallback to single check if no one ELSE has seen it yet */}
+              {participants
+                .filter(p => p.id !== currentUserId)
+                .every(p => !p.lastSeenMessageId || p.lastSeenMessageId < message.id) && (
                   <svg
-                    className="w-3.5 h-3.5 text-blue-500"
+                    className="w-3.5 h-3.5 text-zinc-500"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -75,31 +120,7 @@ const MessageItem = memo(({ message, isDarkMode }: { message: MessageUI, isDarkM
                   >
                     <path d="M5 12l4 4L19 6" />
                   </svg>
-                  <svg
-                    className="w-3.5 h-3.5 text-blue-500 ml-[-7px]"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M7 14l3 3L21 6" />
-                  </svg>
-                </div>
-              ) : (
-                <svg
-                  className="w-3.5 h-3.5 text-zinc-500"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M5 12l4 4L19 6" />
-                </svg>
-              )}
+                )}
             </div>
           )}
         </div>
@@ -110,10 +131,8 @@ const MessageItem = memo(({ message, isDarkMode }: { message: MessageUI, isDarkM
 
 MessageItem.displayName = "MessageItem";
 
-export const ChatWindow = memo(({ conversationName, conversationAvatar, messages, onSendMessage, isDarkMode = true }: ChatWindowProps) => {
+export const ChatWindow = memo(({ conversationName, conversationAvatar, participants, currentUserId, messages, onSendMessage, onMessageViewed, isDarkMode = true }: ChatWindowProps) => {
   const [inputValue, setInputValue] = useState("")
-
-  
 
 
   const handleSend = () => {
@@ -128,7 +147,7 @@ export const ChatWindow = memo(({ conversationName, conversationAvatar, messages
 
 
       {/* Chat Header */}
-      <div 
+      <div
         className="flex items-center justify-between px-4 py-4 sm:px-6 border-b backdrop-blur-md relative z-10 transform translate-z-0"
         style={isDarkMode ? {
           backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -194,12 +213,12 @@ export const ChatWindow = memo(({ conversationName, conversationAvatar, messages
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col-reverse gap-4 relative z-10 scroll-glass">
         {messages.map((message) => (
-          <MessageItem key={message.id} message={message} isDarkMode={isDarkMode} />
+          <MessageItem key={message.id} message={message} participants={participants} currentUserId={currentUserId} isDarkMode={isDarkMode} onMessageViewed={onMessageViewed} />
         ))}
       </div>
 
       {/* Input Area */}
-      <div 
+      <div
         className="px-4 py-4 sm:px-6 border-t backdrop-blur-md relative z-10 transform translate-z-0"
         style={isDarkMode ? {
           backgroundColor: 'rgba(255, 255, 255, 0.06)',
