@@ -13,6 +13,7 @@ interface MiniChatSession {
   recipientName: string
   recipientAvatar: string
   conversationId?: string
+  lastSeenMessageId?: string
   isMinimized?: boolean
   initialShowTooltip?: boolean
   participants?: ParticipantUI[]
@@ -95,6 +96,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
                         isMinimized: true,
                         initialShowTooltip: true,
                         participants: mapped.participants,
+                        lastSeenMessageId: mapped.lastSeenMessageId,
                       },
                     ]
                     return next.length > 3 ? next.slice(1) : next
@@ -117,6 +119,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
           chat.conversationId === data.conversation_id
             ? {
               ...chat,
+              lastSeenMessageId: data.user_id === user?.id ? lastSeenId : chat.lastSeenMessageId,
               participants: chat.participants?.map((p) =>
                 p.id === data.user_id
                   ? { ...p, lastSeenMessageId: lastSeenId }
@@ -151,6 +154,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
                   onMinimize={() => toggleMinimize(chat.recipientId)}
                   isMinimized={chat.isMinimized}
                   participants={chat.participants}
+                  lastSeenMessageId={chat.lastSeenMessageId}
                 />
               </div>
             ))}
@@ -179,6 +183,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
                   isMinimized={chat.isMinimized}
                   initialShowTooltip={chat.initialShowTooltip}
                   participants={chat.participants}
+                  lastSeenMessageId={chat.lastSeenMessageId}
                 />
               </div>
             ))}

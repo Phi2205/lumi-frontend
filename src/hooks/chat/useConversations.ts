@@ -105,6 +105,7 @@ export const useConversations = () => {
   }, []);
 
   const markAsRead = useCallback((conversationId: string, lastMessageId?: string) => {
+    
     setConversations(prev => prev.map(conv => {
       if (conv.id === conversationId && user) {
         return {

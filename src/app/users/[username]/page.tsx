@@ -193,6 +193,7 @@ export default function UserProfilePage() {
           recipientAvatar: userProfile.avatar_url || "/avatar-default.jpg",
           conversationId: conversation.id,
           participants: mapped.participants,
+          lastSeenMessageId: mapped.lastSeenMessageId,
         })
       }
     } catch (error) {

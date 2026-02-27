@@ -24,6 +24,7 @@ interface MiniChatProps {
   onMinimize?: () => void
   isMinimized?: boolean
   initialShowTooltip?: boolean
+  lastSeenMessageId?: string
 }
 
 export function MiniChat({
@@ -35,7 +36,8 @@ export function MiniChat({
   onClose,
   onMinimize,
   isMinimized = false,
-  initialShowTooltip = false
+  initialShowTooltip = false,
+  lastSeenMessageId,
 }: MiniChatProps) {
   const [inputValue, setInputValue] = useState("")
   const [showIncomingTooltip, setShowIncomingTooltip] = useState(initialShowTooltip)
@@ -59,6 +61,18 @@ export function MiniChat({
       }
     }
   })
+
+  // Mark as read when active and has messages
+  useEffect(() => {
+    if (!isMinimized && messages.length > 0 && conversationId) {
+      const latestMessage = messages[0]
+      if (!latestMessage.isOwn && latestMessage.id !== lastSeenMessageId) {
+        console.log('Marking as read:', latestMessage.id, lastSeenMessageId)
+        markRead(latestMessage.id)
+      }
+    }
+  }, [isMinimized, messages, conversationId, lastSeenMessageId, markRead])
+
   const { user } = useAuth()
 
   const handleSend = () => {

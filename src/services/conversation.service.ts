@@ -14,6 +14,7 @@ export const mapConversationToUI = (conv: ApiConversation, currentUserId: string
         }
     }
 
+
     return {
         id: conv.id,
         name: name || "Người dùng Lumi",

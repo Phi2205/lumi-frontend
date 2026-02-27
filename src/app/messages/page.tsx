@@ -131,6 +131,7 @@ export default function MessagesPage() {
                 onSendMessage={handleSendMessage}
                 onMessageViewed={(msgId) => {
                   if (selectedConversationId) {
+                    console.log("onMessageViewed", msgId)
                     markRead(msgId)
                     markAsRead(selectedConversationId, msgId)
                   }

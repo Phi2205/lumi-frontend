@@ -43,6 +43,7 @@ export const MessageItem = memo(({ message, isDarkMode, participants, currentUse
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
+          console.log("onMessageViewed", message.id)
           onMessageViewed(message.id);
           // console.log("myLastSeenId", myLastSeenId)
           // console.log("message.id", message.id)
