@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useChatRealtime } from '@/socket/chat/useChatRealtime'
 import { useAuth } from '@/contexts/AuthContext'
 import { getConversationDetailService, mapConversationToUI } from '@/services/conversation.service'
+import { ParticipantUI } from './ConversationList'
 
 interface MiniChatSession {
   recipientId: string
@@ -14,10 +15,11 @@ interface MiniChatSession {
   conversationId?: string
   isMinimized?: boolean
   initialShowTooltip?: boolean
+  participants?: ParticipantUI[]
 }
 
 interface MiniChatContextType {
-  openChat: (session: Omit<MiniChatSession, 'isMinimized'>) => void
+  openChat: (session: Omit<MiniChatSession, 'isMinimized' | 'participants'> & { participants?: ParticipantUI[] }) => void
   closeChat: (recipientId: string) => void
   toggleMinimize: (recipientId: string) => void
   chats: MiniChatSession[]
@@ -31,7 +33,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const isMessagesPage = pathname?.startsWith('/messages')
 
-  const openChat = (session: Omit<MiniChatSession, 'isMinimized'>) => {
+  const openChat = (session: Omit<MiniChatSession, 'isMinimized' | 'participants'> & { participants?: ParticipantUI[] }) => {
     setChats((prev) => {
       // If already open, just bring to front or un-minimize
       if (prev.find((c) => c.recipientId === session.recipientId)) {
@@ -92,6 +94,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
                         conversationId: mapped.id,
                         isMinimized: true,
                         initialShowTooltip: true,
+                        participants: mapped.participants,
                       },
                     ]
                     return next.length > 3 ? next.slice(1) : next
@@ -103,6 +106,26 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
         }
         return prev
       })
+    },
+    onUserReadMessage: (data: { conversation_id: string, user_id: string, last_seen_message_id?: string, message_id?: string }) => {
+      console.log('User read message in MiniChatContext:', data)
+      const lastSeenId = data.last_seen_message_id || data.message_id
+      if (!lastSeenId) return
+
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.conversationId === data.conversation_id
+            ? {
+              ...chat,
+              participants: chat.participants?.map((p) =>
+                p.id === data.user_id
+                  ? { ...p, lastSeenMessageId: lastSeenId }
+                  : p
+              )
+            }
+            : chat
+        )
+      )
     },
   })
 
@@ -127,6 +150,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
                   onClose={() => closeChat(chat.recipientId)}
                   onMinimize={() => toggleMinimize(chat.recipientId)}
                   isMinimized={chat.isMinimized}
+                  participants={chat.participants}
                 />
               </div>
             ))}
@@ -154,6 +178,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
                   onMinimize={() => toggleMinimize(chat.recipientId)}
                   isMinimized={chat.isMinimized}
                   initialShowTooltip={chat.initialShowTooltip}
+                  participants={chat.participants}
                 />
               </div>
             ))}

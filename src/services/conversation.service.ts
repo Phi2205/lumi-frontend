@@ -25,6 +25,7 @@ export const mapConversationToUI = (conv: ApiConversation, currentUserId: string
         isOnline: false,
         lastMessageId: conv.last_message_id,
         lastSeenMessageId: conv.last_seen_message_id,
+        lastMessageAt: conv.last_message_at,
         participants: conv.participants.map(p => ({
             id: p.id,
             name: p.name,

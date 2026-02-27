@@ -30,18 +30,23 @@ interface ChatWindowProps {
   onMessageViewed?: (messageId: string) => void
 }
 
-const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, onMessageViewed }: { message: MessageUI, isDarkMode: boolean, participants: ParticipantUI[], currentUserId?: string, onMessageViewed?: (id: string) => void }) => {
-  const itemRef = useEffect(() => {
+export const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, onMessageViewed }: { message: MessageUI, isDarkMode: boolean, participants: ParticipantUI[], currentUserId?: string, onMessageViewed?: (id: string) => void }) => {
+  const [showDetails, setShowDetails] = useState(false);
+  useEffect(() => {
     // Chỉ gửi event nếu là tin nhắn của người khác và ID tin nhắn lớn hơn ID đã xem cuối cùng của mình
     const myInfo = participants.find(p => p.id === currentUserId);
     const myLastSeenId = myInfo?.lastSeenMessageId;
-
+    console.log("myLastSeenId", myLastSeenId)
+    // console.log("participants", participants)
     if (!onMessageViewed || message.isOwn || (myLastSeenId && message.id <= myLastSeenId)) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           onMessageViewed(message.id);
+          // console.log("myLastSeenId", myLastSeenId)
+          // console.log("message.id", message.id)
+          // console.log("onMessageViewed", message.id)
           observer.disconnect(); // Chỉ gửi một lần
         }
       },
@@ -56,20 +61,31 @@ const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, on
 
   return (
     <div id={`msg-${message.id}`} className={`flex gap-3 ${message.isOwn ? "flex-row-reverse" : "flex-row"} animate-in fade-in duration-400`}>
+
       {!message.isOwn && (
         <Avatar
-          className="h-9 w-9 flex-shrink-0 border"
+          className="h-9 w-9 flex-shrink-0 border mt-6"
           style={{
             borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
           }}
         >
-          <AvatarImage src={message.senderAvatar || "/placeholder.svg"} alt={message.sender} />
+          <AvatarImage src={message.senderAvatar || "/avatar-default.jpg"} alt={message.sender} />
           <AvatarFallback className="bg-zinc-800 text-white text-xs">{message.sender[0]}</AvatarFallback>
         </Avatar>
       )}
-      <div className={`flex flex-col gap-1.5 max-w-[80%] ${message.isOwn ? "items-end" : "items-start"}`}>
+
+      <div className={`flex flex-col gap-1 max-w-[80%] ${message.isOwn ? "items-end" : "items-start"}`}>
+        <span
+          className="text-[10px] px-2 mb-0.5 uppercase tracking-wider font-semibold opacity-60"
+          style={{
+            color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.5)'
+          }}
+        >
+          {message.timestamp}
+        </span>
         <div
-          className={`rounded-2xl px-4 py-2.5 text-[14px] leading-[1.5] shadow-sm transition-all ${message.isOwn
+          onClick={() => setShowDetails(!showDetails)}
+          className={`rounded-2xl px-4 py-2.5 text-[14px] cursor-pointer active:scale-[0.98] select-none leading-[1.5] shadow-sm transition-all ${message.isOwn
             ? 'bg-brand-primary text-white font-medium border border-white/10'
             : isDarkMode
               ? 'bg-zinc-800/80 text-white border border-white/5 font-normal'
@@ -78,27 +94,20 @@ const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, on
         >
           <p>{message.content}</p>
         </div>
-        <div className="flex items-center gap-1.5 px-1">
-          <span
-            className="text-[11px] uppercase tracking-wider font-semibold"
-            style={{
-              color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.5)'
-            }}
-          >
-            {message.timestamp}
-          </span>
+        <div className="flex items-center gap-1.5 px-1 min-h-[16px]">
+
           {message.isOwn && (
-            <div className="flex items-center mt-1">
+            <div className="flex items-center">
               <div className="flex -space-x-1.5 ml-1">
                 {participants
-                  .filter(p => p.id !== currentUserId && p.lastSeenMessageId && message.id <= p.lastSeenMessageId)
+                  .filter(p => p.id !== currentUserId && p.lastSeenMessageId && (showDetails ? message.id <= p.lastSeenMessageId : message.id === p.lastSeenMessageId))
                   .map((p) => (
                     <Avatar
                       key={p.id}
-                      className="h-4 w-4 ring-1 ring-white/20 border-none"
+                      className="h-4 w-4 ring-1 ring-white/20 border-none transition-all"
                       title={p.name}
                     >
-                      <AvatarImage src={p.avatar_url || "/placeholder.svg"} />
+                      <AvatarImage src={p.avatar_url || "/avatar-default.jpg"} />
                       <AvatarFallback className="text-[6px] bg-zinc-800 text-white">
                         {p.name[0]}
                       </AvatarFallback>
@@ -110,7 +119,7 @@ const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, on
                 .filter(p => p.id !== currentUserId)
                 .every(p => !p.lastSeenMessageId || p.lastSeenMessageId < message.id) && (
                   <svg
-                    className="w-3.5 h-3.5 text-zinc-500"
+                    className="w-3.5 h-3.5 text-zinc-500 ml-1"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"

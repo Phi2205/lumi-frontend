@@ -13,15 +13,21 @@ type MessageCache = {
 };
 
 // Helper function to map API message to MessageUI
-const mapMessageToUI = (m: any, currentUserId: string): MessageUI => ({
-  id: m.id,
-  sender: m.sender?.name || m.sender?.username || "Unknown",
-  senderAvatar: m.sender?.avatar_url || "/avatar-default.jpg",
-  content: m.content,
-  timestamp: new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-  isOwn: m.sender?.id === currentUserId || m.sender_id === currentUserId,
-  isRead: m.is_read
-});
+const mapMessageToUI = (m: any, currentUserId: string): MessageUI => {
+  const date = new Date(m.created_at);
+  const isToday = date.toDateString() === new Date().toDateString();
+  const time = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
+
+  return {
+    id: m.id,
+    sender: m.sender?.name || m.sender?.username || "Unknown",
+    senderAvatar: m.sender?.avatar_url || "/avatar-default.jpg",
+    content: m.content,
+    timestamp: isToday ? time : `${dateStr} ${time}`,
+    isOwn: m.sender?.id === currentUserId || m.sender_id === currentUserId
+  };
+};
 
 export const useMessages = (conversationId?: string) => {
   const { user } = useAuth();

@@ -17,6 +17,8 @@ import { User, FriendshipStatus } from "@/types/user.type"
 import { ProfileSkeleton } from "@/components/skeleton"
 import { useMiniChat } from "@/components/messages/MiniChatContext"
 import { getOrCreatePrivateConversationApi } from "@/apis/conversation.api"
+import { useAuth } from "@/contexts/AuthContext"
+import { mapConversationToUI } from "@/services/conversation.service"
 
 interface Post {
   id: number
@@ -50,6 +52,7 @@ export default function UserProfilePage() {
   const imgRef = useRef<HTMLImageElement | null>(null)
 
   const { openChat } = useMiniChat()
+  const { user } = useAuth()
   const [isStartingChat, setIsStartingChat] = useState(false)
 
   const handleDarkModeToggle = (checked: boolean) => {
@@ -176,17 +179,20 @@ export default function UserProfilePage() {
 
   const handleStartChat = async () => {
     if (!userProfile?.id || isStartingChat) return
-    
+
     try {
       setIsStartingChat(true)
       const res = await getOrCreatePrivateConversationApi(userProfile.id)
       if (res.data.success) {
         const conversation = res.data.data
+        console.log("Conversation:", conversation)
+        const mapped = mapConversationToUI(conversation, user?.id || "")
         openChat({
           recipientId: userProfile.id,
           recipientName: userProfile.name || "User",
           recipientAvatar: userProfile.avatar_url || "/avatar-default.jpg",
-          conversationId: conversation.id
+          conversationId: conversation.id,
+          participants: mapped.participants,
         })
       }
     } catch (error) {
@@ -340,12 +346,12 @@ export default function UserProfilePage() {
             <>
               {/* Cover Photo */}
               <GlassCard variant="lg" className="h-72 md:h-96 rounded-3xl overflow-hidden mb-0 p-0">
-                  <Image
-                    src={ "/bg12.jpg"}
-                    alt="Profile cover"
-                    fill
-                    className="object-cover h-[50%]"
-                  />
+                <Image
+                  src={"/bg12.jpg"}
+                  alt="Profile cover"
+                  fill
+                  className="object-cover h-[50%]"
+                />
               </GlassCard>
 
               {/* Profile Header Section */}
@@ -385,16 +391,16 @@ export default function UserProfilePage() {
                           {buttonConfig.text}
                         </GlassButton>
                       )}
-                      
-                      <GlassButton 
-                        className="bg-white/10 hover:bg-white/20" 
+
+                      <GlassButton
+                        className="bg-white/10 hover:bg-white/20"
                         title="Send message"
                         onClick={handleStartChat}
                         disabled={isStartingChat}
                       >
                         <Send className="w-4 h-4 md:w-6 md:h-6" />
                       </GlassButton>
-                      
+
                       <GlassButton className="bg-white/10 hover:bg-white/20" title="Share profile">
                         <Share2 className="w-4 h-4 md:w-6 md:h-6" />
                       </GlassButton>
@@ -415,8 +421,8 @@ export default function UserProfilePage() {
 
                   <div className="flex flex-wrap gap-4 text-sm text-white/70">
                     <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-brand-primary" />
-                        {userProfile?.location || "Not specified"}
+                      <MapPin className="w-4 h-4 text-brand-primary" />
+                      {userProfile?.location || "Not specified"}
                     </div>
                     {userProfile?.website && (
                       <div className="flex items-center gap-2">

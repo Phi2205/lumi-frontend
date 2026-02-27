@@ -11,12 +11,15 @@ import { GlassButton } from "@/lib/components/glass-button"
 import { useMessages } from "@/hooks/chat/useMessages"
 import { useAuth } from "@/contexts/AuthContext"
 import { useChatRealtime } from "@/socket/chat/useChatRealtime"
+import { MessageItem } from "./ChatWindow"
+import { ParticipantUI } from "./ConversationList"
 
 interface MiniChatProps {
   conversationId?: string
   recipientId: string
   recipientName: string
   recipientAvatar: string
+  participants?: ParticipantUI[]
   onClose: () => void
   onMinimize?: () => void
   isMinimized?: boolean
@@ -28,6 +31,7 @@ export function MiniChat({
   recipientId,
   recipientName,
   recipientAvatar,
+  participants = [],
   onClose,
   onMinimize,
   isMinimized = false,
@@ -45,7 +49,7 @@ export function MiniChat({
   }, [initialShowTooltip])
 
   const { messages, appendRealtimeMessage, loading } = useMessages(conversationId)
-  const { sendMessage } = useChatRealtime({
+  const { sendMessage, markRead } = useChatRealtime({
     conversationId,
     onNewMessageReceived: (msg) => {
       appendRealtimeMessage(msg);
@@ -148,56 +152,57 @@ export function MiniChat({
       <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse gap-4 scroll-glass relative z-10">
         {/* Message groups */}
         {messages.map((msg, idx) => (
-          <div key={msg.id} className={`flex flex-col ${msg.isOwn ? 'items-end' : 'items-start'} animate-in fade-in duration-400`}>
-            <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-[14px] leading-[1.5] shadow-md ${msg.isOwn
-              ? 'bg-brand-primary text-white font-medium border border-white/10'
-              : 'bg-white/10 backdrop-blur-md text-white border border-white/5 font-normal'
-              }`}>
-              {msg.content}
-            </div>
-            {msg.isOwn && (
-              <div className="flex items-center mt-1 px-1">
-                {msg.isRead ? (
-                  <div className="flex">
-                    <svg
-                      className="w-3 h-3 text-blue-400"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M5 12l4 4L19 6" />
-                    </svg>
-                    <svg
-                      className="w-3 h-3 text-blue-400 ml-[-6px]"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M7 14l3 3L21 6" />
-                    </svg>
-                  </div>
-                ) : (
-                  <svg
-                    className="w-3 h-3 text-white/30"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12l4 4L19 6" />
-                  </svg>
-                )}
-              </div>
-            )}
-          </div>
+          // <div key={msg.id} className={`flex flex-col ${msg.isOwn ? 'items-end' : 'items-start'} animate-in fade-in duration-400`}>
+          //   <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-[14px] leading-[1.5] shadow-md ${msg.isOwn
+          //     ? 'bg-brand-primary text-white font-medium border border-white/10'
+          //     : 'bg-white/10 backdrop-blur-md text-white border border-white/5 font-normal'
+          //     }`}>
+          //     {msg.content}
+          //   </div>
+          //   {msg.isOwn && (
+          //     <div className="flex items-center mt-1 px-1">
+          //       {msg.isRead ? (
+          //         <div className="flex">
+          //           <svg
+          //             className="w-3 h-3 text-blue-400"
+          //             viewBox="0 0 24 24"
+          //             fill="none"
+          //             stroke="currentColor"
+          //             strokeWidth="3"
+          //             strokeLinecap="round"
+          //             strokeLinejoin="round"
+          //           >
+          //             <path d="M5 12l4 4L19 6" />
+          //           </svg>
+          //           <svg
+          //             className="w-3 h-3 text-blue-400 ml-[-6px]"
+          //             viewBox="0 0 24 24"
+          //             fill="none"
+          //             stroke="currentColor"
+          //             strokeWidth="3"
+          //             strokeLinecap="round"
+          //             strokeLinejoin="round"
+          //           >
+          //             <path d="M7 14l3 3L21 6" />
+          //           </svg>
+          //         </div>
+          //       ) : (
+          //         <svg
+          //           className="w-3 h-3 text-white/30"
+          //           viewBox="0 0 24 24"
+          //           fill="none"
+          //           stroke="currentColor"
+          //           strokeWidth="3"
+          //           strokeLinecap="round"
+          //           strokeLinejoin="round"
+          //         >
+          //           <path d="M5 12l4 4L19 6" />
+          //         </svg>
+          //       )}
+          //     </div>
+          //   )}
+          // </div>
+          <MessageItem message={msg} isDarkMode={false} participants={participants} currentUserId={user?.id} />
         ))}
 
         {/* Intro Section - Đưa xuống cuối DOM để hiển thị ở đầu danh sách khi dùng flex-col-reverse */}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { ConversationList, type ConversationUI } from "@/components/messages/ConversationList"
 import { ChatWindow, type MessageUI } from "@/components/messages/ChatWindow"
 import { useDarkMode } from "@/hooks/useDarkMode"
@@ -55,6 +55,32 @@ export default function MessagesPage() {
     sendMessage(message)
   }
 
+  const handleSelectConversation = (id: string) => {
+    setSelectedConversationId(id)
+    const conv = conversations.find(c => c.id === id)
+    const lastSeenMessageId = conv?.participants.find(p => p.id === user?.id)?.lastSeenMessageId || 0
+    console.log("lastSeenMessageId", lastSeenMessageId)
+    console.log("conv?.lastMessageId", conv?.lastMessageId)
+    if (lastSeenMessageId && conv?.lastMessageId == lastSeenMessageId) {
+      console.log("no need to mark as read")
+      return
+    }
+    // Nếu có tin nhắn (lastMessageId) VÀ (chưa từng xem tin nhắn nào HOẶC tin nhắn mới nhất lớn hơn tin nhắn đã xem cuối cùng)
+    if (conv?.lastMessageId && (lastSeenMessageId < conv.lastMessageId)) {
+      console.log("mark as read")
+      markRead(conv.lastMessageId, id)
+      markAsRead(id, conv.lastMessageId)
+    } else {
+      console.log("mark as read else")
+      markAsRead(id)
+    }
+
+    console.log("selected conversation id", id)
+    console.log("conversations", conversations)
+    console.log("conv:", conv)
+    setShowChatMobile(true)
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <BackgroundRenderer
@@ -74,17 +100,7 @@ export default function MessagesPage() {
           <ConversationList
             conversations={conversations}
             selectedId={selectedConversationId}
-            onSelect={(id) => {
-              setSelectedConversationId(id)
-              const conv = conversations.find(c => c.id === id)
-              if (conv?.lastMessageId) {
-                markRead(conv.lastMessageId, id)
-                markAsRead(id, conv.lastMessageId)
-              } else {
-                markAsRead(id)
-              }
-              setShowChatMobile(true)
-            }}
+            onSelect={handleSelectConversation}
             loading={loading}
           />
         </div>

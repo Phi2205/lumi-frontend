@@ -3,6 +3,7 @@ import { ConversationUI } from "@/components/messages/ConversationList";
 import { getConversationsService, mapConversationToUI } from "@/services/conversation.service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChatRealtime } from "@/socket/chat/useChatRealtime";
+import { formatTime } from "@/utils/format";
 
 export const useConversations = () => {
   const { user } = useAuth();
@@ -51,20 +52,41 @@ export const useConversations = () => {
     loadConversations();
   }, [loadConversations]);
 
-  const handleConversationUpdate = useCallback((data: any) => {
-    setConversations(prev => prev.map(conv => {
-      if (conv.id === data.conversationId) {
-        return {
-          ...conv,
-          lastMessage: data.lastMessage.content,
-          timestamp: "now",
-          unread: true,
-          unreadCount: (conv.unreadCount || 0) + 1
-        };
-      }
-      return conv;
-    }));
+  // Update relative timestamps automatically every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setConversations(prev => prev.map(conv => {
+        if (!conv.lastMessageAt) return conv;
+        const newTimestamp = formatTime(conv.lastMessageAt);
+        if (newTimestamp === conv.timestamp) return conv;
+        return { ...conv, timestamp: newTimestamp };
+      }));
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, []);
+
+  const handleConversationUpdate = useCallback((data: any) => {
+    setConversations(prev => {
+      const convIndex = prev.findIndex(conv => conv.id === data.conversationId);
+      if (convIndex === -1) return prev;
+
+      const isMe = user?.id === data.senderId;
+
+      const updatedConv = {
+        ...prev[convIndex],
+        lastMessage: data.lastMessage.content,
+        lastMessageId: data.message_id,
+        lastMessageAt: data.lastMessage.createdAt || new Date().toISOString(),
+        timestamp: "vừa xong",
+        unread: isMe ? prev[convIndex].unread : true,
+        unreadCount: isMe ? prev[convIndex].unreadCount : (prev[convIndex].unreadCount || 0) + 1
+      };
+
+      const filtered = prev.filter((_, i) => i !== convIndex);
+      return [updatedConv, ...filtered];
+    });
+  }, [user?.id]);
 
   const handleUserReadMessage = useCallback((data: any) => {
     setConversations(prev => prev.map(conv => {

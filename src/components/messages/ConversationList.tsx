@@ -25,6 +25,7 @@ export interface ConversationUI {
   lastMessageId?: string
   lastSeenMessageId?: string
   participants: ParticipantUI[]
+  lastMessageAt?: string
 }
 
 interface ConversationListProps {

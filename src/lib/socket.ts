@@ -14,3 +14,16 @@ export const getSocket = () => {
   }
   return socket;
 };
+
+export const reconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+    socket.connect();
+  }
+};
+
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+  }
+};
