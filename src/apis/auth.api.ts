@@ -1,5 +1,6 @@
 import axiosInstance from './axiosInstance';
 import axios from 'axios';
+import { reconnectSocket } from '@/lib/socket';
 
 export interface LoginPayload {
   email: string;

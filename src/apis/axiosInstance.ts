@@ -46,7 +46,6 @@ axiosInstance.interceptors.response.use(
             return refreshTokenApi()
                 .then(() => {
                     console.log("Token refreshed successfully");
-                    reconnectSocket(); // Kết nối lại socket với token mới
                     processQueue(null);
                     return axiosInstance(originalRequest);
                 })
@@ -62,6 +61,7 @@ axiosInstance.interceptors.response.use(
                     return Promise.reject(refreshError);
                 })
                 .finally(() => {
+                    reconnectSocket();
                     isRefreshing = false;
                 });
         }

@@ -18,7 +18,9 @@ export const getSocket = () => {
 export const reconnectSocket = () => {
   if (socket) {
     socket.disconnect();
+    console.log("Socket disconnected");
     socket.connect();
+    console.log("Socket connected");
   }
 };
 
