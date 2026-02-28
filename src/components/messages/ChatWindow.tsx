@@ -35,7 +35,7 @@ const listUserSeenMessage = (participants: ParticipantUI[], messageId: string, c
   return listUserSeen
 }
 
-export const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, onMessageViewed }: { message: MessageUI, isDarkMode: boolean, participants: ParticipantUI[], currentUserId?: string, onMessageViewed?: (id: string) => void }) => {
+export const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, onMessageViewed, showAuto }: { message: MessageUI, isDarkMode: boolean, participants: ParticipantUI[], currentUserId?: string, onMessageViewed?: (id: string) => void, showAuto: boolean }) => {
   const [showDetails, setShowDetails] = useState(false);
 
 
@@ -66,6 +66,8 @@ export const MessageItem = memo(({ message, isDarkMode, participants, currentUse
 
   //   return () => observer.disconnect();
   // }, [message.id, onMessageViewed, message.isOwn, participants, currentUserId]);
+
+
 
   return (
     <div id={`msg-${message.id}`} className={`flex gap-3 ${message.isOwn ? "flex-row-reverse" : "flex-row"} animate-in fade-in duration-400`}>
@@ -102,19 +104,23 @@ export const MessageItem = memo(({ message, isDarkMode, participants, currentUse
         >
           <p>{message.content}</p>
         </div>
-        <div className="flex items-center gap-1.5 px-1 min-h-[16px]">
-
-          {message.isOwn && (
-            <div className="flex items-center">
+        <div
+          className={`grid transition-all duration-300 ease-in-out ${message.isOwn && (showAuto || showDetails)
+              ? "grid-rows-[1fr] opacity-100 mt-1.5"
+              : "grid-rows-[0fr] opacity-0 mt-0"
+            }`}
+        >
+          <div className="overflow-hidden">
+            <div className="flex items-center justify-end px-1 pb-1">
               {(() => {
                 const readBy = listUserSeenMessage(participants, message.id, currentUserId);
                 if (readBy.length > 0) {
                   return (
-                    <div className="flex -space-x-1.5 ml-1">
+                    <div className="flex -space-x-1.5">
                       {readBy.map((p) => (
                         <Avatar
                           key={p.id}
-                          className="h-4 w-4 ring-1 ring-white/20 border-none transition-all"
+                          className="h-4 w-4 ring-1 ring-white/20 border-none transition-all hover:scale-110 active:scale-95"
                           title={p.name}
                         >
                           <AvatarImage src={p.avatar_url || "/avatar-default.jpg"} />
@@ -128,7 +134,7 @@ export const MessageItem = memo(({ message, isDarkMode, participants, currentUse
                 }
                 return (
                   <svg
-                    className="w-3.5 h-3.5 text-zinc-500 ml-1"
+                    className="w-3.5 h-3.5 text-zinc-500"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -141,7 +147,7 @@ export const MessageItem = memo(({ message, isDarkMode, participants, currentUse
                 );
               })()}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
@@ -153,6 +159,8 @@ MessageItem.displayName = "MessageItem";
 export const ChatWindow = memo(({ conversationName, conversationAvatar, participants, currentUserId, messages, onSendMessage, onMessageViewed, isDarkMode = true }: ChatWindowProps) => {
   const [inputValue, setInputValue] = useState("")
 
+  // Biến đếm để chỉ cho phép hiển thị 1 lần (tin nhắn mới nhất có người xem)
+  let autoShowCount = 1;
 
   const handleSend = () => {
     if (inputValue.trim()) {
@@ -232,9 +240,34 @@ export const ChatWindow = memo(({ conversationName, conversationAvatar, particip
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col-reverse gap-4 relative z-10 scroll-glass">
-        {messages.map((message) => (
-          <MessageItem key={message.id} message={message} participants={participants} currentUserId={currentUserId} isDarkMode={isDarkMode} onMessageViewed={onMessageViewed} />
-        ))}
+        {messages.map((message, index) => {
+          // Kiểm tra xem tin nhắn này có ai xem chưa
+          const seenByCount = listUserSeenMessage(participants, message.id, currentUserId).length;
+
+          let canShow = false;
+
+          // 1. Nếu là tin nhắn mới nhất, là của mình và chưa ai đọc -> hiện dấu tích
+          if (index === 0 && message.isOwn && seenByCount === 0) {
+            canShow = true;
+          }
+          // 2. Nếu là tin nhắn của mình, đã có người đọc -> hiện avatar (chỉ hiện 1 cái mới nhất đã đọc)
+          else if (message.isOwn && seenByCount > 0 && autoShowCount > 0) {
+            canShow = true;
+            autoShowCount--;
+          }
+
+          return (
+            <MessageItem
+              key={message.id}
+              message={message}
+              participants={participants}
+              currentUserId={currentUserId}
+              isDarkMode={isDarkMode}
+              onMessageViewed={onMessageViewed}
+              showAuto={canShow}
+            />
+          );
+        })}
       </div>
 
       {/* Input Area */}
