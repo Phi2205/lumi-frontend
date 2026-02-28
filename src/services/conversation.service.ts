@@ -14,7 +14,8 @@ export const mapConversationToUI = (conv: ApiConversation, currentUserId: string
         }
     }
 
-
+    const myParticipant = conv.participants.find(p => p.id === currentUserId);
+    console.log("conv", conv.unread_count);
     return {
         id: conv.id,
         name: name || "Người dùng Lumi",
@@ -25,7 +26,7 @@ export const mapConversationToUI = (conv: ApiConversation, currentUserId: string
         unreadCount: conv.unread_count || 0,
         isOnline: false,
         lastMessageId: conv.last_message_id,
-        lastSeenMessageId: conv.last_seen_message_id,
+        lastSeenMessageId: myParticipant?.last_seen_message_id || conv.last_seen_message_id,
         lastMessageAt: conv.last_message_at,
         participants: conv.participants.map(p => ({
             id: p.id,

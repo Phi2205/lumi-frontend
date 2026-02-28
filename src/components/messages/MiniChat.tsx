@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   X, Minus, Send, Mic, Image as ImageIcon,
   Smile, ThumbsUp, ChevronDown, MoreHorizontal,
@@ -25,6 +25,7 @@ interface MiniChatProps {
   isMinimized?: boolean
   initialShowTooltip?: boolean
   lastSeenMessageId?: string
+  unreadCount?: number
 }
 
 export function MiniChat({
@@ -38,9 +39,11 @@ export function MiniChat({
   isMinimized = false,
   initialShowTooltip = false,
   lastSeenMessageId,
+  unreadCount = 0,
 }: MiniChatProps) {
   const [inputValue, setInputValue] = useState("")
   const [showIncomingTooltip, setShowIncomingTooltip] = useState(initialShowTooltip)
+  const [lastEmittedReadId, setLastEmittedReadId] = useState<string | null>(null)
 
   // Auto-hide initial tooltip
   useEffect(() => {
@@ -62,16 +65,26 @@ export function MiniChat({
     }
   })
 
-  // Mark as read when active and has messages
-  useEffect(() => {
+  // Define handleMarkRead with useCallback
+  const handleMarkRead = useCallback(() => {
     if (!isMinimized && messages.length > 0 && conversationId) {
       const latestMessage = messages[0]
-      if (!latestMessage.isOwn && latestMessage.id !== lastSeenMessageId) {
-        console.log('Marking as read:', latestMessage.id, lastSeenMessageId)
+      if (
+        !latestMessage.isOwn &&
+        latestMessage.id !== lastSeenMessageId &&
+        latestMessage.id !== lastEmittedReadId
+      ) {
+        console.log('Marking as read (mini):', latestMessage.id)
         markRead(latestMessage.id)
+        setLastEmittedReadId(latestMessage.id)
       }
     }
-  }, [isMinimized, messages, conversationId, lastSeenMessageId, markRead])
+  }, [isMinimized, messages, conversationId, lastSeenMessageId, lastEmittedReadId, markRead])
+
+  // Mark as read when active and has messages
+  useEffect(() => {
+    handleMarkRead()
+  }, [handleMarkRead])
 
   const { user } = useAuth()
 
@@ -81,6 +94,8 @@ export function MiniChat({
       setInputValue("")
     }
   }
+
+  console.log('unreadCount', unreadCount)
 
   const lastMessage = messages[0]?.content || "Chưa có tin nhắn"
 
@@ -99,6 +114,13 @@ export function MiniChat({
         <div className="relative cursor-pointer transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl">
           <StoryAvatar className="w-12 h-12" src={recipientAvatar || "/avatar-default.jpg"} />
           <span className="absolute bottom-1 right-1 h-3.5 w-3.5 rounded-full bg-green-500 ring-2 ring-[#1c1c1c]" />
+          {unreadCount > 0 && (
+            <div className="absolute -top-1 -left-1 min-w-[20px] h-5 px-1.5 rounded-full bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center shadow-lg border border-white/20 animate-in zoom-in duration-300">
+              <span className="text-[10px] font-bold text-white tabular-nums">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Message Tooltip (Bubble style) */}
@@ -216,7 +238,7 @@ export function MiniChat({
           //     </div>
           //   )}
           // </div>
-          <MessageItem message={msg} isDarkMode={false} participants={participants} currentUserId={user?.id} />
+          <MessageItem key={msg.id} message={msg} isDarkMode={false} participants={participants} currentUserId={user?.id} />
         ))}
 
         {/* Intro Section - Đưa xuống cuối DOM để hiển thị ở đầu danh sách khi dùng flex-col-reverse */}

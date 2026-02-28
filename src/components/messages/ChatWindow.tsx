@@ -30,35 +30,42 @@ interface ChatWindowProps {
   onMessageViewed?: (messageId: string) => void
 }
 
+const listUserSeenMessage = (participants: ParticipantUI[], messageId: string, currentUserId: string | undefined) => {
+  const listUserSeen = participants.filter(p => p.id !== currentUserId && p.lastSeenMessageId && parseInt(p.lastSeenMessageId) >= parseInt(messageId))
+  return listUserSeen
+}
+
 export const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, onMessageViewed }: { message: MessageUI, isDarkMode: boolean, participants: ParticipantUI[], currentUserId?: string, onMessageViewed?: (id: string) => void }) => {
   const [showDetails, setShowDetails] = useState(false);
-  useEffect(() => {
-    // Chỉ gửi event nếu là tin nhắn của người khác và ID tin nhắn lớn hơn ID đã xem cuối cùng của mình
-    const myInfo = participants.find(p => p.id === currentUserId);
-    const myLastSeenId = myInfo?.lastSeenMessageId;
-    console.log("myLastSeenId", myLastSeenId)
-    // console.log("participants", participants)
-    if (!onMessageViewed || message.isOwn || (myLastSeenId && message.id <= myLastSeenId)) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          console.log("onMessageViewed", message.id)
-          onMessageViewed(message.id);
-          // console.log("myLastSeenId", myLastSeenId)
-          // console.log("message.id", message.id)
-          // console.log("onMessageViewed", message.id)
-          observer.disconnect(); // Chỉ gửi một lần
-        }
-      },
-      { threshold: 0.5 } // 50% tin nhắn hiện ra thì tính là đã xem
-    );
 
-    const currentEl = document.getElementById(`msg-${message.id}`);
-    if (currentEl) observer.observe(currentEl);
+  // useEffect(() => {
+  //   // Chỉ gửi event nếu là tin nhắn của người khác và ID tin nhắn lớn hơn ID đã xem cuối cùng của mình
+  //   const myInfo = participants.find(p => p.id === currentUserId);
+  //   const myLastSeenId = myInfo?.lastSeenMessageId;
+  //   console.log("myLastSeenId", myLastSeenId)
+  //   // console.log("participants", participants)
+  //   if (!onMessageViewed || message.isOwn || (myLastSeenId && message.id <= myLastSeenId)) return;
 
-    return () => observer.disconnect();
-  }, [message.id, onMessageViewed, message.isOwn, participants, currentUserId]);
+  //   const observer = new IntersectionObserver(
+  //     ([entry]) => {
+  //       if (entry.isIntersecting) {
+  //         console.log("onMessageViewed", message.id)
+  //         onMessageViewed(message.id);
+  //         // console.log("myLastSeenId", myLastSeenId)
+  //         // console.log("message.id", message.id)
+  //         // console.log("onMessageViewed", message.id)
+  //         observer.disconnect(); // Chỉ gửi một lần
+  //       }
+  //     },
+  //     { threshold: 0.5 } // 50% tin nhắn hiện ra thì tính là đã xem
+  //   );
+
+  //   const currentEl = document.getElementById(`msg-${message.id}`);
+  //   if (currentEl) observer.observe(currentEl);
+
+  //   return () => observer.disconnect();
+  // }, [message.id, onMessageViewed, message.isOwn, participants, currentUserId]);
 
   return (
     <div id={`msg-${message.id}`} className={`flex gap-3 ${message.isOwn ? "flex-row-reverse" : "flex-row"} animate-in fade-in duration-400`}>
@@ -99,26 +106,27 @@ export const MessageItem = memo(({ message, isDarkMode, participants, currentUse
 
           {message.isOwn && (
             <div className="flex items-center">
-              <div className="flex -space-x-1.5 ml-1">
-                {participants
-                  .filter(p => p.id !== currentUserId && p.lastSeenMessageId && (showDetails ? message.id <= p.lastSeenMessageId : message.id === p.lastSeenMessageId))
-                  .map((p) => (
-                    <Avatar
-                      key={p.id}
-                      className="h-4 w-4 ring-1 ring-white/20 border-none transition-all"
-                      title={p.name}
-                    >
-                      <AvatarImage src={p.avatar_url || "/avatar-default.jpg"} />
-                      <AvatarFallback className="text-[6px] bg-zinc-800 text-white">
-                        {p.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                  ))}
-              </div>
-              {/* Fallback to single check if no one ELSE has seen it yet */}
-              {participants
-                .filter(p => p.id !== currentUserId)
-                .every(p => !p.lastSeenMessageId || p.lastSeenMessageId < message.id) && (
+              {(() => {
+                const readBy = listUserSeenMessage(participants, message.id, currentUserId);
+                if (readBy.length > 0) {
+                  return (
+                    <div className="flex -space-x-1.5 ml-1">
+                      {readBy.map((p) => (
+                        <Avatar
+                          key={p.id}
+                          className="h-4 w-4 ring-1 ring-white/20 border-none transition-all"
+                          title={p.name}
+                        >
+                          <AvatarImage src={p.avatar_url || "/avatar-default.jpg"} />
+                          <AvatarFallback className="text-[6px] bg-zinc-800 text-white">
+                            {p.name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                      ))}
+                    </div>
+                  );
+                }
+                return (
                   <svg
                     className="w-3.5 h-3.5 text-zinc-500 ml-1"
                     viewBox="0 0 24 24"
@@ -130,7 +138,8 @@ export const MessageItem = memo(({ message, isDarkMode, participants, currentUse
                   >
                     <path d="M5 12l4 4L19 6" />
                   </svg>
-                )}
+                );
+              })()}
             </div>
           )}
         </div>
@@ -148,6 +157,7 @@ export const ChatWindow = memo(({ conversationName, conversationAvatar, particip
   const handleSend = () => {
     if (inputValue.trim()) {
       onSendMessage?.(inputValue)
+      console.log("input value", inputValue)
       setInputValue("")
     }
   }

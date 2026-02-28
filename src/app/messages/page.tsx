@@ -25,7 +25,6 @@ export default function MessagesPage() {
   const { conversations, loading, error, reload, setConversations, markAsRead } = useConversations()
   const { messages, loading: messagesLoading, hasMore, loadMore, appendRealtimeMessage } = useMessages(selectedConversationId || undefined)
   const { sendMessage, markRead } = useChatRealtime({
-    conversationId: selectedConversationId || undefined,
     onNewMessageReceived: (msg) => {
       appendRealtimeMessage(msg)
     }
@@ -52,32 +51,25 @@ export default function MessagesPage() {
   }, [selectedConversationId])
 
   const handleSendMessage = (message: string) => {
-    sendMessage(message)
+    if (selectedConversationId) {
+      sendMessage(message, selectedConversationId)
+    }
   }
+
+  // Auto mark as read when selecting conversation or receiving new message in selected conversation
+  useEffect(() => {
+    if (selectedConversationId) {
+      const selectedConv = conversations.find(c => c.id === selectedConversationId);
+      if (selectedConv && (selectedConv.unreadCount || 0) > 0 && selectedConv.lastMessageId) {
+        console.log("Auto-marking as read for:", selectedConversationId);
+        markRead(selectedConv.lastMessageId, selectedConversationId);
+        markAsRead(selectedConversationId, selectedConv.lastMessageId);
+      }
+    }
+  }, [selectedConversationId, conversations, markRead, markAsRead]);
 
   const handleSelectConversation = (id: string) => {
     setSelectedConversationId(id)
-    const conv = conversations.find(c => c.id === id)
-    const lastSeenMessageId = conv?.participants.find(p => p.id === user?.id)?.lastSeenMessageId || 0
-    console.log("lastSeenMessageId", lastSeenMessageId)
-    console.log("conv?.lastMessageId", conv?.lastMessageId)
-    if (lastSeenMessageId && conv?.lastMessageId == lastSeenMessageId) {
-      console.log("no need to mark as read")
-      return
-    }
-    // Nếu có tin nhắn (lastMessageId) VÀ (chưa từng xem tin nhắn nào HOẶC tin nhắn mới nhất lớn hơn tin nhắn đã xem cuối cùng)
-    if (conv?.lastMessageId && (lastSeenMessageId < conv.lastMessageId)) {
-      console.log("mark as read")
-      markRead(conv.lastMessageId, id)
-      markAsRead(id, conv.lastMessageId)
-    } else {
-      console.log("mark as read else")
-      markAsRead(id)
-    }
-
-    console.log("selected conversation id", id)
-    console.log("conversations", conversations)
-    console.log("conv:", conv)
     setShowChatMobile(true)
   }
 
@@ -132,7 +124,7 @@ export default function MessagesPage() {
                 onMessageViewed={(msgId) => {
                   if (selectedConversationId) {
                     console.log("onMessageViewed", msgId)
-                    markRead(msgId)
+                    markRead(msgId, selectedConversationId)
                     markAsRead(selectedConversationId, msgId)
                   }
                 }}

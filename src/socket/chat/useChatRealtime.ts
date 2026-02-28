@@ -62,7 +62,7 @@ export const useChatRealtime = (options?: ChatRealtimeOptions) => {
   const sendMessage = useCallback((content: string, convId?: string) => {
     const id = convId || conversationId;
     if (!id || !content.trim()) return;
-
+    console.log("content", content);
     sendMessageEmit({
       conversationId: id,
       content: content.trim(),
