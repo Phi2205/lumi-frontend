@@ -10,6 +10,7 @@ import Link from "next/link"
 interface SidebarProps {
   activeTab?: string
   onTabChange?: (tab: string) => void
+  isMobileHidden?: boolean
 }
 
 const menuItems = [
@@ -24,7 +25,7 @@ const menuItems = [
 
 const mobileItems = menuItems.slice(0, 5)
 
-export function Sidebar({ activeTab: _activeTab, onTabChange }: SidebarProps) {
+export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -96,9 +97,8 @@ export function Sidebar({ activeTab: _activeTab, onTabChange }: SidebarProps) {
       `}</style>
 
       {/* Desktop Sidebar */}
-      <aside className={`hidden md:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] border-r border-white/20 backdrop-blur-md py-8 gap-2 transition-[width,padding] duration-300 transform translate-z-0 ${
-        (isSearchOpen || currentActiveId === "messages") ? 'w-20 px-3' : 'w-64 px-6'
-      }`}>
+      <aside className={`hidden md:flex flex-col fixed left-0 top-16 h-[calc(100vh-64px)] border-r border-white/20 backdrop-blur-md py-8 gap-2 transition-[width,padding] duration-300 transform translate-z-0 ${(isSearchOpen || currentActiveId === "messages") ? 'w-20 px-3' : 'w-64 px-6'
+        }`}>
         <nav className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon
@@ -107,13 +107,11 @@ export function Sidebar({ activeTab: _activeTab, onTabChange }: SidebarProps) {
             const buttonContent = (
               <Button
                 variant={isActive ? "default" : "ghost"}
-                className={`w-full rounded-lg transition-[transform,background-color,color] duration-200 ${
-                  (isSearchOpen || currentActiveId === "messages") ? 'justify-center px-0' : 'justify-start gap-3'
-                } ${
-                  isActive 
-                    ? "text-white shadow-lg scale-[1.02]" 
+                className={`w-full rounded-lg transition-[transform,background-color,color] duration-200 ${(isSearchOpen || currentActiveId === "messages") ? 'justify-center px-0' : 'justify-start gap-3'
+                  } ${isActive
+                    ? "text-white shadow-lg scale-[1.02]"
                     : "hover:bg-white/10 text-white/70 hover:text-white scale-100"
-                }`}
+                  }`}
                 style={isActive ? {
                   backgroundColor: 'var(--brand-primary)',
                   borderColor: 'var(--brand-primary)'
@@ -143,7 +141,8 @@ export function Sidebar({ activeTab: _activeTab, onTabChange }: SidebarProps) {
       <SearchPanel isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
       {/* Mobile Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 flex md:hidden h-16 border-t border-white/20 bg-black/20 backdrop-blur-md px-4 z-50 transform translate-z-0">
+      <nav className={`fixed bottom-0 left-0 right-0 md:hidden h-16 border-t border-white/20 bg-black/20 backdrop-blur-md px-4 z-50 transform translate-z-0 ${isMobileHidden ? 'hidden' : 'flex'
+        }`}>
         <div ref={mobileNavRef} className="flex w-full items-center justify-around relative">
           {/* Sliding indicator pill */}
           <div
@@ -163,11 +162,10 @@ export function Sidebar({ activeTab: _activeTab, onTabChange }: SidebarProps) {
             const mobileButtonContent = (
               <div
                 data-tab-btn
-                className={`relative flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-colors duration-200 ${
-                  isActive 
-                    ? "text-white" 
-                    : "text-white/50 hover:text-white/80"
-                }`}
+                className={`relative flex flex-col items-center justify-center w-12 h-12 rounded-lg transition-colors duration-200 ${isActive
+                  ? "text-white"
+                  : "text-white/50 hover:text-white/80"
+                  }`}
               >
                 <div
                   style={isBouncing && isActive ? { animation: 'tabBounce 0.4s ease' } : {}}

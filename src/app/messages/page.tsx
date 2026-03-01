@@ -81,11 +81,13 @@ export default function MessagesPage() {
         imageError={imageError}
       />
 
-      <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
-      <Sidebar activeTab="messages" />
+      <div className={`${showChatMobile ? 'hidden lg:block' : 'block'}`}>
+        <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
+      </div>
+      <Sidebar activeTab="messages" isMobileHidden={showChatMobile} />
 
       {/* Instagram-style Layout */}
-      <div className="flex h-[calc(100vh)] pt-16 md:ml-20">
+      <div className={`flex h-[calc(100vh)] md:ml-20 ${showChatMobile ? 'pt-0 lg:pt-16' : 'pt-16'}`}>
         {/* Left Sidebar - Conversation List */}
         <div className={`w-full lg:w-[400px] flex-shrink-0 border-r border-white/10 overflow-hidden relative z-10 
           ${showChatMobile ? 'hidden lg:flex' : 'flex'}`}>

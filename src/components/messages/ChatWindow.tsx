@@ -106,8 +106,8 @@ export const MessageItem = memo(({ message, isDarkMode, participants, currentUse
         </div>
         <div
           className={`grid transition-all duration-300 ease-in-out ${message.isOwn && (showAuto || showDetails)
-              ? "grid-rows-[1fr] opacity-100 mt-1.5"
-              : "grid-rows-[0fr] opacity-0 mt-0"
+            ? "grid-rows-[1fr] opacity-100 mt-1.5"
+            : "grid-rows-[0fr] opacity-0 mt-0"
             }`}
         >
           <div className="overflow-hidden">
@@ -187,7 +187,7 @@ export const ChatWindow = memo(({ conversationName, conversationAvatar, particip
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
         }}
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ml-12 lg:ml-0">
           <div className="relative">
             <Avatar className="h-10 w-10 border"
               style={{
