@@ -53,11 +53,18 @@ axiosInstance.interceptors.response.use(
                     console.log("Failed to refresh token:", refreshError);
                     processQueue(refreshError);
 
-                    // Log the user out by clearing localStorage
-
-                    // Show toast notification và chỉ redirect sau khi user đóng thông báo
+                    // Clear auth data: User from localStorage and Tokens from cookies
                     localStorage.removeItem('user');
+
+                    // Clear cookies (Note: if HttpOnly, this won't work browser-side, but covers non-HttpOnly)
+                    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+                    // Show notification và redirect sau khi user đóng thông báo
                     window.confirm('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+
+                    window.location.href = '/login';
                     return Promise.reject(refreshError);
                 })
                 .finally(() => {

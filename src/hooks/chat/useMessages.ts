@@ -25,7 +25,8 @@ const mapMessageToUI = (m: any, currentUserId: string): MessageUI => {
     senderAvatar: m.sender?.avatar_url || "/avatar-default.jpg",
     content: m.content,
     timestamp: isToday ? time : `${dateStr} ${time}`,
-    isOwn: m.sender?.id === currentUserId || m.sender_id === currentUserId
+    isOwn: m.sender?.id === currentUserId || m.sender_id === currentUserId,
+    attachments: m.attachments
   };
 };
 

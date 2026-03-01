@@ -24,6 +24,30 @@ export const reconnectSocket = () => {
   }
 };
 
+// Heartbeat mechanism to keep online status active
+let heartbeatInterval: NodeJS.Timeout | null = null;
+
+export const startHeartbeat = () => {
+  const s = getSocket();
+
+  if (heartbeatInterval) return;
+
+  heartbeatInterval = setInterval(() => {
+    if (s.connected) {
+      console.log("Sending heartbeat...");
+      s.emit('heartbeat');
+    }
+  }, 45000); // Send every 45 seconds
+
+  s.on('heartbeat_ack', (data) => {
+    console.log('Server confirmed online status:', data);
+  });
+
+  s.on('disconnect', () => {
+    console.log("Socket disconnected, heartbeat will pause");
+  });
+};
+
 export const disconnectSocket = () => {
   if (socket) {
     socket.disconnect();

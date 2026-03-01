@@ -5,6 +5,13 @@ import { ApiResponse } from "@/types/response.type";
 export interface Participant extends User {
   joined_at: string;
   last_seen_message_id?: string;
+  is_online?: boolean;
+  last_online?: string;
+}
+
+export interface Attachment {
+  url: string;
+  type: string;
 }
 
 export interface Conversation {
@@ -31,6 +38,7 @@ export interface Message {
   updated_at?: string;
   user?: User;
   is_read?: boolean;
+  attachments?: Attachment[];
 }
 
 export interface MessageResponse {
@@ -48,8 +56,8 @@ export const getConversationDetailApi = (conversationId: string) =>
 export const getMessagesApi = (conversationId: string) =>
   axiosInstance.get(`/conversations/${conversationId}/messages`);
 
-export const sendMessageApi = (conversationId: string, content: string) =>
-  axiosInstance.post(`/conversations/${conversationId}/messages`, { content });
+// export const sendMessageApi = (conversationId: string, content: string) =>
+//   axiosInstance.post(`/conversations/${conversationId}/messages`, { content });
 
 export const getMessageApi = (conversationId: string, cursor?: string) =>
   axiosInstance.get<ApiResponse<MessageResponse>>(`/conversations/${conversationId}/messages`, { params: { cursor } });

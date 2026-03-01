@@ -3,7 +3,11 @@ import { SocketEvents } from "../events";
 
 const socket = getSocket();
 
-export const sendMessageEmit = (data: { conversationId: string; content: string }) => {
+export const sendMessageEmit = (data: {
+  conversationId: string;
+  content?: string;
+  attachments?: { url: string; type: string }[]
+}) => {
   socket.emit(SocketEvents.SEND_MESSAGE, data);
 };
 

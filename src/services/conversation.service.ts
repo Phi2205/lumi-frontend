@@ -5,12 +5,16 @@ import { formatTime } from "../utils/format";
 export const mapConversationToUI = (conv: ApiConversation, currentUserId: string): ConversationUI => {
     let name = conv.name || "";
     let avatar = conv.avatar_url || "";
+    let isOnline = false;
+    let lastOnline = undefined;
 
     if (conv.type === 'private') {
         const otherParticipant = conv.participants.find(p => p.id !== currentUserId);
         if (otherParticipant) {
             name = name || otherParticipant.name;
             avatar = avatar || otherParticipant.avatar_url || "";
+            isOnline = otherParticipant.is_online || false;
+            lastOnline = otherParticipant.last_online;
         }
     }
 
@@ -24,7 +28,8 @@ export const mapConversationToUI = (conv: ApiConversation, currentUserId: string
         timestamp: conv.last_message_at ? formatTime(conv.last_message_at) : "",
         unread: (conv.unread_count || 0) > 0,
         unreadCount: conv.unread_count || 0,
-        isOnline: false,
+        isOnline: isOnline,
+        lastOnline: lastOnline,
         lastMessageId: conv.last_message_id,
         lastSeenMessageId: myParticipant?.last_seen_message_id || conv.last_seen_message_id,
         lastMessageAt: conv.last_message_at,
@@ -34,7 +39,9 @@ export const mapConversationToUI = (conv: ApiConversation, currentUserId: string
             avatar_url: p.avatar_url || "",
             lastSeenMessageId: p.last_seen_message_id,
             joined_at: p.joined_at,
-            isOnline: true,
+            isOnline: p.is_online || false,
+            lastOnline: p.last_online,
+            username: p.username,
         })),
     };
 };

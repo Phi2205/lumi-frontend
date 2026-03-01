@@ -56,6 +56,7 @@ interface StoryAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   alt?: string
   hasStory?: boolean
   isSeen?: boolean
+  isOnline?: boolean
 }
 
 function StoryAvatar({
@@ -63,6 +64,7 @@ function StoryAvatar({
   alt = "Avatar",
   hasStory = false,
   isSeen = false,
+  isOnline = false,
   className,
   ...props
 }: StoryAvatarProps) {
@@ -86,6 +88,13 @@ function StoryAvatar({
           <AvatarFallback>{alt?.slice(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
       </div>
+
+      {isOnline && (
+        <span className={cn(
+          "absolute bottom-0 right-0 size-[28%] min-w-3 min-h-3 rounded-full border-2 border-background bg-green-500 z-10",
+          hasStory && "bottom-[5%] right-[5%]"
+        )} />
+      )}
     </div>
   )
 }

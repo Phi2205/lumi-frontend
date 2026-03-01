@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect } from "react";
-import { getSocket } from "@/lib/socket";
+import { getSocket, startHeartbeat } from "@/lib/socket";
 
 const SocketContext = createContext<any>(null);
 
@@ -10,6 +10,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     socket.connect();
+    startHeartbeat(); // Start the 45s heartbeat
     return () => {
       socket.disconnect();
     };

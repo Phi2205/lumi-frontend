@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useConversations } from "@/hooks/chat/useConversations"
 import { useMessages } from "@/hooks/chat/useMessages"
 import { useChatRealtime } from "@/socket/chat/useChatRealtime"
+import { usePresenceRealtime } from "@/socket/presence/usePresenceRealtime"
 
 // export default function Page() {
 //   return <div>Test messages</div>
@@ -29,6 +30,43 @@ export default function MessagesPage() {
       appendRealtimeMessage(msg)
     }
   })
+
+  usePresenceRealtime({
+    onStatusChanged: (data) => {
+      setConversations(prev => prev.map(conv => {
+        // Cập nhật cho hội thoại private (nếu User là người nhận)
+        let isOnline = conv.isOnline;
+        let lastOnline = conv.lastOnline;
+
+        // Tìm người tham gia có ID trùng với data.userId
+        const updatedParticipants = conv.participants.map(p => {
+          if (p.id === data.userId || p.username === data.userId) { // Backends might send username or ID
+            return {
+              ...p,
+              isOnline: data.is_online,
+              lastOnline: data.last_online
+            };
+          }
+          return p;
+        });
+
+        const targetParticipant = updatedParticipants.find(p => p.id === data.userId || p.username === data.userId);
+
+        // Nếu là chat 1-1 và người status change là "đối phương"
+        if (conv.participants.length === 2 && targetParticipant && targetParticipant.id !== user?.id) {
+          isOnline = data.is_online;
+          lastOnline = data.last_online;
+        }
+
+        return {
+          ...conv,
+          participants: updatedParticipants,
+          isOnline,
+          lastOnline
+        };
+      }));
+    }
+  });
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
   const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
   const [showChatMobile, setShowChatMobile] = useState(false)
@@ -50,9 +88,9 @@ export default function MessagesPage() {
     }
   }, [selectedConversationId])
 
-  const handleSendMessage = (message: string) => {
+  const handleSendMessage = (message?: string, attachments?: { url: string; type: string }[]) => {
     if (selectedConversationId) {
-      sendMessage(message, selectedConversationId)
+      sendMessage(message, selectedConversationId, attachments)
     }
   }
 
@@ -130,6 +168,8 @@ export default function MessagesPage() {
                     markAsRead(selectedConversationId, msgId)
                   }
                 }}
+                isOnline={conversations.find(c => c.id === selectedConversationId)?.isOnline || false}
+                lastOnline={conversations.find(c => c.id === selectedConversationId)?.lastOnline || ""}
               />
             </div>
           ) : (

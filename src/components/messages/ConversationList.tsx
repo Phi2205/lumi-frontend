@@ -11,6 +11,8 @@ export interface ParticipantUI {
   avatar_url: string
   isOnline: boolean
   lastSeenMessageId?: string
+  lastOnline?: string
+  username?: string
 }
 
 export interface ConversationUI {
@@ -26,6 +28,7 @@ export interface ConversationUI {
   lastSeenMessageId?: string
   participants: ParticipantUI[]
   lastMessageAt?: string
+  lastOnline?: string
 }
 
 interface ConversationListProps {

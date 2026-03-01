@@ -59,13 +59,13 @@ export const useChatRealtime = (options?: ChatRealtimeOptions) => {
     };
   }, [socket, conversationId, onNewMessageReceived, onConversationUpdate, onUserRead]);
 
-  const sendMessage = useCallback((content: string, convId?: string) => {
+  const sendMessage = useCallback((content?: string, convId?: string, attachments: { url: string; type: string }[] = []) => {
     const id = convId || conversationId;
-    if (!id || !content.trim()) return;
-    console.log("content", content);
+    if (!id || (!content?.trim() && attachments.length === 0)) return;
     sendMessageEmit({
       conversationId: id,
-      content: content.trim(),
+      content: content?.trim(),
+      attachments
     });
   }, [conversationId]);
 
