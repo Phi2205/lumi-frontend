@@ -1,7 +1,7 @@
 import axiosInstance from './axiosInstance';
 
 export interface Upload {
-    url: string;
+    public_id: string;
     type: string;
 }
 

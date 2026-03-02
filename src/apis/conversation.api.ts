@@ -47,6 +47,14 @@ export interface MessageResponse {
   hasMore: boolean;
 }
 
+export interface MediaResponse {
+  items: Attachment[];
+  nextCursor?: string;
+  hasMore: boolean;
+}
+
+
+
 export const getConversationsApi = (page: number, limit: number, signal?: AbortSignal) =>
   axiosInstance.get('/conversations', { params: { page, limit }, signal });
 
@@ -64,3 +72,9 @@ export const getMessageApi = (conversationId: string, cursor?: string) =>
 
 export const getOrCreatePrivateConversationApi = (recipientId: string) =>
   axiosInstance.post(`/conversations/private/${recipientId}`);
+
+export const getMediaApi = (conversationId: string, limit: number, next?: string) =>
+  axiosInstance.get<ApiResponse<MediaResponse>>(`/conversations/${conversationId}/media`, { params: { limit, next } });
+
+export const createGroupConversationApi = (name: string, userIds: string[]) =>
+  axiosInstance.post(`/conversations/group`, { name, userIds });

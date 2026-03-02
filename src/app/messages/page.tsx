@@ -15,6 +15,7 @@ import { useConversations } from "@/hooks/chat/useConversations"
 import { useMessages } from "@/hooks/chat/useMessages"
 import { useChatRealtime } from "@/socket/chat/useChatRealtime"
 import { usePresenceRealtime } from "@/socket/presence/usePresenceRealtime"
+import { CreateGroupModal } from "@/components/messages/CreateGroupModal"
 
 // export default function Page() {
 //   return <div>Test messages</div>
@@ -70,6 +71,7 @@ export default function MessagesPage() {
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
   const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
   const [showChatMobile, setShowChatMobile] = useState(false)
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
 
 
 
@@ -134,6 +136,7 @@ export default function MessagesPage() {
             selectedId={selectedConversationId}
             onSelect={handleSelectConversation}
             loading={loading}
+            onOpenCreateGroup={() => setIsGroupModalOpen(true)}
           />
         </div>
 
@@ -155,6 +158,7 @@ export default function MessagesPage() {
                 </GlassButton>
               </div>
               <ChatWindow
+                conversationId={selectedConversationId}
                 conversationName={conversations.find(c => c.id === selectedConversationId)?.name || ""}
                 conversationAvatar={conversations.find(c => c.id === selectedConversationId)?.avatar || ""}
                 participants={conversations.find(c => c.id === selectedConversationId)?.participants || []}
@@ -170,6 +174,7 @@ export default function MessagesPage() {
                 }}
                 isOnline={conversations.find(c => c.id === selectedConversationId)?.isOnline || false}
                 lastOnline={conversations.find(c => c.id === selectedConversationId)?.lastOnline || ""}
+                conversation={conversations.find(c => c.id === selectedConversationId)}
               />
             </div>
           ) : (
@@ -181,6 +186,16 @@ export default function MessagesPage() {
           )}
         </div>
       </div>
+
+      <CreateGroupModal
+        isOpen={isGroupModalOpen}
+        onClose={() => setIsGroupModalOpen(false)}
+        onCreated={(id) => {
+          reload()
+          handleSelectConversation(id)
+        }}
+        isDarkMode={isDarkMode}
+      />
     </div>
   )
 }

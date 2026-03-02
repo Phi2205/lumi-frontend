@@ -1,4 +1,4 @@
-import { getConversationsApi, Conversation as ApiConversation, getMessageApi, getConversationDetailApi } from "../apis/conversation.api";
+import { getConversationsApi, Conversation as ApiConversation, getMessageApi, getConversationDetailApi, getMediaApi, createGroupConversationApi } from "../apis/conversation.api";
 import { ConversationUI } from "../components/messages/ConversationList";
 import { formatTime } from "../utils/format";
 
@@ -25,6 +25,7 @@ export const mapConversationToUI = (conv: ApiConversation, currentUserId: string
         name: name || "Người dùng Lumi",
         avatar: avatar,
         lastMessage: conv.last_message || "Chưa có tin nhắn",
+        type: conv.type,
         timestamp: conv.last_message_at ? formatTime(conv.last_message_at) : "",
         unread: (conv.unread_count || 0) > 0,
         unreadCount: conv.unread_count || 0,
@@ -72,6 +73,26 @@ export const getMessagesService = async (conversationId: string, cursor?: string
         return response.data;
     } catch (error) {
         console.error('Error fetching messages:', error);
+        throw error;
+    }
+};
+
+export const getMediaService = async (conversationId: string, limit: number, next?: string) => {
+    try {
+        const response = await getMediaApi(conversationId, limit, next);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching media:', error);
+        throw error;
+    }
+};
+
+export const createGroupConversationService = async (name: string, userIds: string[]) => {
+    try {
+        const response = await createGroupConversationApi(name, userIds);
+        return response.data;
+    } catch (error) {
+        console.error('Error creating group conversation:', error);
         throw error;
     }
 };
