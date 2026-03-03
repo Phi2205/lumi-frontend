@@ -119,9 +119,22 @@ interface ChatWindowProps {
   participants: ParticipantUI[]
   currentUserId?: string
   onMessageViewed?: (messageId: string) => void
+  onLoadMore?: () => void
+  hasMore?: boolean
+  isLoadingMore?: boolean
   isOnline?: boolean
   lastOnline?: string
-  conversation: ConversationUI
+  conversation?: ConversationUI
+  // New props for jump mode
+  targetMessageId?: string | null
+  onLoadMoreAbove?: () => void
+  hasMoreAbove?: boolean
+  isLoadingMoreAbove?: boolean
+  onLoadMoreBelow?: () => void
+  hasMoreBelow?: boolean
+  isLoadingMoreBelow?: boolean
+  onCloseJumpMode?: () => void
+  onJumpToMessage?: (messageId: string) => void
 }
 
 const listUserSeenMessage = (participants: ParticipantUI[], messageId: string, currentUserId: string | undefined) => {
@@ -129,11 +142,14 @@ const listUserSeenMessage = (participants: ParticipantUI[], messageId: string, c
   return listUserSeen
 }
 
-export const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, onMessageViewed, showAuto }: { message: MessageUI, isDarkMode: boolean, participants: ParticipantUI[], currentUserId?: string, onMessageViewed?: (id: string) => void, showAuto: boolean }) => {
+export const MessageItem = memo(({ message, isDarkMode, participants, currentUserId, onMessageViewed, showAuto, isHighlighted }: { message: MessageUI, isDarkMode: boolean, participants: ParticipantUI[], currentUserId?: string, onMessageViewed?: (id: string) => void, showAuto: boolean, isHighlighted?: boolean }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div id={`msg-${message.id}`} className={`flex gap-3 ${message.isOwn ? "flex-row-reverse" : "flex-row"} animate-in fade-in duration-400`}>
+    <div id={`msg-${message.id}`} className={`flex gap-3 ${message.isOwn ? "flex-row-reverse" : "flex-row"} animate-in fade-in duration-400 ${isHighlighted ? "relative" : ""}`}>
+      {isHighlighted && (
+        <div className="absolute inset-0 bg-brand-primary/10 rounded-2xl -z-10 animate-pulse" />
+      )}
 
       {!message.isOwn && (
         <Avatar
@@ -247,21 +263,46 @@ export const MessageItem = memo(({ message, isDarkMode, participants, currentUse
 
 MessageItem.displayName = "MessageItem";
 
-export const ChatWindow = memo(({ conversation, conversationId, conversationName, conversationAvatar, participants, currentUserId, messages, onSendMessage, onMessageViewed, isDarkMode = true, isOnline = false, lastOnline = "" }: ChatWindowProps) => {
+export const ChatWindow = memo(({
+  conversation,
+  conversationId,
+  conversationName,
+  conversationAvatar,
+  participants,
+  currentUserId,
+  messages,
+  onSendMessage,
+  onMessageViewed,
+  onLoadMore,
+  hasMore,
+  isLoadingMore,
+  isDarkMode = true,
+  isOnline = false,
+  lastOnline = "",
+  // Jump mode props
+  targetMessageId,
+  onLoadMoreAbove,
+  hasMoreAbove,
+  isLoadingMoreAbove,
+  onLoadMoreBelow,
+  hasMoreBelow,
+  isLoadingMoreBelow,
+  onCloseJumpMode,
+  onJumpToMessage
+}: ChatWindowProps) => {
   const [inputValue, setInputValue] = useState("")
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
+  const [atBottom, setAtBottom] = useState(true)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  console.log("Conversation Avatar: ", conversationAvatar)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const initialJumpDone = useRef<string | null>(null)
+  const lastScrollHeight = useRef<number>(0)
+  const isAdjustingScroll = useRef<boolean>(false)
+
   // Biến đếm để chỉ cho phép hiển thị 1 lần (tin nhắn mới nhất có người xem)
   let autoShowCount = 1;
-
-  useEffect(() => {
-    if (conversation) {
-      console.log("Conversation: ", conversation)
-    }
-  }, [conversation])
 
   const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -303,6 +344,86 @@ export const ChatWindow = memo(({ conversation, conversationId, conversationName
     }
   }
 
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
+    const isAtTop = Math.abs(scrollTop) + clientHeight >= scrollHeight - 80
+    const isAtBottom = Math.abs(scrollTop) <= 80
+
+    setAtBottom(isAtBottom)
+
+    if (targetMessageId) {
+      // Jump mode: bi-directional
+      if (isAtTop && onLoadMoreAbove && hasMoreAbove && !isLoadingMoreAbove) {
+        console.log("Load lên trên")
+        onLoadMoreAbove()
+      } else if (isAtBottom && onLoadMoreBelow && hasMoreBelow && !isLoadingMoreBelow) {
+        console.log("Load xuống dưới")
+        onLoadMoreBelow()
+      }
+    } else {
+      // Normal mode: only scroll up for more (older)
+      if (isAtTop && onLoadMore && hasMore && !isLoadingMore) {
+        onLoadMore()
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (targetMessageId) {
+      if (initialJumpDone.current !== targetMessageId) {
+        const el = document.getElementById(`msg-${targetMessageId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'auto', block: 'center' });
+          initialJumpDone.current = targetMessageId;
+          lastScrollHeight.current = scrollContainerRef.current?.scrollHeight || 0;
+        }
+      } else if (scrollContainerRef.current && !isAdjustingScroll.current) {
+        const container = scrollContainerRef.current;
+        const newHeight = container.scrollHeight;
+        const heightDiff = newHeight - lastScrollHeight.current;
+
+        console.log("--- Scroll Debug (Jump Mode) ---");
+        console.log("Old ScrollHeight:", lastScrollHeight.current);
+        console.log("New ScrollHeight:", newHeight);
+        console.log("Height Diff:", heightDiff);
+        console.log("Current ScrollTop (before):", container.scrollTop);
+        console.log("ClientHeight:", container.clientHeight);
+
+        if (heightDiff > 0) {
+          isAdjustingScroll.current = true;
+          requestAnimationFrame(() => {
+            if (scrollContainerRef.current) {
+              // Trong flex-col-reverse, 0 là đáy, càng lên trên càng âm.
+              // Khi nạp thêm tin nhắn ở đáy, ta phải trừ đi heightDiff để giữ nguyên vị trí cũ.
+              const targetScroll = scrollContainerRef.current.scrollTop - heightDiff;
+              scrollContainerRef.current.scrollTop = targetScroll;
+
+              console.log("--- Scroll Adjustment (Fix) ---");
+              console.log("Height Added at Bottom:", heightDiff);
+              console.log("Target ScrollTop:", targetScroll);
+              console.log("Resulting ScrollTop:", scrollContainerRef.current.scrollTop);
+            }
+            isAdjustingScroll.current = false;
+          });
+        }
+        lastScrollHeight.current = newHeight;
+      }
+    } else {
+      initialJumpDone.current = null;
+      lastScrollHeight.current = scrollContainerRef.current?.scrollHeight || 0;
+    }
+  }, [targetMessageId, messages]);
+
+  // Auto scroll to bottom when new messages arrival (Normal Mode)
+  useEffect(() => {
+    if (!targetMessageId && atBottom && scrollContainerRef.current) {
+      // Trong flex-col-reverse, 0 là đáy (mới nhất)
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [messages, targetMessageId, atBottom]);
+
   return (
     <div className="flex h-full w-full relative overflow-hidden">
       {/* Main Chat Area */}
@@ -322,7 +443,7 @@ export const ChatWindow = memo(({ conversation, conversationId, conversationName
         >
           <div className="flex items-center gap-3 ml-12 lg:ml-0">
             <StoryAvatar
-              src={conversation.avatar == "" ? (conversation?.type === 'group' ? "/avatar-group-default.jpg" : "/avatar-default.jpg") : conversationAvatar}
+              src={(!conversation || conversation.avatar === "") ? (conversation?.type === 'group' ? "/avatar-group-default.jpg" : "/avatar-default.jpg") : conversationAvatar}
               alt={conversationName}
               isOnline={isOnline}
               className="h-10 w-10"
@@ -335,6 +456,16 @@ export const ChatWindow = memo(({ conversation, conversationId, conversationName
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {targetMessageId && (
+              <GlassButton
+                variant="ghost"
+                size="sm"
+                onClick={onCloseJumpMode}
+                className="text-[11px] px-3 border-brand-primary/30 text-brand-primary"
+              >
+                Về hiện tại
+              </GlassButton>
+            )}
             <GlassButton
               variant="ghost"
               size="sm"
@@ -370,7 +501,17 @@ export const ChatWindow = memo(({ conversation, conversationId, conversationName
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col-reverse gap-4 relative z-10 scroll-glass">
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col-reverse gap-4 relative z-10 scroll-glass"
+          style={{ overflowAnchor: 'none' }}
+        >
+          {hasMoreBelow && (
+            <div className="flex justify-center p-4">
+              <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
           {messages.map((message, index) => {
             const seenByCount = listUserSeenMessage(participants, message.id, currentUserId).length;
             let canShow = false;
@@ -392,9 +533,21 @@ export const ChatWindow = memo(({ conversation, conversationId, conversationName
                 isDarkMode={isDarkMode}
                 onMessageViewed={onMessageViewed}
                 showAuto={canShow}
+                isHighlighted={message.id === targetMessageId}
               />
             );
           })}
+          {(isLoadingMore || isLoadingMoreAbove) && (
+            <div className="flex justify-center p-4">
+              <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          {isLoadingMoreBelow && (
+            <div className="flex justify-center p-4 absolute bottom-[100px] left-1/2 -translate-x-1/2 bg-black/20 backdrop-blur-md rounded-full px-4 py-2 z-50">
+              <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mr-2" />
+              <span className="text-[10px]">Đang tải mới hơn...</span>
+            </div>
+          )}
         </div>
 
         {/* Input Area */}
@@ -510,6 +663,7 @@ export const ChatWindow = memo(({ conversation, conversationId, conversationName
             onClose={() => setShowInfo(false)}
             currentUserId={currentUserId}
             conversation={conversation}
+            onJumpToMessage={onJumpToMessage}
           />
         </div>
       </div>

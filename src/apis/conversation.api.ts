@@ -1,6 +1,7 @@
 import axiosInstance from "./axiosInstance";
 import { User } from "../types/user.type";
 import { ApiResponse } from "@/types/response.type";
+import { Pagination } from "../types/pagination.type";
 
 export interface Participant extends User {
   joined_at: string;
@@ -53,6 +54,25 @@ export interface MediaResponse {
   hasMore: boolean;
 }
 
+export interface messageSearch {
+  id: string;
+  conversation_id: string;
+  content: string;
+  type: string;
+  created_at: string;
+  sender: User;
+}
+
+export interface messageSearchResponse {
+  items: messageSearch[];
+  pagination: Pagination;
+}
+
+export interface MessageAround {
+  items: Message[];
+  hasMoreBelow: boolean;
+  hasMoreAbove: boolean;
+}
 
 
 export const getConversationsApi = (page: number, limit: number, signal?: AbortSignal) =>
@@ -78,3 +98,15 @@ export const getMediaApi = (conversationId: string, limit: number, next?: string
 
 export const createGroupConversationApi = (name: string, userIds: string[]) =>
   axiosInstance.post(`/conversations/group`, { name, userIds });
+
+export const searchMessageApi = (conversationId: string, query: string, page: string, limit: string) =>
+  axiosInstance.get<ApiResponse<messageSearchResponse>>(`/conversations/${conversationId}/messages/search`, { params: { query, page, limit } });
+
+export const getMessageAround = (conversationId: string, messageId: string, limit: string) =>
+  axiosInstance.get<ApiResponse<MessageAround>>(`/conversations/${conversationId}/messages/${messageId}/around`, { params: { limit } });
+
+export const getMessageOlder = (conversationId: string, cursor: string, limit: number) =>
+  axiosInstance.get<ApiResponse<MessageResponse>>(`/conversations/${conversationId}/messages/older`, { params: { cursor, limit } });
+
+export const getMessageNewer = (conversationId: string, cursor: string, limit: number) =>
+  axiosInstance.get<ApiResponse<MessageResponse>>(`/conversations/${conversationId}/messages/newer`, { params: { cursor, limit } });

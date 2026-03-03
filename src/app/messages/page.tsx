@@ -13,6 +13,7 @@ import { GlassButton } from "@/lib/components/glass-button"
 import { useAuth } from "@/contexts/AuthContext"
 import { useConversations } from "@/hooks/chat/useConversations"
 import { useMessages } from "@/hooks/chat/useMessages"
+import { useJumpMessages } from "@/hooks/chat/useJumpMessages"
 import { useChatRealtime } from "@/socket/chat/useChatRealtime"
 import { usePresenceRealtime } from "@/socket/presence/usePresenceRealtime"
 import { CreateGroupModal } from "@/components/messages/CreateGroupModal"
@@ -24,8 +25,21 @@ import { CreateGroupModal } from "@/components/messages/CreateGroupModal"
 export default function MessagesPage() {
   const { user } = useAuth()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [jumpMessageId, setJumpMessageId] = useState<string | null>(null)
   const { conversations, loading, error, reload, setConversations, markAsRead } = useConversations()
   const { messages, loading: messagesLoading, hasMore, loadMore, appendRealtimeMessage } = useMessages(selectedConversationId || undefined)
+
+  const {
+    messages: jumpMessages,
+    loading: jumpLoading,
+    hasMoreAbove,
+    hasMoreBelow,
+    loadMoreAbove,
+    loadMoreBelow,
+    loadingAbove,
+    loadingBelow
+  } = useJumpMessages(selectedConversationId || undefined, jumpMessageId)
+
   const { sendMessage, markRead } = useChatRealtime({
     onNewMessageReceived: (msg) => {
       appendRealtimeMessage(msg)
@@ -110,7 +124,16 @@ export default function MessagesPage() {
 
   const handleSelectConversation = (id: string) => {
     setSelectedConversationId(id)
+    setJumpMessageId(null)
     setShowChatMobile(true)
+  }
+
+  const handleJumpToMessage = (messageId: string) => {
+    setJumpMessageId(messageId)
+  }
+
+  const handleCloseJumpMode = () => {
+    setJumpMessageId(null)
   }
 
   return (
@@ -163,7 +186,7 @@ export default function MessagesPage() {
                 conversationAvatar={conversations.find(c => c.id === selectedConversationId)?.avatar || ""}
                 participants={conversations.find(c => c.id === selectedConversationId)?.participants || []}
                 currentUserId={user?.id}
-                messages={messages}
+                messages={jumpMessageId ? jumpMessages : messages}
                 onSendMessage={handleSendMessage}
                 onMessageViewed={(msgId) => {
                   if (selectedConversationId) {
@@ -172,9 +195,22 @@ export default function MessagesPage() {
                     markAsRead(selectedConversationId, msgId)
                   }
                 }}
+                onLoadMore={loadMore}
+                hasMore={hasMore}
+                isLoadingMore={messagesLoading}
                 isOnline={conversations.find(c => c.id === selectedConversationId)?.isOnline || false}
                 lastOnline={conversations.find(c => c.id === selectedConversationId)?.lastOnline || ""}
                 conversation={conversations.find(c => c.id === selectedConversationId)}
+                // Jump mode props
+                targetMessageId={jumpMessageId}
+                onLoadMoreAbove={loadMoreAbove}
+                hasMoreAbove={hasMoreAbove}
+                isLoadingMoreAbove={loadingAbove}
+                onLoadMoreBelow={loadMoreBelow}
+                hasMoreBelow={hasMoreBelow}
+                isLoadingMoreBelow={loadingBelow}
+                onCloseJumpMode={handleCloseJumpMode}
+                onJumpToMessage={handleJumpToMessage}
               />
             </div>
           ) : (

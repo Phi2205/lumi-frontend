@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
     User,
     BellOff,
@@ -30,7 +30,9 @@ import { MessageUI, AttachmentUI } from "./ChatWindow"
 
 import { useRouter } from "next/navigation"
 
-import { getMediaService } from "@/services/conversation.service"
+import { getMediaService, searchMessageService } from "@/services/conversation.service"
+import { messageSearch } from "@/apis/conversation.api"
+import { useDebounce } from "@/hooks/useDebounce"
 import { urlImage } from "@/utils/imageUrl"
 import { MediaDetailView } from "./MediaDetailView"
 
@@ -47,6 +49,7 @@ interface ConversationInfoProps {
     isOnline?: boolean
     onClose?: () => void
     currentUserId?: string
+    onJumpToMessage?: (messageId: string) => void
 }
 
 const InfoSection = ({
@@ -119,7 +122,8 @@ export const ConversationInfo = ({
     isDarkMode = true,
     isOnline = false,
     onClose,
-    currentUserId
+    currentUserId,
+    onJumpToMessage
 }: ConversationInfoProps) => {
     const router = useRouter()
     const [sections, setSections] = useState({
@@ -133,6 +137,32 @@ export const ConversationInfo = ({
     const [allMedia, setAllMedia] = useState<AttachmentUI[]>([])
     const [isLoadingMedia, setIsLoadingMedia] = useState(false)
     const [showMediaDetail, setShowMediaDetail] = useState(false)
+    const [isSearching, setIsSearching] = useState(false)
+    const [searchQuery, setSearchQuery] = useState("")
+    const [searchResults, setSearchResults] = useState<messageSearch[]>([])
+    const [isSearchingLoading, setIsSearchingLoading] = useState(false)
+    const debouncedSearchQuery = useDebounce(searchQuery, 500)
+
+    useEffect(() => {
+        const handleSearch = async () => {
+            if (!debouncedSearchQuery.trim() || !conversationId) {
+                setSearchResults([])
+                return
+            }
+
+            setIsSearchingLoading(true)
+            try {
+                const data = await searchMessageService(conversationId, debouncedSearchQuery, "1", "20")
+                setSearchResults(data.data.items)
+            } catch (error) {
+                console.error("Search error:", error)
+            } finally {
+                setIsSearchingLoading(false)
+            }
+        }
+
+        handleSearch()
+    }, [debouncedSearchQuery, conversationId])
 
     const handleProfileClick = () => {
         const otherParticipant = participants.find(p => p.id !== currentUserId);
@@ -185,6 +215,80 @@ export const ConversationInfo = ({
             ? "bg-black/10 backdrop-blur-sm text-white border-l border-white/10"
             : "bg-white/30 backdrop-blur-sm text-gray-900 border-l border-black/5"
             } relative shadow-2xl`}>
+            {/* Search Overlay */}
+            {isSearching && (
+                <div className={`absolute inset-0 z-20 flex flex-col ${isDarkMode ? "bg-[#121212]" : "bg-white"}`}>
+                    <div className="p-4 border-b border-white/10 flex items-center gap-2">
+                        <button onClick={() => {
+                            setIsSearching(false)
+                            setSearchQuery("")
+                            setSearchResults([])
+                        }} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                            <ArrowLeft className="w-5 h-5" />
+                        </button>
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-50" />
+                            <input
+                                autoFocus
+                                type="text"
+                                placeholder="Tìm kiếm tin nhắn..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className={`w-full bg-white/5 border border-white/10 rounded-full py-1.5 pl-10 pr-4 text-sm focus:outline-none focus:border-brand-primary/50 transition-all ${!isDarkMode && "bg-black/5 text-gray-900 border-black/10"}`}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                        {isSearchingLoading ? (
+                            <div className="flex flex-col items-center justify-center h-40 opacity-50">
+                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary mb-2"></div>
+                                <span className="text-sm">Đang tìm kiếm...</span>
+                            </div>
+                        ) : searchQuery && searchResults.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-40 opacity-50">
+                                <Search className="w-10 h-10 mb-2" />
+                                <span className="text-sm text-center">Không tìm thấy kết quả nào cho<br /><span className="font-semibold">"{searchQuery}"</span></span>
+                            </div>
+                        ) : searchResults.length > 0 ? (
+                            <div className="space-y-3">
+                                {searchResults.map((msg) => (
+                                    <div
+                                        key={msg.id}
+                                        onClick={() => onJumpToMessage?.(msg.id)}
+                                        className={`p-3 rounded-2xl transition-all cursor-pointer group border ${isDarkMode
+                                            ? "hover:bg-white/5 border-transparent hover:border-white/10"
+                                            : "hover:bg-black/5 border-transparent hover:border-black/5"
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                            <Avatar className="h-6 w-6 border border-white/10">
+                                                <AvatarImage src={msg.sender.avatar_url || "/avatar-default.jpg"} />
+                                                <AvatarFallback className="text-[10px]">{msg.sender.name[0]}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-semibold truncate">{msg.sender.name}</span>
+                                                    <span className="text-[10px] opacity-40">{new Date(msg.created_at).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p className={`text-xs leading-relaxed opacity-70 line-clamp-3 ml-8 ${!isDarkMode && "text-gray-700"}`}>
+                                            {msg.content}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-40 opacity-30 text-center px-8">
+                                <Search className="w-12 h-12 mb-4" />
+                                <p className="text-sm">Nhập nội dung tin nhắn bạn muốn tìm kiếm trong cuộc trò chuyện này</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Mobile Header / Back Button */}
             <div className="lg:hidden flex items-center p-4 border-b border-white/5">
                 <button
@@ -232,7 +336,10 @@ export const ConversationInfo = ({
                         </div>
                         <span className="text-[11px] font-medium">Tắt thông báo</span>
                     </div>
-                    <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
+                    <div
+                        onClick={() => setIsSearching(true)}
+                        className="flex flex-col items-center gap-1.5 cursor-pointer group"
+                    >
                         <div className={`h-9 w-9 rounded-full flex items-center justify-center transition-all backdrop-blur-md border ${isDarkMode ? "bg-white/10 group-hover:bg-white/20 border-white/10 shadow-lg shadow-black/20" : "bg-white/50 group-hover:bg-white/80 border-black/5 shadow-sm"
                             }`}>
                             <Search className="w-5 h-5" />

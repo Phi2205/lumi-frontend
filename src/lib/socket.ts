@@ -34,7 +34,7 @@ export const startHeartbeat = () => {
 
   heartbeatInterval = setInterval(() => {
     if (s.connected) {
-      console.log("Sending heartbeat...");
+      // console.log("Sending heartbeat...");
       s.emit('heartbeat');
     }
   }, 45000); // Send every 45 seconds

@@ -1,6 +1,7 @@
-import { getConversationsApi, Conversation as ApiConversation, getMessageApi, getConversationDetailApi, getMediaApi, createGroupConversationApi } from "../apis/conversation.api";
+import { getConversationsApi, Conversation as ApiConversation, getMessageApi, getConversationDetailApi, getMediaApi, createGroupConversationApi, getMessageAround, getMessageOlder, getMessageNewer } from "../apis/conversation.api";
 import { ConversationUI } from "../components/messages/ConversationList";
 import { formatTime } from "../utils/format";
+import { searchMessageApi } from "../apis/conversation.api";
 
 export const mapConversationToUI = (conv: ApiConversation, currentUserId: string): ConversationUI => {
     let name = conv.name || "";
@@ -93,6 +94,46 @@ export const createGroupConversationService = async (name: string, userIds: stri
         return response.data;
     } catch (error) {
         console.error('Error creating group conversation:', error);
+        throw error;
+    }
+};
+
+export const searchMessageService = async (conversationId: string, query: string, page: string, limit: string) => {
+    try {
+        const response = await searchMessageApi(conversationId, query, page, limit);
+        return response.data;
+    } catch (error) {
+        console.error('Error searching messages:', error);
+        throw error;
+    }
+};
+
+export const getMessageAroundService = async (conversationId: string, messageId: string, limit: string) => {
+    try {
+        const response = await getMessageAround(conversationId, messageId, limit);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching message around:', error);
+        throw error;
+    }
+};
+
+export const getMessageOlderService = async (conversationId: string, cursor: string, limit: number) => {
+    try {
+        const response = await getMessageOlder(conversationId, cursor, limit);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching message older:', error);
+        throw error;
+    }
+};
+
+export const getMessageNewerService = async (conversationId: string, cursor: string, limit: number) => {
+    try {
+        const response = await getMessageNewer(conversationId, cursor, limit);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching message newer:', error);
         throw error;
     }
 };
