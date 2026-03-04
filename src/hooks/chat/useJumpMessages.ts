@@ -36,6 +36,13 @@ export const useJumpMessages = (conversationId?: string, targetMessageId?: strin
     const isFetchingBelow = useRef(false);
     const isFetchingAround = useRef(false);
 
+    useEffect(() => {
+        console.log("targetMessageId: ", targetMessageId)
+        console.log("message: ", messages)
+        console.log("hasMoreAbove: ", hasMoreAbove)
+        console.log("hasMoreBelow: ", hasMoreBelow)
+    }, [targetMessageId, messages])
+
     const loadAround = useCallback(async () => {
         if (!conversationId || !user || !targetMessageId || isFetchingAround.current) return;
 
@@ -67,6 +74,10 @@ export const useJumpMessages = (conversationId?: string, targetMessageId?: strin
             loadAround();
         } else {
             setMessages([]);
+            setHasMoreAbove(false);
+            setHasMoreBelow(false);
+            setLoadingAbove(false);
+            setLoadingBelow(false);
         }
         return () => abortRef.current?.abort();
     }, [targetMessageId, loadAround]);

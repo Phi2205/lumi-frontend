@@ -50,6 +50,7 @@ interface ConversationInfoProps {
     onClose?: () => void
     currentUserId?: string
     onJumpToMessage?: (messageId: string) => void
+    targetMessageId?: string | null
 }
 
 const InfoSection = ({
@@ -123,7 +124,8 @@ export const ConversationInfo = ({
     isOnline = false,
     onClose,
     currentUserId,
-    onJumpToMessage
+    onJumpToMessage,
+    targetMessageId
 }: ConversationInfoProps) => {
     const router = useRouter()
     const [sections, setSections] = useState({
@@ -141,19 +143,28 @@ export const ConversationInfo = ({
     const [searchQuery, setSearchQuery] = useState("")
     const [searchResults, setSearchResults] = useState<messageSearch[]>([])
     const [isSearchingLoading, setIsSearchingLoading] = useState(false)
+    const [searchPage, setSearchPage] = useState(1)
+    const [hasMoreSearch, setHasMoreSearch] = useState(false)
+    const [isSearchingMore, setIsSearchingMore] = useState(false)
     const debouncedSearchQuery = useDebounce(searchQuery, 500)
 
     useEffect(() => {
-        const handleSearch = async () => {
+        const handleInitialSearch = async () => {
             if (!debouncedSearchQuery.trim() || !conversationId) {
                 setSearchResults([])
+                setSearchPage(1)
+                setHasMoreSearch(false)
                 return
             }
 
             setIsSearchingLoading(true)
+            setSearchPage(1)
             try {
                 const data = await searchMessageService(conversationId, debouncedSearchQuery, "1", "20")
-                setSearchResults(data.data.items)
+                if (data && data.success) {
+                    setSearchResults(data.data.items || [])
+                    setHasMoreSearch(data.data.pagination?.hasNextPage || false)
+                }
             } catch (error) {
                 console.error("Search error:", error)
             } finally {
@@ -161,8 +172,35 @@ export const ConversationInfo = ({
             }
         }
 
-        handleSearch()
+        handleInitialSearch()
     }, [debouncedSearchQuery, conversationId])
+
+    const loadMoreSearch = async () => {
+        if (!conversationId || isSearchingMore || !hasMoreSearch || !debouncedSearchQuery) return;
+
+        setIsSearchingMore(true);
+        const nextPage = searchPage + 1;
+        try {
+            const data = await searchMessageService(conversationId, debouncedSearchQuery, nextPage.toString(), "20");
+            if (data && data.success) {
+                setSearchResults(prev => [...prev, ...(data.data.items || [])]);
+                setSearchPage(nextPage);
+                setHasMoreSearch(data.data.pagination?.hasNextPage || false);
+            }
+        } catch (error) {
+            console.error("Load more search error:", error);
+        } finally {
+            setIsSearchingMore(false);
+        }
+    };
+
+    const handleSearchScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        // Kiểm tra xem đã cuộn gần tới đáy chưa (còn cách đáy 20px)
+        if (scrollHeight - scrollTop - clientHeight < 20) {
+            loadMoreSearch();
+        }
+    };
 
     const handleProfileClick = () => {
         const otherParticipant = participants.find(p => p.id !== currentUserId);
@@ -239,7 +277,10 @@ export const ConversationInfo = ({
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    <div
+                        onScroll={handleSearchScroll}
+                        className="flex-1 overflow-y-auto p-4 custom-scrollbar scroll-glass"
+                    >
                         {isSearchingLoading ? (
                             <div className="flex flex-col items-center justify-center h-40 opacity-50">
                                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary mb-2"></div>
@@ -255,7 +296,23 @@ export const ConversationInfo = ({
                                 {searchResults.map((msg) => (
                                     <div
                                         key={msg.id}
-                                        onClick={() => onJumpToMessage?.(msg.id)}
+                                        onClick={() => {
+                                            if (msg.id === targetMessageId) {
+                                                // Nếu đã là target rồi thì chỉ cần scroll đến
+                                                const el = document.getElementById(`msg-${msg.id}`);
+                                                if (el) {
+                                                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                }
+                                            } else {
+                                                // Nếu là tin nhắn khác thì nhảy chế độ jump sang tin nhắn đó
+                                                onJumpToMessage?.(msg.id);
+                                            }
+
+                                            // Đóng sidebar nếu đang ở chế độ mobile
+                                            if (window.innerWidth < 1024) {
+                                                onClose?.();
+                                            }
+                                        }}
                                         className={`p-3 rounded-2xl transition-all cursor-pointer group border ${isDarkMode
                                             ? "hover:bg-white/5 border-transparent hover:border-white/10"
                                             : "hover:bg-black/5 border-transparent hover:border-black/5"
@@ -278,6 +335,11 @@ export const ConversationInfo = ({
                                         </p>
                                     </div>
                                 ))}
+                                {isSearchingMore && (
+                                    <div className="flex justify-center p-2">
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-primary"></div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-40 opacity-30 text-center px-8">

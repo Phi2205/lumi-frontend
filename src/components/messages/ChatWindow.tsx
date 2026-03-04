@@ -338,9 +338,21 @@ export const ChatWindow = memo(({
         }
       }
 
+
       onSendMessage?.(finalContent, attachments)
       setInputValue("")
       setSelectedFiles([])
+
+      // Tắt JumpMode khi gửi tin nhắn mới
+      if (targetMessageId && onCloseJumpMode) {
+        onCloseJumpMode();
+      }
+
+      // Cuộn xuống đáy ngay lập tức
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 0;
+        setAtBottom(true);
+      }
     }
   }
 
@@ -370,51 +382,56 @@ export const ChatWindow = memo(({
     }
   }
 
+  const lastFirstMessageId = useRef<string | null>(null);
+
   useEffect(() => {
     if (targetMessageId) {
       if (initialJumpDone.current !== targetMessageId) {
         const el = document.getElementById(`msg-${targetMessageId}`);
         if (el) {
-          el.scrollIntoView({ behavior: 'auto', block: 'center' });
+          if (hasMoreBelow) {
+            el.scrollIntoView({ behavior: 'auto', block: 'center' });
+          } else {
+            // Nếu không còn tin nhắn phía dưới, nhảy thẳng về đáy (hiện tại)
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollTop = 0;
+              setAtBottom(true);
+            }
+          }
           initialJumpDone.current = targetMessageId;
           lastScrollHeight.current = scrollContainerRef.current?.scrollHeight || 0;
+          lastFirstMessageId.current = messages[0]?.id || null;
         }
       } else if (scrollContainerRef.current && !isAdjustingScroll.current) {
         const container = scrollContainerRef.current;
         const newHeight = container.scrollHeight;
         const heightDiff = newHeight - lastScrollHeight.current;
 
-        console.log("--- Scroll Debug (Jump Mode) ---");
-        console.log("Old ScrollHeight:", lastScrollHeight.current);
-        console.log("New ScrollHeight:", newHeight);
-        console.log("Height Diff:", heightDiff);
-        console.log("Current ScrollTop (before):", container.scrollTop);
-        console.log("ClientHeight:", container.clientHeight);
+        // Kiểm tra xem có phải là nạp tin nhắn MỚI HƠN phía dưới không?
+        // (Trong mảng messages, messages[0] là tin nhắn mới nhất)
+        const currentFirstId = messages[0]?.id;
+        const isBelowLoad = lastFirstMessageId.current && currentFirstId !== lastFirstMessageId.current;
 
-        if (heightDiff > 0) {
+        if (heightDiff > 0 && isBelowLoad) {
           isAdjustingScroll.current = true;
           requestAnimationFrame(() => {
             if (scrollContainerRef.current) {
-              // Trong flex-col-reverse, 0 là đáy, càng lên trên càng âm.
-              // Khi nạp thêm tin nhắn ở đáy, ta phải trừ đi heightDiff để giữ nguyên vị trí cũ.
+              // Chỉ bù trừ khi có tin nhắn nạp vào phía ĐÁY (newer messages)
               const targetScroll = scrollContainerRef.current.scrollTop - heightDiff;
               scrollContainerRef.current.scrollTop = targetScroll;
-
-              console.log("--- Scroll Adjustment (Fix) ---");
-              console.log("Height Added at Bottom:", heightDiff);
-              console.log("Target ScrollTop:", targetScroll);
-              console.log("Resulting ScrollTop:", scrollContainerRef.current.scrollTop);
             }
             isAdjustingScroll.current = false;
           });
         }
         lastScrollHeight.current = newHeight;
+        lastFirstMessageId.current = currentFirstId || null;
       }
     } else {
       initialJumpDone.current = null;
       lastScrollHeight.current = scrollContainerRef.current?.scrollHeight || 0;
+      lastFirstMessageId.current = messages[0]?.id || null;
     }
-  }, [targetMessageId, messages]);
+  }, [targetMessageId, messages, hasMoreBelow]);
 
   // Auto scroll to bottom when new messages arrival (Normal Mode)
   useEffect(() => {
@@ -456,16 +473,7 @@ export const ChatWindow = memo(({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {targetMessageId && (
-              <GlassButton
-                variant="ghost"
-                size="sm"
-                onClick={onCloseJumpMode}
-                className="text-[11px] px-3 border-brand-primary/30 text-brand-primary"
-              >
-                Về hiện tại
-              </GlassButton>
-            )}
+
             <GlassButton
               variant="ghost"
               size="sm"
@@ -507,11 +515,7 @@ export const ChatWindow = memo(({
           className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col-reverse gap-4 relative z-10 scroll-glass"
           style={{ overflowAnchor: 'none' }}
         >
-          {hasMoreBelow && (
-            <div className="flex justify-center p-4">
-              <div className="w-5 h-5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
+
           {messages.map((message, index) => {
             const seenByCount = listUserSeenMessage(participants, message.id, currentUserId).length;
             let canShow = false;
@@ -664,6 +668,7 @@ export const ChatWindow = memo(({
             currentUserId={currentUserId}
             conversation={conversation}
             onJumpToMessage={onJumpToMessage}
+            targetMessageId={targetMessageId}
           />
         </div>
       </div>
