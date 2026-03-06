@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { loginUser, logoutUser, registerUser } from '@/services/auth.service';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     try {
       setIsLoading(true);
       const response = await loginUser({ email, password });
@@ -49,9 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router, setItem]);
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = useCallback(async (email: string, password: string, name: string) => {
     try {
       setIsLoading(true);
       const response = await registerUser({ email, password, name });
@@ -68,9 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router, setItem]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       setIsLoading(true);
       await logoutUser();
@@ -88,16 +88,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router, removeItem]);
 
-  const value: AuthContextType = {
+  const value = useMemo(() => ({
     user,
     isAuthenticated: !!user,
     isLoading,
     login,
     register,
     logout,
-  };
+  }), [user, isLoading, login, register, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

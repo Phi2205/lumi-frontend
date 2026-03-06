@@ -26,10 +26,10 @@ export function Header({ isDarkMode, onDarkModeToggle }: HeaderProps) {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-3xl bg-white/5 border-b border-white/20">
+    <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-white/5 border-b border-white/20 transform translate-z-0">
       <div className="mx-auto flex h-16 max-w-full items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+        <Link href="/" className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity duration-200">
           <span className="text-3xl sm:text-4xl text-white font-normal" style={{ fontFamily: 'var(--font-dancing-script), cursive', letterSpacing: '0.5px', fontWeight: 600 }}>
             Lumi
           </span>
@@ -47,7 +47,7 @@ export function Header({ isDarkMode, onDarkModeToggle }: HeaderProps) {
 
           {/* Avatar with Dropdown Menu */}
           <div className="hidden sm:block relative group">
-            <Avatar className="h-9 w-9 cursor-pointer hover:ring-2 hover:ring-blue-400/50 transition-all ring-2 ring-blue-400/30">
+            <Avatar className="h-9 w-9 cursor-pointer hover:ring-2 hover:ring-blue-400/50 transition-[ring] duration-200 ring-2 ring-blue-400/30">
               <AvatarImage src={user?.avatar_url || "/avatar-default.jpg"} alt="User" />
               <AvatarFallback>{user?.username?.[0] || user?.email?.[0] || "U"}</AvatarFallback>
             </Avatar>

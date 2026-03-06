@@ -1,17 +1,18 @@
 import axios from 'axios';
 import { refreshTokenApi } from './auth.api';
 import { Notification } from '@/lib/components/notification';
+import { reconnectSocket } from '@/lib/socket';
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL;
 // Tạo instance của axios
 const axiosInstance = axios.create({
-  baseURL: baseURL, // Lấy base URL từ biến môi trường
-  withCredentials: true, // Cho phép gửi và nhận cookies (cần thiết cho JWT token trong cookie)
-  headers: {
-    'Content-Type': 'application/json', // Đặt header Content-Type
-    // Có thể thêm các header khác nếu cần
-    // 'Authorization': `Bearer ${token}` // nếu có token
-  },
+    baseURL: baseURL, // Lấy base URL từ biến môi trường
+    withCredentials: true, // Cho phép gửi và nhận cookies (cần thiết cho JWT token trong cookie)
+    headers: {
+        'Content-Type': 'application/json', // Đặt header Content-Type
+        // Có thể thêm các header khác nếu cần
+        // 'Authorization': `Bearer ${token}` // nếu có token
+    },
 });
 
 // Bắt lỗi toàn cục (nếu cần)
@@ -52,14 +53,22 @@ axiosInstance.interceptors.response.use(
                     console.log("Failed to refresh token:", refreshError);
                     processQueue(refreshError);
 
-                    // Log the user out by clearing localStorage
-                    
-                    // Show toast notification và chỉ redirect sau khi user đóng thông báo
+                    // Clear auth data: User from localStorage and Tokens from cookies
                     localStorage.removeItem('user');
+
+                    // Clear cookies (Note: if HttpOnly, this won't work browser-side, but covers non-HttpOnly)
+                    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+
+                    // Show notification và redirect sau khi user đóng thông báo
                     window.confirm('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+
+                    window.location.href = '/login';
                     return Promise.reject(refreshError);
                 })
                 .finally(() => {
+                    reconnectSocket();
                     isRefreshing = false;
                 });
         }

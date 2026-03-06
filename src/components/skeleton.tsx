@@ -45,9 +45,9 @@ export const SkeletonTitle = ({ className = "" }: { className?: string }) => (
 );
 
 export const SkeletonButton = ({ width = "w-28", className = "" }: { width?: string; className?: string }) => (
-  <Skeleton 
-    height="h-10" 
-    width={width} 
+  <Skeleton
+    height="h-10"
+    width={width}
     className={`bg-white/10 rounded-xl ${className}`}
   />
 );
@@ -55,7 +55,7 @@ export const SkeletonButton = ({ width = "w-28", className = "" }: { width?: str
 export const SkeletonButtons = ({ count = 3, className = "" }: { count?: number; className?: string }) => (
   <div className={`flex gap-3 items-center ${className}`}>
     {Array.from({ length: count }).map((_, i) => (
-      <SkeletonButton 
+      <SkeletonButton
         key={i}
         width={i === 0 ? "w-28" : "w-10"}
       />
@@ -65,14 +65,14 @@ export const SkeletonButtons = ({ count = 3, className = "" }: { count?: number;
 
 export const SkeletonStatCard = ({ className = "" }: { className?: string }) => (
   <GlassCard variant="sm" className={className}>
-    <Skeleton 
-      height="h-4" 
-      width="w-16" 
+    <Skeleton
+      height="h-4"
+      width="w-16"
       className="mb-2 bg-white/10 rounded"
     />
-    <Skeleton 
-      height="h-8" 
-      width="w-20" 
+    <Skeleton
+      height="h-8"
+      width="w-20"
       className="bg-white/10 rounded-lg"
     />
   </GlassCard>
@@ -89,9 +89,9 @@ export const SkeletonStatCards = ({ count = 3, className = "" }: { count?: numbe
 export const SkeletonUserDetails = ({ count = 3, className = "" }: { count?: number; className?: string }) => (
   <div className={`flex flex-wrap gap-4 ${className}`}>
     {Array.from({ length: count }).map((_, i) => (
-      <Skeleton 
+      <Skeleton
         key={i}
-        height="h-5" 
+        height="h-5"
         width={i === 0 ? "w-32" : i === 1 ? "w-28" : "w-36"}
         className="bg-white/10 rounded"
       />
@@ -102,10 +102,10 @@ export const SkeletonUserDetails = ({ count = 3, className = "" }: { count?: num
 export const SkeletonSkills = ({ count = 6, className = "" }: { count?: number; className?: string }) => (
   <div className={`flex flex-wrap gap-2 ${className}`}>
     {Array.from({ length: count }).map((_, i) => (
-      <Skeleton 
+      <Skeleton
         key={i}
-        height="h-8" 
-        width="w-32" 
+        height="h-8"
+        width="w-32"
         rounded="rounded-full"
         className="bg-white/10"
       />
@@ -117,8 +117,8 @@ export const SkeletonPostGrid = ({ count = 6, className = "" }: { count?: number
   <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ${className}`}>
     {Array.from({ length: count }).map((_, i) => (
       <div key={i} className="relative w-full h-64">
-        <Skeleton 
-          height="h-full" 
+        <Skeleton
+          height="h-full"
           className="rounded-2xl bg-white/10"
           width="w-full"
         />
@@ -128,9 +128,9 @@ export const SkeletonPostGrid = ({ count = 6, className = "" }: { count?: number
 );
 
 export const SkeletonAvatar = ({ size = "h-40", className = "" }: { size?: string; className?: string }) => (
-  <Skeleton 
-    height={size} 
-    width={size.replace("h-", "w-")} 
+  <Skeleton
+    height={size}
+    width={size.replace("h-", "w-")}
     rounded="rounded-full"
     className={`bg-white/10 ring-4 ring-white/20 ${className}`}
   />
@@ -138,14 +138,14 @@ export const SkeletonAvatar = ({ size = "h-40", className = "" }: { size?: strin
 
 export const SkeletonUserInfo = ({ className = "" }: { className?: string }) => (
   <div className={className}>
-    <Skeleton 
-      height="h-9" 
-      width="w-48" 
+    <Skeleton
+      height="h-9"
+      width="w-48"
       className="mb-2 bg-white/10 rounded-lg"
     />
-    <Skeleton 
-      height="h-6" 
-      width="w-32" 
+    <Skeleton
+      height="h-6"
+      width="w-32"
       className="bg-white/10 rounded"
     />
   </div>
@@ -156,9 +156,9 @@ export const ProfileSkeleton = () => (
   <>
     {/* Cover Photo Skeleton */}
     <GlassCard variant="lg" className="h-48 md:h-64 rounded-3xl overflow-hidden mb-0">
-      <Skeleton 
-        height="h-full" 
-        className="rounded-3xl bg-white/10" 
+      <Skeleton
+        height="h-full"
+        className="rounded-3xl bg-white/10"
         width="w-full"
       />
     </GlassCard>
@@ -192,32 +192,32 @@ export const ProfileSkeleton = () => (
     <GlassCard className="mb-8">
       <div className="space-y-6">
         <div>
-          <Skeleton 
-            height="h-8" 
-            width="w-24" 
+          <Skeleton
+            height="h-8"
+            width="w-24"
             className="mb-4 bg-white/10 rounded-lg"
           />
           <SkeletonText lines={3} />
         </div>
 
         <div>
-          <Skeleton 
-            height="h-6" 
-            width="w-20" 
+          <Skeleton
+            height="h-6"
+            width="w-20"
             className="mb-3 bg-white/10 rounded"
           />
           <SkeletonSkills count={6} />
         </div>
 
         <div>
-          <Skeleton 
-            height="h-6" 
-            width="w-24" 
+          <Skeleton
+            height="h-6"
+            width="w-24"
             className="mb-3 bg-white/10 rounded"
           />
-          <Skeleton 
-            height="h-5" 
-            width="w-48" 
+          <Skeleton
+            height="h-5"
+            width="w-48"
             className="bg-white/10 rounded"
           />
         </div>
@@ -226,9 +226,9 @@ export const ProfileSkeleton = () => (
 
     {/* Posts Grid Skeleton */}
     <div className="mb-8">
-      <Skeleton 
-        height="h-8" 
-        width="w-24" 
+      <Skeleton
+        height="h-8"
+        width="w-24"
         className="mb-6 bg-white/10 rounded-lg"
       />
       <SkeletonPostGrid count={6} />
@@ -258,23 +258,23 @@ export const SkeletonFriendRequests = ({ count = 3, className = "" }: { count?: 
 
 export const SkeletonStoryItem = ({ className = "" }: { className?: string }) => (
   <div className={`flex-shrink-0 ${className}`}>
-    <Skeleton 
-      height="h-24" 
-      width="w-20" 
+    <Skeleton
+      height="h-24"
+      width="w-20"
       rounded="rounded-lg"
       className="bg-white/10"
     />
     <div className="mt-2 flex items-center justify-center">
-      <Skeleton 
-        height="h-6" 
-        width="w-6" 
+      <Skeleton
+        height="h-6"
+        width="w-6"
         rounded="rounded-full"
         className="bg-white/10"
       />
     </div>
-    <Skeleton 
-      height="h-3" 
-      width="w-16" 
+    <Skeleton
+      height="h-3"
+      width="w-16"
       className="mt-1 mx-auto bg-white/10 rounded"
     />
   </div>
@@ -290,14 +290,14 @@ export const SkeletonStories = ({ count = 5, className = "" }: { count?: number;
 
 // Story Page Skeleton Component
 export const StorySkeleton = () => (
-  <div 
+  <div
     className="relative w-full h-full bg-black/80 flex items-center justify-center"
     style={{
       width: '100%',
       height: '100%'
     }}
   >
-    <div 
+    <div
       className="relative bg-black rounded-3xl overflow-hidden shadow-2xl"
       style={{
         height: '100%',
@@ -306,37 +306,37 @@ export const StorySkeleton = () => (
       }}
     >
       {/* Main content skeleton */}
-      <Skeleton 
-        height="h-full" 
-        className="rounded-3xl bg-white/10" 
+      <Skeleton
+        height="h-full"
+        className="rounded-3xl bg-white/10"
         width="w-full"
       />
 
       {/* Header skeleton */}
       <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Skeleton 
-            height="h-8" 
-            width="w-8" 
+          <Skeleton
+            height="h-8"
+            width="w-8"
             rounded="rounded-full"
             className="bg-white/20 ring-2 ring-white/50"
           />
           <div className="space-y-2">
-            <Skeleton 
-              height="h-4" 
-              width="w-24" 
+            <Skeleton
+              height="h-4"
+              width="w-24"
               className="bg-white/20 rounded"
             />
-            <Skeleton 
-              height="h-3" 
-              width="w-20" 
+            <Skeleton
+              height="h-3"
+              width="w-20"
               className="bg-white/15 rounded"
             />
           </div>
         </div>
-        <Skeleton 
-          height="h-8" 
-          width="w-8" 
+        <Skeleton
+          height="h-8"
+          width="w-8"
           rounded="rounded-full"
           className="bg-white/20"
         />
@@ -356,17 +356,17 @@ export const StorySkeleton = () => (
 
       {/* Navigation buttons skeleton */}
       <div className="absolute left-4 top-1/2 -translate-y-1/2">
-        <Skeleton 
-          height="h-12" 
-          width="w-12" 
+        <Skeleton
+          height="h-12"
+          width="w-12"
           rounded="rounded-full"
           className="bg-white/20"
         />
       </div>
       <div className="absolute right-4 top-1/2 -translate-y-1/2">
-        <Skeleton 
-          height="h-12" 
-          width="w-12" 
+        <Skeleton
+          height="h-12"
+          width="w-12"
           rounded="rounded-full"
           className="bg-white/20"
         />
@@ -392,7 +392,7 @@ export const SkeletonPostCard = ({ className = "" }: { className?: string }) => 
     {/* Content */}
     <div className="p-4">
       <SkeletonText lines={2} className="mb-4" />
-      
+
       {/* Media */}
       <Skeleton width="w-full" height="h-64" className="rounded-xl" />
     </div>
@@ -447,6 +447,27 @@ export const SkeletonComments = ({ count = 3, className = "" }: { count?: number
   <div className={`space-y-4 ${className}`}>
     {Array.from({ length: count }).map((_, i) => (
       <SkeletonComment key={i} />
+    ))}
+  </div>
+);
+
+export const SkeletonConversationItem = ({ className = "" }: { className?: string }) => (
+  <div className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 border border-white/5 animate-pulse ${className}`}>
+    <Skeleton width="w-12" height="h-12" rounded="rounded-full" className="bg-white/10 shrink-0" />
+    <div className="flex-1 space-y-2">
+      <div className="flex items-center justify-between">
+        <Skeleton width="w-32" height="h-4" rounded="rounded" className="bg-white/10" />
+        <Skeleton width="w-10" height="h-3" rounded="rounded" className="bg-white/10" />
+      </div>
+      <Skeleton width="w-4/5" height="h-3" rounded="rounded" className="bg-white/5" />
+    </div>
+  </div>
+);
+
+export const SkeletonConversationList = ({ count = 10, className = "" }: { count?: number; className?: string }) => (
+  <div className={`space-y-1.5 ${className}`}>
+    {Array.from({ length: count }).map((_, i) => (
+      <SkeletonConversationItem key={i} />
     ))}
   </div>
 );

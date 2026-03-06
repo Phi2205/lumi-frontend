@@ -148,8 +148,8 @@
 }
 
 :root {
-  /* Glass effect variables */
-  --blur-amount: 15px;
+  /* Glass effect variables - Reduced for performance */
+  --blur-amount: 8px;
   --glass-opacity: 0.15;
   --border-color: rgba(255, 255, 255, 0.2);
   --border-width: 1px;
@@ -192,6 +192,11 @@
   /* Backdrop blur 10-20px (using 15px as default) */
   backdrop-filter: blur(var(--blur-amount));
   -webkit-backdrop-filter: blur(var(--blur-amount));
+  
+  /* Hardware acceleration & isolation */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: paint;
   
   /* Translucent white 15-30% opacity */
   background: rgba(255, 255, 255, var(--glass-opacity));
@@ -312,7 +317,7 @@
 
 /* Interactive glass (hover effects) */
 .glass-interactive {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
   cursor: pointer;
 }
 
@@ -423,7 +428,7 @@
   z-index: var(--z-glass-elevated);
   color: var(--glass-text-light);
   padding: 1.5rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease;
   cursor: pointer;
 }
 
