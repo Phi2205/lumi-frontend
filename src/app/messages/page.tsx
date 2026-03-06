@@ -13,7 +13,10 @@ import { GlassButton } from "@/lib/components/glass-button"
 import { useAuth } from "@/contexts/AuthContext"
 import { useConversations } from "@/hooks/chat/useConversations"
 import { useMessages } from "@/hooks/chat/useMessages"
+import { useJumpMessages } from "@/hooks/chat/useJumpMessages"
 import { useChatRealtime } from "@/socket/chat/useChatRealtime"
+import { usePresenceRealtime } from "@/socket/presence/usePresenceRealtime"
+import { CreateGroupModal } from "@/components/messages/CreateGroupModal"
 
 // export default function Page() {
 //   return <div>Test messages</div>
@@ -22,17 +25,67 @@ import { useChatRealtime } from "@/socket/chat/useChatRealtime"
 export default function MessagesPage() {
   const { user } = useAuth()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [jumpMessageId, setJumpMessageId] = useState<string | null>(null)
   const { conversations, loading, error, reload, setConversations, markAsRead } = useConversations()
   const { messages, loading: messagesLoading, hasMore, loadMore, appendRealtimeMessage } = useMessages(selectedConversationId || undefined)
+
+  const {
+    messages: jumpMessages,
+    loading: jumpLoading,
+    hasMoreAbove,
+    hasMoreBelow,
+    loadMoreAbove,
+    loadMoreBelow,
+    loadingAbove,
+    loadingBelow
+  } = useJumpMessages(selectedConversationId || undefined, jumpMessageId)
+
   const { sendMessage, markRead } = useChatRealtime({
-    conversationId: selectedConversationId || undefined,
     onNewMessageReceived: (msg) => {
       appendRealtimeMessage(msg)
     }
   })
+
+  usePresenceRealtime({
+    onStatusChanged: (data) => {
+      setConversations(prev => prev.map(conv => {
+        // Cập nhật cho hội thoại private (nếu User là người nhận)
+        let isOnline = conv.isOnline;
+        let lastOnline = conv.lastOnline;
+
+        // Tìm người tham gia có ID trùng với data.userId
+        const updatedParticipants = conv.participants.map(p => {
+          if (p.id === data.userId || p.username === data.userId) { // Backends might send username or ID
+            return {
+              ...p,
+              isOnline: data.is_online,
+              lastOnline: data.last_online
+            };
+          }
+          return p;
+        });
+
+        const targetParticipant = updatedParticipants.find(p => p.id === data.userId || p.username === data.userId);
+
+        // Nếu là chat 1-1 và người status change là "đối phương"
+        if (conv.participants.length === 2 && targetParticipant && targetParticipant.id !== user?.id) {
+          isOnline = data.is_online;
+          lastOnline = data.last_online;
+        }
+
+        return {
+          ...conv,
+          participants: updatedParticipants,
+          isOnline,
+          lastOnline
+        };
+      }));
+    }
+  });
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
   const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
   const [showChatMobile, setShowChatMobile] = useState(false)
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
 
 
 
@@ -51,34 +104,36 @@ export default function MessagesPage() {
     }
   }, [selectedConversationId])
 
-  const handleSendMessage = (message: string) => {
-    sendMessage(message)
+  const handleSendMessage = (message?: string, attachments?: { url: string; type: string }[]) => {
+    if (selectedConversationId) {
+      sendMessage(message, selectedConversationId, attachments)
+    }
   }
+
+  // Auto mark as read when selecting conversation or receiving new message in selected conversation
+  useEffect(() => {
+    if (selectedConversationId) {
+      const selectedConv = conversations.find(c => c.id === selectedConversationId);
+      if (selectedConv && (selectedConv.unreadCount || 0) > 0 && selectedConv.lastMessageId) {
+        console.log("Auto-marking as read for:", selectedConversationId);
+        markRead(selectedConv.lastMessageId, selectedConversationId);
+        markAsRead(selectedConversationId, selectedConv.lastMessageId);
+      }
+    }
+  }, [selectedConversationId, conversations, markRead, markAsRead]);
 
   const handleSelectConversation = (id: string) => {
     setSelectedConversationId(id)
-    const conv = conversations.find(c => c.id === id)
-    const lastSeenMessageId = conv?.participants.find(p => p.id === user?.id)?.lastSeenMessageId || 0
-    console.log("lastSeenMessageId", lastSeenMessageId)
-    console.log("conv?.lastMessageId", conv?.lastMessageId)
-    if (lastSeenMessageId && conv?.lastMessageId == lastSeenMessageId) {
-      console.log("no need to mark as read")
-      return
-    }
-    // Nếu có tin nhắn (lastMessageId) VÀ (chưa từng xem tin nhắn nào HOẶC tin nhắn mới nhất lớn hơn tin nhắn đã xem cuối cùng)
-    if (conv?.lastMessageId && (lastSeenMessageId < conv.lastMessageId)) {
-      console.log("mark as read")
-      markRead(conv.lastMessageId, id)
-      markAsRead(id, conv.lastMessageId)
-    } else {
-      console.log("mark as read else")
-      markAsRead(id)
-    }
-
-    console.log("selected conversation id", id)
-    console.log("conversations", conversations)
-    console.log("conv:", conv)
+    setJumpMessageId(null)
     setShowChatMobile(true)
+  }
+
+  const handleJumpToMessage = (messageId: string) => {
+    setJumpMessageId(messageId)
+  }
+
+  const handleCloseJumpMode = () => {
+    setJumpMessageId(null)
   }
 
   return (
@@ -89,11 +144,13 @@ export default function MessagesPage() {
         imageError={imageError}
       />
 
-      <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
-      <Sidebar activeTab="messages" />
+      <div className={`${showChatMobile ? 'hidden lg:block' : 'block'}`}>
+        <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
+      </div>
+      <Sidebar activeTab="messages" isMobileHidden={showChatMobile} />
 
       {/* Instagram-style Layout */}
-      <div className="flex h-[calc(100vh)] pt-16 md:ml-20">
+      <div className={`flex h-[calc(100vh)] md:ml-20 ${showChatMobile ? 'pt-0 lg:pt-16' : 'pt-16'}`}>
         {/* Left Sidebar - Conversation List */}
         <div className={`w-full lg:w-[400px] flex-shrink-0 border-r border-white/10 overflow-hidden relative z-10 
           ${showChatMobile ? 'hidden lg:flex' : 'flex'}`}>
@@ -102,6 +159,7 @@ export default function MessagesPage() {
             selectedId={selectedConversationId}
             onSelect={handleSelectConversation}
             loading={loading}
+            onOpenCreateGroup={() => setIsGroupModalOpen(true)}
           />
         </div>
 
@@ -123,19 +181,36 @@ export default function MessagesPage() {
                 </GlassButton>
               </div>
               <ChatWindow
+                conversationId={selectedConversationId}
                 conversationName={conversations.find(c => c.id === selectedConversationId)?.name || ""}
                 conversationAvatar={conversations.find(c => c.id === selectedConversationId)?.avatar || ""}
                 participants={conversations.find(c => c.id === selectedConversationId)?.participants || []}
                 currentUserId={user?.id}
-                messages={messages}
+                messages={jumpMessageId ? jumpMessages : messages}
                 onSendMessage={handleSendMessage}
                 onMessageViewed={(msgId) => {
                   if (selectedConversationId) {
                     console.log("onMessageViewed", msgId)
-                    markRead(msgId)
+                    markRead(msgId, selectedConversationId)
                     markAsRead(selectedConversationId, msgId)
                   }
                 }}
+                onLoadMore={loadMore}
+                hasMore={hasMore}
+                isLoadingMore={messagesLoading}
+                isOnline={conversations.find(c => c.id === selectedConversationId)?.isOnline || false}
+                lastOnline={conversations.find(c => c.id === selectedConversationId)?.lastOnline || ""}
+                conversation={conversations.find(c => c.id === selectedConversationId)}
+                // Jump mode props
+                targetMessageId={jumpMessageId}
+                onLoadMoreAbove={loadMoreAbove}
+                hasMoreAbove={hasMoreAbove}
+                isLoadingMoreAbove={loadingAbove}
+                onLoadMoreBelow={loadMoreBelow}
+                hasMoreBelow={hasMoreBelow}
+                isLoadingMoreBelow={loadingBelow}
+                onCloseJumpMode={handleCloseJumpMode}
+                onJumpToMessage={handleJumpToMessage}
               />
             </div>
           ) : (
@@ -147,6 +222,16 @@ export default function MessagesPage() {
           )}
         </div>
       </div>
+
+      <CreateGroupModal
+        isOpen={isGroupModalOpen}
+        onClose={() => setIsGroupModalOpen(false)}
+        onCreated={(id) => {
+          reload()
+          handleSelectConversation(id)
+        }}
+        isDarkMode={isDarkMode}
+      />
     </div>
   )
 }

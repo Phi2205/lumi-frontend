@@ -1,9 +1,11 @@
 "use client"
 
-import { Search } from "lucide-react"
+import { Search, PlusCircle } from "lucide-react"
 import { StoryAvatar } from "@/components/ui/avatar"
 import { useState, memo, useDeferredValue, useMemo, useEffect } from "react"
 import { SkeletonConversationList } from "@/components/skeleton"
+import { GlassButton } from "@/lib/components/glass-button"
+import { CreateGroupModal } from "./CreateGroupModal"
 
 export interface ParticipantUI {
   id: string
@@ -11,6 +13,9 @@ export interface ParticipantUI {
   avatar_url: string
   isOnline: boolean
   lastSeenMessageId?: string
+  lastOnline?: string
+  username?: string
+  joined_at?: string
 }
 
 export interface ConversationUI {
@@ -26,6 +31,8 @@ export interface ConversationUI {
   lastSeenMessageId?: string
   participants: ParticipantUI[]
   lastMessageAt?: string
+  lastOnline?: string
+  type: string
 }
 
 interface ConversationListProps {
@@ -33,6 +40,7 @@ interface ConversationListProps {
   selectedId?: string | null
   onSelect?: (id: string) => void
   loading?: boolean
+  onOpenCreateGroup?: () => void
 }
 
 const ConversationItem = memo(({
@@ -55,7 +63,7 @@ const ConversationItem = memo(({
         }`}
     >
       <div className="relative flex-shrink-0">
-        <StoryAvatar className="w-12 h-12" src={conversation.avatar || "/avatar-default.jpg"} alt={conversation.name} hasStory={false} />
+        <StoryAvatar className="w-12 h-12" src={conversation.avatar || (conversation.type === 'group' ? "/avatar-group-default.jpg" : "/avatar-default.jpg" )} alt={conversation.name} hasStory={false} />
         {conversation.isOnline && (
           <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-400 ring-2 ring-zinc-900" />
         )}
@@ -89,7 +97,7 @@ const ConversationItem = memo(({
 
 ConversationItem.displayName = "ConversationItem";
 
-export function ConversationList({ conversations, selectedId, onSelect, loading }: ConversationListProps) {
+export function ConversationList({ conversations, selectedId, onSelect, loading, onOpenCreateGroup }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const deferredQuery = useDeferredValue(searchQuery)
 
@@ -110,16 +118,28 @@ export function ConversationList({ conversations, selectedId, onSelect, loading 
       <div
         className="p-4 border-b backdrop-blur-md relative z-10 bg-white/5 border-white/10"
       >
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-300" />
-          <input
-            placeholder="Search conversations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-white placeholder-white/50 focus:outline-none transition-all bg-white/10 border border-white/10"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-300" />
+            <input
+              placeholder="Tìm kiếm..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-white placeholder-white/50 focus:outline-none transition-all bg-white/10 border border-white/10"
+            />
+          </div>
+          <GlassButton
+            variant="ghost"
+            size="sm"
+            onClick={onOpenCreateGroup}
+            className="h-10 w-10 p-0 rounded-full flex-shrink-0 border-white/10 hover:bg-brand-primary/20"
+            title="Tạo nhóm"
+          >
+            <PlusCircle className="h-5 w-5 text-cyan-300" />
+          </GlassButton>
         </div>
       </div>
+
 
       {/* Conversations List */}
       <div

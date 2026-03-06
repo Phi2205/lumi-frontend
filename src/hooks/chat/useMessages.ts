@@ -25,7 +25,8 @@ const mapMessageToUI = (m: any, currentUserId: string): MessageUI => {
     senderAvatar: m.sender?.avatar_url || "/avatar-default.jpg",
     content: m.content,
     timestamp: isToday ? time : `${dateStr} ${time}`,
-    isOwn: m.sender?.id === currentUserId || m.sender_id === currentUserId
+    isOwn: m.sender?.id === currentUserId || m.sender_id === currentUserId,
+    attachments: m.attachments
   };
 };
 
@@ -115,23 +116,32 @@ export const useMessages = (conversationId?: string) => {
 
   const appendRealtimeMessage = useCallback(
     (messageData: any) => {
-      if (!conversationId || !user) return;
+      if (!user) return;
 
       const message = mapMessageToUI(messageData, user.id);
+      const msgConvId = messageData.conversationId || messageData.conversation_id;
 
-      setMessages(prev => {
-        if (prev.find(m => m.id === message.id)) return prev;
+      if (!msgConvId) return;
 
-        // Tin nhắn mới realtime nằm ở đầu mảng
-        const updated = [message, ...prev];
+      // Cập nhật cache cho hội thoại tương ứng (nếu đã từng load)
+      if (cacheRef.current[msgConvId]) {
+        const cache = cacheRef.current[msgConvId];
+        if (!cache.messages.find(m => m.id === message.id)) {
+          cacheRef.current[msgConvId] = {
+            ...cache,
+            messages: [message, ...cache.messages],
+          };
+        }
+      }
 
-        cacheRef.current[conversationId] = {
-          ...cacheRef.current[conversationId],
-          messages: updated,
-        };
-
-        return updated;
-      });
+      // Nếu là hội thoại đang được chọn, cập nhật state UI
+      if (msgConvId === conversationId) {
+        setMessages(prev => {
+          const isExist = prev.find(m => m.id === message.id);
+          if (isExist) return prev;
+          return [message, ...prev];
+        });
+      }
     },
     [conversationId, user]
   );

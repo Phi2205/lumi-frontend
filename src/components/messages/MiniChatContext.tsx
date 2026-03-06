@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, ReactNode } from 'react'
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react'
 import { MiniChat } from './MiniChat'
 import { usePathname } from 'next/navigation'
 import { useChatRealtime } from '@/socket/chat/useChatRealtime'
@@ -14,6 +14,7 @@ interface MiniChatSession {
   recipientAvatar: string
   conversationId?: string
   lastSeenMessageId?: string
+  unreadCount?: number
   isMinimized?: boolean
   initialShowTooltip?: boolean
   participants?: ParticipantUI[]
@@ -66,9 +67,35 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
     )
   }
 
+  useEffect(() => {
+    console.log('chats', chats)
+  }, [chats])
+
   useChatRealtime({
     onNewMessageReceived: (message) => {
-      console.log('New message received:', message)
+      console.log('New message received in MiniChatContext:', message)
+      const msgConvId = message.conversation_id;
+      const isMe = message.senderId === user?.id || message.sender_id === user?.id;
+      console.log('isMe', isMe)
+      console.log('msgConvId', msgConvId)
+      console.log('user?.id', user?.id)
+      if (msgConvId && !isMe) {
+        console.log('msgConvId', msgConvId)
+        setChats((prev) => {
+          console.log('Previous chats state:', prev);
+          return prev.map((chat) => {
+            const isMatch = chat.conversationId === msgConvId;
+            console.log(`Checking chat ${chat.conversationId} against ${msgConvId}: match=${isMatch}`);
+            if (isMatch) {
+              const newCount = (chat.unreadCount || 0) + 1;
+              console.log("newCount", newCount);
+              console.log(`Updating unreadCount for ${chat.conversationId} from ${chat.unreadCount || 0} to ${newCount}`);
+              return { ...chat, unreadCount: newCount };
+            }
+            return chat;
+          });
+        });
+      }
     },
     onConversationUpdate: async (data: { conversationId: string, lastMessage: any }) => {
       console.log('Conversation updated:', data)
@@ -82,6 +109,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
             .then((res) => {
               if (res && res.data) {
                 const mapped = mapConversationToUI(res.data, user.id)
+                console.log('Mapped conversation:', mapped)
                 const recipient = mapped.participants.find((p) => p.id !== user.id)
                 if (recipient) {
                   setChats((prev) => {
@@ -97,6 +125,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
                         initialShowTooltip: true,
                         participants: mapped.participants,
                         lastSeenMessageId: mapped.lastSeenMessageId,
+                        unreadCount: mapped.unreadCount,
                       },
                     ]
                     return next.length > 3 ? next.slice(1) : next
@@ -120,6 +149,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
             ? {
               ...chat,
               lastSeenMessageId: data.user_id === user?.id ? lastSeenId : chat.lastSeenMessageId,
+              unreadCount: data.user_id === user?.id ? 0 : chat.unreadCount,
               participants: chat.participants?.map((p) =>
                 p.id === data.user_id
                   ? { ...p, lastSeenMessageId: lastSeenId }
@@ -184,6 +214,7 @@ export function MiniChatProvider({ children }: { children: ReactNode }) {
                   initialShowTooltip={chat.initialShowTooltip}
                   participants={chat.participants}
                   lastSeenMessageId={chat.lastSeenMessageId}
+                  unreadCount={chat.unreadCount}
                 />
               </div>
             ))}

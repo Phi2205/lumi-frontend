@@ -49,6 +49,10 @@ export const useConversations = () => {
   }, [user]);
 
   useEffect(() => {
+    console.log("conversations", conversations)
+  }, [conversations]);
+
+  useEffect(() => {
     loadConversations();
   }, [loadConversations]);
 
@@ -91,8 +95,10 @@ export const useConversations = () => {
   const handleUserReadMessage = useCallback((data: any) => {
     setConversations(prev => prev.map(conv => {
       if (conv.id === data.conversation_id) {
+        const isMe = data.user_id === user?.id;
         return {
           ...conv,
+          lastSeenMessageId: isMe ? data.last_seen_message_id : conv.lastSeenMessageId,
           participants: conv.participants.map(p =>
             p.id === data.user_id
               ? { ...p, lastSeenMessageId: data.last_seen_message_id }
@@ -102,16 +108,17 @@ export const useConversations = () => {
       }
       return conv;
     }));
-  }, []);
+  }, [user?.id]);
 
   const markAsRead = useCallback((conversationId: string, lastMessageId?: string) => {
-    
+
     setConversations(prev => prev.map(conv => {
       if (conv.id === conversationId && user) {
         return {
           ...conv,
           unread: false,
           unreadCount: 0,
+          lastSeenMessageId: lastMessageId || conv.lastSeenMessageId,
           participants: conv.participants.map(p =>
             p.id === user.id
               ? { ...p, lastSeenMessageId: lastMessageId || p.lastSeenMessageId }

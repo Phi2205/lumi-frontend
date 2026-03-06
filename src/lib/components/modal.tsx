@@ -32,7 +32,7 @@ export const Modal: React.FC<ModalProps> = ({
     setMounted(true);
     return () => setMounted(false);
   }, []);
-
+  
   // Lock body scroll when modal is open
   useEffect(() => {
     if (!isOpen) return;
