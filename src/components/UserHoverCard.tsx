@@ -3,8 +3,9 @@
 import { useState } from "react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { MessageCircle, UserPlus, MoreHorizontal, MapPin, Briefcase, User } from "lucide-react"
+import { MessageCircle, UserPlus, MoreHorizontal, MapPin, Briefcase, User, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { GlassCard } from "@/lib/components"
 
 interface UserHoverCardProps {
   userId: string
@@ -60,13 +61,14 @@ export function UserHoverCard({
 
       {/* Hover Card */}
       {isOpen && (
-        <div
-          className="fixed z-50 w-80 backdrop-blur-2xl bg-gradient-to-br from-white/15 to-white/10 border border-white/30 rounded-3xl shadow-2xl p-6 glass-card"
+        <GlassCard
+          className="fixed z-50 w-80 p-6 rounded-3xl !backdrop-blur-2xl !bg-gradient-to-br !from-white/15 !to-white/10 !border-white/30"
+          variant="lg"
           style={{
             left: `${position.x}px`,
             top: `${position.y}px`,
             transform: "translateX(-50%) translateX(50px)",
-          }}
+          } as React.CSSProperties}
           onMouseEnter={() => setIsOpen(true)}
           onMouseLeave={() => setIsOpen(false)}
         >
@@ -75,19 +77,7 @@ export function UserHoverCard({
             onClick={() => setIsOpen(false)}
             className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition"
           >
-            <svg
-              className="w-5 h-5 text-white/70"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X className="w-5 h-5 text-white/70" />
           </button>
 
           {/* Header Section */}
@@ -179,7 +169,7 @@ export function UserHoverCard({
               <MoreHorizontal className="w-4 h-4" />
             </Button>
           </div>
-        </div>
+        </GlassCard>
       )}
     </div>
   )
