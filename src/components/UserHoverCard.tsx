@@ -62,7 +62,7 @@ export function UserHoverCard({
       {/* Hover Card */}
       {isOpen && (
         <GlassCard
-          className="fixed z-50 w-80 p-6 rounded-3xl !backdrop-blur-2xl !bg-gradient-to-br !from-white/15 !to-white/10 !border-white/30"
+          className="fixed z-50 w-80 p-6 rounded-3xl !backdrop-blur-2xl !bg-black/80 !border-white/20"
           variant="lg"
           style={{
             left: `${position.x}px`,
