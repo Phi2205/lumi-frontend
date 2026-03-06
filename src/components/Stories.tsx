@@ -11,6 +11,7 @@ import type { StoryFriend, Story as StoryApi } from "@/apis/story.api"
 import { playHlsPreview } from "@/lib/hls"
 import { SkeletonStories } from "@/components/skeleton"
 import { ModalStory } from "@/components/ModalStory"
+import { UserHoverCard } from "@/components/UserHoverCard"
 
 interface StoryItem {
   id: string
@@ -342,16 +343,22 @@ export function Stories() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                 </div>
                 <div className="mt-2 flex items-center justify-center gap-1">
-                  <Avatar 
-                    className="h-6 w-6 ring-2 ring-offset-1"
-                    style={{ 
-                      '--tw-ring-color': 'color-mix(in srgb, var(--brand-primary) 50%, transparent)',
-                      ringColor: 'color-mix(in srgb, var(--brand-primary) 50%, transparent)'
-                    } as React.CSSProperties & { ringColor?: string }}
+                  <UserHoverCard
+                    userId={story.id}
+                    name={story.name}
+                    avatar={story.avatar || "/avatar-default.jpg"}
                   >
-                    <AvatarImage src={story.avatar || "/avatar-default.jpg"} alt={story.username} />
-                    <AvatarFallback>{story.username[0]}</AvatarFallback>
-                  </Avatar>
+                    <Avatar 
+                      className="h-6 w-6 ring-2 ring-offset-1 cursor-pointer hover:scale-110 transition"
+                      style={{ 
+                        '--tw-ring-color': 'color-mix(in srgb, var(--brand-primary) 50%, transparent)',
+                        ringColor: 'color-mix(in srgb, var(--brand-primary) 50%, transparent)'
+                      } as React.CSSProperties & { ringColor?: string }}
+                    >
+                      <AvatarImage src={story.avatar || "/avatar-default.jpg"} alt={story.username} />
+                      <AvatarFallback>{story.username[0]}</AvatarFallback>
+                    </Avatar>
+                  </UserHoverCard>
                 </div>
                 <p className="text-xs text-center text-white font-medium mt-1 truncate">{story.name}</p>
               </div>

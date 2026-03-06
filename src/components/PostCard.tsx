@@ -5,13 +5,17 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { LikeButton } from "./LikeButton"
 import { CommentSection } from "./CommentSection"
+import { UserHoverCard } from "./UserHoverCard"
 import { useState } from "react"
 
 export interface Post {
   id: string
   author: {
+    id?: string
     name: string
     avatar: string
+    education?: string
+    location?: string
   }
   timestamp: string
   content: string
@@ -34,10 +38,18 @@ export function PostCard({ post, onLike }: PostCardProps) {
       {/* Post Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10 ring-2 ring-blue-400/50">
-            <AvatarImage src={post.author.avatar || "/placeholder.svg"} alt={post.author.name} />
-            <AvatarFallback>{post.author.name[0]}</AvatarFallback>
-          </Avatar>
+          <UserHoverCard
+            userId={post.author.id || "user-1"}
+            name={post.author.name}
+            avatar={post.author.avatar || "/placeholder.svg"}
+            education={post.author.education}
+            location={post.author.location}
+          >
+            <Avatar className="h-10 w-10 ring-2 ring-blue-400/50 cursor-pointer hover:ring-blue-400 transition">
+              <AvatarImage src={post.author.avatar || "/placeholder.svg"} alt={post.author.name} />
+              <AvatarFallback>{post.author.name[0]}</AvatarFallback>
+            </Avatar>
+          </UserHoverCard>
           <div>
             <p className="font-semibold text-white">{post.author.name}</p>
             <p className="text-xs text-white/50">{post.timestamp}</p>
