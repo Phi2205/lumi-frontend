@@ -142,56 +142,74 @@ export default function ReelsPage() {
     }
   }, [reels.length])
 
+  const scrollToNext = () => setCurrentIndex((prev) => (prev + 1) % reels.length)
+  const scrollToPrevious = () => setCurrentIndex((prev) => (prev - 1 + reels.length) % reels.length)
+
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-black">
-      {/* Reel Container */}
-      <div className="relative w-full h-full">
-        {reels.map((reel, index) => (
-          <div
-            key={reel.id}
-            className={`absolute inset-0 transition-opacity duration-300 ${
-              index === currentIndex ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
-          >
-            <ReelCard reel={reel} isActive={index === currentIndex} isDarkMode={isDarkMode} />
-          </div>
-        ))}
+    <div className="relative w-full min-h-screen overflow-hidden bg-black flex items-center justify-center">
+      {/* Main Reel Container - Centered with Fixed Width */}
+      <div className="relative w-full max-w-sm h-screen md:h-[90vh] md:rounded-2xl overflow-hidden">
+        <ReelCard
+          reel={reels[currentIndex]}
+          isActive={true}
+          isDarkMode={isDarkMode}
+        />
       </div>
 
-      {/* Navigation Indicators - Left Side */}
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 z-30 flex flex-col gap-2">
+      {/* Right Side Navigation - Desktop */}
+      <div className="hidden md:flex absolute right-8 top-1/2 -translate-y-1/2 z-30 flex-col gap-4">
+        <button
+          onClick={scrollToPrevious}
+          className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all"
+          aria-label="Previous reel"
+        >
+          <ChevronUp className="w-5 h-5" />
+        </button>
+        <button
+          onClick={scrollToNext}
+          className="p-3 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all"
+          aria-label="Next reel"
+        >
+          <ChevronDown className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Bottom Navigation - Mobile */}
+      <div className="md:hidden absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+        <button
+          onClick={scrollToPrevious}
+          className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all"
+          aria-label="Previous reel"
+        >
+          <ChevronUp className="w-4 h-4" />
+        </button>
+        <button
+          onClick={scrollToNext}
+          className="p-2 rounded-full bg-white/20 hover:bg-white/30 text-white transition-all"
+          aria-label="Next reel"
+        >
+          <ChevronDown className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Indicator Dots - Bottom Center */}
+      <div className="absolute bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
         {reels.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentIndex(index)}
-            className={`h-1 rounded-full transition-all ${
-              index === currentIndex ? "w-8 bg-white" : "w-2 bg-white/50 hover:bg-white/70"
+            className={`transition-all ${
+              index === currentIndex
+                ? "bg-white w-8 h-1"
+                : "bg-white/50 w-1 h-1 hover:bg-white/80"
             }`}
             aria-label={`Go to reel ${index + 1}`}
           />
         ))}
       </div>
 
-      {/* Navigation Arrows */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-4">
-        <button
-          onClick={() => setCurrentIndex((prev) => (prev - 1 + reels.length) % reels.length)}
-          className="p-3 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition"
-          aria-label="Previous reel"
-        >
-          <ChevronUp className="w-5 h-5 text-white" />
-        </button>
-        <button
-          onClick={() => setCurrentIndex((prev) => (prev + 1) % reels.length)}
-          className="p-3 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 transition"
-          aria-label="Next reel"
-        >
-          <ChevronDown className="w-5 h-5 text-white" />
-        </button>
-      </div>
-
-      {/* Reel Counter */}
-      <div className="absolute top-4 right-4 z-30 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full text-white text-xs font-semibold">
+      {/* Reel Counter - Top Right */}
+      <div className="absolute top-4 right-4 z-30 bg-black/50 px-3 py-1.5 rounded-full text-white text-xs font-semibold">
         {currentIndex + 1} / {reels.length}
       </div>
     </div>
