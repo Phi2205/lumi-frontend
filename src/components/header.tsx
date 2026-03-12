@@ -7,6 +7,7 @@ import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import Link from "next/link"
 import { SwitchMode } from "@/components/SwitchMode"
+import { UploadHeaderIcon } from "@/components/common/UploadHeaderIcon"
 
 interface HeaderProps {
   isDarkMode: boolean
@@ -40,6 +41,8 @@ export function Header({ isDarkMode, onDarkModeToggle }: HeaderProps) {
 
         {/* Right Section */}
         <div className="flex items-center gap-2 sm:gap-4">
+          <UploadHeaderIcon />
+
           <Button variant="ghost" size="icon" className="relative text-white/60 hover:text-white hover:bg-white/10 rounded-lg">
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
@@ -51,7 +54,7 @@ export function Header({ isDarkMode, onDarkModeToggle }: HeaderProps) {
               <AvatarImage src={user?.avatar_url || "/avatar-default.jpg"} alt="User" />
               <AvatarFallback>{user?.username?.[0] || user?.email?.[0] || "U"}</AvatarFallback>
             </Avatar>
-            
+
             {/* Dropdown Menu */}
             <div className="absolute right-0 top-full mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
               <div className="backdrop-blur-xl bg-neutral-900/90 border border-white/20 rounded-xl shadow-2xl py-2 overflow-hidden">
@@ -64,7 +67,7 @@ export function Header({ isDarkMode, onDarkModeToggle }: HeaderProps) {
                     {user?.email || "user@example.com"}
                   </p>
                 </div>
-                
+
                 {/* Menu Items */}
                 <div className="py-1.5">
                   <button
@@ -77,7 +80,7 @@ export function Header({ isDarkMode, onDarkModeToggle }: HeaderProps) {
                     <UserIcon className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
                     <span>Profile</span>
                   </button>
-                  
+
                   {/* Dark Mode Toggle */}
                   <div className="w-full px-4 py-2.5 text-left text-sm text-white font-medium hover:bg-white/15 flex items-center justify-between transition-all duration-150 rounded-lg mx-1.5 group/item">
                     <div className="flex items-center gap-3 flex-shrink-0">
@@ -88,7 +91,7 @@ export function Header({ isDarkMode, onDarkModeToggle }: HeaderProps) {
                       <SwitchMode isDarkMode={isDarkMode} onToggle={onDarkModeToggle} />
                     </div>
                   </div>
-                  
+
                   <button
                     className="w-full px-4 py-2.5 text-left text-sm text-white font-medium hover:bg-white/15 flex items-center gap-3 transition-all duration-150 rounded-lg mx-1.5 group/item"
                     onClick={() => {
@@ -99,9 +102,9 @@ export function Header({ isDarkMode, onDarkModeToggle }: HeaderProps) {
                     <Settings className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
                     <span>Settings</span>
                   </button>
-                  
+
                   <div className="border-t border-white/20 my-1.5 mx-2"></div>
-                  
+
                   <button
                     className="w-full px-4 py-2.5 text-left text-sm text-red-400 font-semibold hover:bg-red-500/20 hover:text-red-300 flex items-center gap-3 transition-all duration-150 rounded-lg mx-1.5 group/item"
                     onClick={handleLogout}

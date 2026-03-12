@@ -19,3 +19,12 @@ export const getUserByUsername = async (username: string) => {
         throw error;
     }
 }
+
+export const editProfile = async (data: userApi.EditProfilePayload) => {
+    try {
+        const response = await userApi.editProfileApi(data);
+        return response.data.data;
+    } catch (error) {
+        throw error;
+    }
+}

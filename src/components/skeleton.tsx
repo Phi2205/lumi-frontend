@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react';
-import { GlassCard } from "@/lib/components";
+import { GlassCard, GlassCardVariant } from "@/lib/components";
 
 interface SkeletonProps {
   className?: string;
@@ -153,87 +153,84 @@ export const SkeletonUserInfo = ({ className = "" }: { className?: string }) => 
 
 // Profile Skeleton Component
 export const ProfileSkeleton = () => (
-  <>
-    {/* Cover Photo Skeleton */}
-    <GlassCard variant="lg" className="h-48 md:h-64 rounded-3xl overflow-hidden mb-0">
+  <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+    {/* Back button skeleton */}
+    <div className="mb-4">
       <Skeleton
-        height="h-full"
-        className="rounded-3xl bg-white/10"
-        width="w-full"
+        width="w-20"
+        height="h-8"
+        className="rounded-xl bg-white/5 opacity-50"
       />
+    </div>
+
+    {/* Cover Photo Skeleton */}
+    <GlassCard variant="lg" className="h-72 md:h-96 rounded-3xl overflow-hidden mb-0 p-0 border-white/10">
+      <div className="w-full h-full bg-linear-to-b from-white/10 to-transparent animate-pulse" />
     </GlassCard>
 
-    {/* Profile Header Section Skeleton */}
-    <GlassCard className="relative -mt-20 mb-8 p-8">
-      <div className="flex flex-col md:flex-row md:items-end gap-6">
+    {/* Profile Header Section Skeleton - Matching GlassCardVariant overlap */}
+    <GlassCardVariant className="relative -mt-37 md:-mt-57 mb-8 p-4 md:p-8 !rounded-b-3xl items-end">
+      <div className="flex flex-row items-end gap-4 md:gap-6">
         {/* Avatar Skeleton */}
         <div className="shrink-0">
-          <SkeletonAvatar />
+          <div className="h-20 w-20 md:h-40 md:w-40 rounded-full bg-white/10 animate-pulse ring-4 ring-white/10 shadow-2xl" />
         </div>
 
         {/* User Info Skeleton */}
-        <div className="flex-1">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <SkeletonUserInfo />
-            <SkeletonButtons count={3} />
+        <div className="flex-1 text-left pb-2">
+          <div className="mb-3 md:mb-4 space-y-2">
+            <div className="h-6 md:h-9 w-32 md:w-48 bg-white/15 rounded-lg animate-pulse" />
+            <div className="h-4 md:h-6 w-24 md:w-32 bg-white/10 rounded animate-pulse" />
           </div>
 
-          <SkeletonText lines={2} className="mb-4" />
+          <div className="flex gap-2 items-center flex-wrap">
+            <div className="h-8 md:h-11 w-24 md:w-32 bg-white/10 rounded-xl animate-pulse" />
+            <div className="h-8 md:h-11 w-8 md:w-11 bg-white/10 rounded-xl animate-pulse" />
+            <div className="h-8 md:h-11 w-8 md:w-11 bg-white/10 rounded-xl animate-pulse" />
+          </div>
+        </div>
+      </div>
+    </GlassCardVariant>
 
-          <SkeletonUserDetails count={3} />
+    {/* Information Section Skeleton */}
+    <GlassCard variant="lg" className="mb-8">
+      <div className="space-y-6">
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="h-7 w-32 bg-white/15 rounded-lg animate-pulse" />
+            <div className="h-6 w-20 bg-brand-primary/10 rounded-full animate-pulse" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-4 w-full bg-white/5 rounded animate-pulse" />
+            <div className="h-4 w-3/4 bg-white/5 rounded animate-pulse" />
+          </div>
+        </div>
+
+        <div className="flex flex-col items-start sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
+          <div className="h-8 w-40 bg-white/5 border border-white/5 rounded-full animate-pulse" />
+          <div className="h-8 w-32 bg-white/5 border border-white/5 rounded-full animate-pulse" />
+          <div className="h-8 w-28 bg-white/5 border border-white/5 rounded-full animate-pulse" />
         </div>
       </div>
     </GlassCard>
 
     {/* Stats Section Skeleton */}
-    <SkeletonStatCards count={3} className="mb-8" />
-
-    {/* About Section Skeleton */}
-    <GlassCard className="mb-8">
-      <div className="space-y-6">
-        <div>
-          <Skeleton
-            height="h-8"
-            width="w-24"
-            className="mb-4 bg-white/10 rounded-lg"
-          />
-          <SkeletonText lines={3} />
-        </div>
-
-        <div>
-          <Skeleton
-            height="h-6"
-            width="w-20"
-            className="mb-3 bg-white/10 rounded"
-          />
-          <SkeletonSkills count={6} />
-        </div>
-
-        <div>
-          <Skeleton
-            height="h-6"
-            width="w-24"
-            className="mb-3 bg-white/10 rounded"
-          />
-          <Skeleton
-            height="h-5"
-            width="w-48"
-            className="bg-white/10 rounded"
-          />
-        </div>
-      </div>
-    </GlassCard>
-
-    {/* Posts Grid Skeleton */}
-    <div className="mb-8">
-      <Skeleton
-        height="h-8"
-        width="w-24"
-        className="mb-6 bg-white/10 rounded-lg"
-      />
-      <SkeletonPostGrid count={6} />
+    <div className="grid grid-cols-3 gap-4 mb-8">
+      <div className="h-20 bg-white/5 border border-white/10 rounded-2xl animate-pulse" />
+      <div className="h-20 bg-white/5 border border-white/10 rounded-2xl animate-pulse" />
+      <div className="h-20 bg-white/5 border border-white/10 rounded-2xl animate-pulse" />
     </div>
-  </>
+
+    {/* Posts Section Skeleton */}
+    <div className="mb-8">
+      <div className="h-8 w-24 bg-white/15 rounded-lg mb-6 animate-pulse" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-64 bg-white/5 rounded-2xl border border-white/5 animate-pulse" />
+        ))}
+      </div>
+    </div>
+  </div>
 );
 
 export const SkeletonFriendRequests = ({ count = 3, className = "" }: { count?: number; className?: string }) => (
@@ -468,6 +465,27 @@ export const SkeletonConversationList = ({ count = 10, className = "" }: { count
   <div className={`space-y-1.5 ${className}`}>
     {Array.from({ length: count }).map((_, i) => (
       <SkeletonConversationItem key={i} />
+    ))}
+  </div>
+);
+
+export const SkeletonSettingsRow = ({ className = "" }: { className?: string }) => (
+  <div className={`flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-2xl animate-pulse ${className}`}>
+    <div className="flex items-center gap-4 min-w-0">
+      <Skeleton width="w-9" height="h-9" className="rounded-lg bg-brand-primary/5" />
+      <div className="min-w-0 space-y-1.5">
+        <Skeleton width="w-12" height="h-3" className="bg-white/5 rounded" />
+        <Skeleton width="w-32" height="h-4" className="bg-white/10 rounded" />
+      </div>
+    </div>
+    <Skeleton width="w-5" height="h-5" className="bg-white/5 rounded-full" />
+  </div>
+);
+
+export const SkeletonSettingsList = ({ count = 3, className = "" }: { count?: number; className?: string }) => (
+  <div className={`space-y-4 ${className}`}>
+    {Array.from({ length: count }).map((_, i) => (
+      <SkeletonSettingsRow key={i} />
     ))}
   </div>
 );

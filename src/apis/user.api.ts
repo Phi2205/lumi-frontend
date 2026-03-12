@@ -15,9 +15,17 @@ export interface FilterUserResponse {
   limit: number;
 };
 
+export interface EditProfilePayload extends Location{
+  bio?: string;
+  birthday?: string;
+}
+
 
 export const filterUserApi = (data: FilterUserPayload) =>
   axiosInstance.get<ApiResponse<FilterUserResponse>>('/users', { params: data });
 
 export const getUserByUsernameApi = (username: string) =>
   axiosInstance.get<ApiResponse<User>>(`/users/username/${username}`);
+
+export const editProfileApi = (data: EditProfilePayload) =>
+  axiosInstance.patch<ApiResponse<User>>(`/users/profile`, data);

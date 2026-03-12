@@ -6,6 +6,7 @@ import { SearchPanel } from "@/components/SearchPanel"
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface SidebarProps {
   activeTab?: string
@@ -28,6 +29,7 @@ const mobileItems = menuItems.slice(0, 5)
 export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const { user } = useAuth()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({})
   const mobileNavRef = useRef<HTMLDivElement>(null)
@@ -37,9 +39,10 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: 
   const currentActiveId = useMemo(() => {
     if (isSearchOpen) return "search"
     if (pathname === "/") return "home"
+    if (pathname === "/profile") return "profile"
     const matchingItem = menuItems.find(item => item.id !== "home" && item.id !== "search" && pathname.startsWith(`/${item.id}`))
     return matchingItem ? matchingItem.id : (_activeTab || "home")
-  }, [pathname, isSearchOpen, _activeTab])
+  }, [pathname, isSearchOpen, _activeTab, user])
 
   // Update sliding indicator position
   const updateIndicator = useCallback(() => {
@@ -76,6 +79,7 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: 
 
   const getItemHref = (id: string) => {
     if (id === "home") return "/"
+    if (id === "profile") return "/profile"
     return `/${id}`
   }
 

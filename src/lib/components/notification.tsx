@@ -13,9 +13,9 @@ interface NotificationProps {
   duration?: number; // Auto close after duration (ms), 0 = no auto close
 }
 
-export const Notification: React.FC<NotificationProps> = ({ 
-  isOpen, 
-  onClose, 
+export const Notification: React.FC<NotificationProps> = ({
+  isOpen,
+  onClose,
   type = 'info',
   title,
   message,
@@ -87,106 +87,85 @@ export const Notification: React.FC<NotificationProps> = ({
   }[type];
 
   return (
-    <>
-      <div 
-        onClick={onClose}
-        className="fixed inset-0 bg-black/30 backdrop-blur-[4px] z-[100]"
+    <div
+      className="fixed top-5 right-5 z-[101] p-0 pointer-events-none"
+      style={{
+        animation: 'slideInRight 0.3s ease'
+      }}
+    >
+      <style>{`
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
+
+      <div
+        className="relative w-full max-w-[400px] backdrop-blur-[20px] rounded-2xl pointer-events-auto shadow-2xl"
         style={{
-          WebkitBackdropFilter: 'blur(4px)',
-          animation: 'fadeIn 0.2s ease'
+          WebkitBackdropFilter: 'blur(20px)',
+          border: `1px solid ${config.borderColor}`
         }}
-      />
-      
-      <div 
-        className="fixed top-5 right-5 z-[101] p-0"
-        style={{
-          animation: 'slideInRight 0.3s ease'
-        }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <style>{`
-          @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-          }
-          @keyframes slideInRight {
-            from {
-              opacity: 0;
-              transform: translateX(100%);
-            }
-            to {
-              opacity: 1;
-              transform: translateX(0);
-            }
-          }
-        `}</style>
-        
-        <div 
-          className="relative w-full max-w-[400px] backdrop-blur-[20px] rounded-2xl"
-          style={{
-            WebkitBackdropFilter: 'blur(20px)',
-            border: `1px solid ${config.borderColor}`
-          }}
-          onClick={(e) => e.stopPropagation()}
+        <svg className="absolute inset-0 w-full h-full pointer-events-none">
+          <defs>
+            <linearGradient id="notificationGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style={{ stopColor: 'rgba(255,255,255,0.12)' }} />
+              <stop offset="50%" style={{ stopColor: 'rgba(255,255,255,0.06)' }} />
+              <stop offset="100%" style={{ stopColor: 'rgba(255,255,255,0.03)' }} />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="100%" height="100%" rx="16" fill="url(#notificationGrad)" stroke={config.borderColor} strokeWidth="1" />
+        </svg>
+
+        <button
+          onClick={onClose}
+          aria-label="Close notification"
+          className="absolute top-4 right-4 w-7 h-7 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center cursor-pointer transition-all duration-300 ease z-[1] hover:bg-white/20"
         >
-          <svg className="absolute inset-0 w-full h-full pointer-events-none">
-            <defs>
-              <linearGradient id="notificationGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style={{stopColor: 'rgba(255,255,255,0.12)'}} />
-                <stop offset="50%" style={{stopColor: 'rgba(255,255,255,0.06)'}} />
-                <stop offset="100%" style={{stopColor: 'rgba(255,255,255,0.03)'}} />
-              </linearGradient>
-            </defs>
-            <rect x="0" y="0" width="100%" height="100%" rx="16" fill="url(#notificationGrad)" stroke={config.borderColor} strokeWidth="1" />
+          <svg width={16} height={16} viewBox="0 0 20 20" fill="rgba(255,255,255,0.8)">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
+        </button>
 
-          <button 
-            onClick={onClose}
-            aria-label="Close notification"
-            className="absolute top-4 right-4 w-7 h-7 rounded-lg bg-white/10 border border-white/15 flex items-center justify-center cursor-pointer transition-all duration-300 ease z-[1] hover:bg-white/20"
-            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
-              e.currentTarget.style.transform = 'rotate(90deg)';
-            }}
-            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
-              e.currentTarget.style.transform = 'rotate(0deg)';
-            }}
-          >
-            <svg width={16} height={16} viewBox="0 0 20 20" fill="rgba(255,255,255,0.8)">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
+        <div className="relative p-6 pr-12 z-[1]">
+          <div className="flex items-start gap-4">
+            <div
+              className={`w-12 h-12 rounded-xl ${config.iconBg} border flex items-center justify-center shrink-0 backdrop-blur-[10px]`}
+              style={{
+                WebkitBackdropFilter: 'blur(10px)'
+              }}
+            >
+              <svg width={24} height={24} fill={config.iconColor} viewBox="0 0 20 20">
+                {config.icon}
+              </svg>
+            </div>
 
-          <div className="relative p-6 pr-12 z-[1]">
-            <div className="flex items-start gap-4">
-              <div 
-                className={`w-12 h-12 rounded-xl ${config.iconBg} border flex items-center justify-center shrink-0 backdrop-blur-[10px]`}
-                style={{
-                  WebkitBackdropFilter: 'blur(10px)'
-                }}
-              >
-                <svg width={24} height={24} fill={config.iconColor} viewBox="0 0 20 20">
-                  {config.icon}
-                </svg>
-              </div>
-
-              <div className="flex-1 min-w-0">
-                {title && (
-                  <h3 className={`text-lg font-bold mb-1 ${config.titleColor}`}>
-                    {title}
-                  </h3>
-                )}
-                {!title && (
-                  <h3 className={`text-lg font-bold mb-1 ${config.titleColor}`}>
-                    {defaultTitle}
-                  </h3>
-                )}
-                <p className="text-[14px] text-white/80 leading-[1.5]">
-                  {message}
-                </p>
-              </div>
+            <div className="flex-1 min-w-0">
+              {title && (
+                <h3 className={`text-lg font-bold mb-1 ${config.titleColor}`}>
+                  {title}
+                </h3>
+              )}
+              {!title && (
+                <h3 className={`text-lg font-bold mb-1 ${config.titleColor}`}>
+                  {defaultTitle}
+                </h3>
+              )}
+              <p className="text-[14px] text-white/80 leading-[1.5]">
+                {message}
+              </p>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
