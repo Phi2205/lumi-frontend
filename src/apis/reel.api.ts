@@ -34,6 +34,25 @@ export interface PaginatedReels {
     hasMore: boolean;
 }
 
+export interface ReelComment {
+    id: string;
+    reel_id: string;
+    user_id: string;
+    content: string;
+    parent_id: string | null;
+    depth: number;
+    created_at: string;
+    user: User;
+    replies: ReelComment[];
+    has_replies: boolean;
+}
+
+export interface ReelCommentResponse {
+    items: ReelComment[];
+    nextCursor: string | null;
+    hasMore: boolean;
+}
+
 export const creatReelApi = (request: CreateReelRequest) =>
     axiosInstance.post<ApiResponse<Reel>>("/reels", request);
 
@@ -54,3 +73,19 @@ export const getReelLikesApi = (reelId: string, cursor?: string, limit: number =
     axiosInstance.get<ApiResponse<any>>(`/reels/${reelId}/likes`, {
         params: { cursor, limit }
     });
+
+export const getReelCommentsApi = (reelId: string, cursor?: string, limit: number = 10) =>
+    axiosInstance.get<ApiResponse<ReelCommentResponse>>(`/reels/${reelId}/comments`, {
+        params: { cursor, limit }
+    });
+
+export const getReelCommentRepliesApi = (reelId: string, parentId: string, cursor?: string, limit: number = 10) =>
+    axiosInstance.get<ApiResponse<ReelCommentResponse>>(`/reels/${reelId}/comments/${parentId}/replies`, {
+        params: { cursor, limit }
+    });
+
+export const createReelCommentApi = (reelId: string, content: string, parentId?: string) =>
+    axiosInstance.post<ApiResponse<ReelComment>>(`/reels/${reelId}/comments`, { content, parentId });
+
+export const deleteReelCommentApi = (reelId: string, commentId: string) =>
+    axiosInstance.delete<ApiResponse<any>>(`/reels/${reelId}/comments/${commentId}`);

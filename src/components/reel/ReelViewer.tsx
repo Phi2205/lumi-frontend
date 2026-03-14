@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect, useCallback } from "react"
-import { ArrowLeft, Loader2 } from "lucide-react"
+import { ArrowLeft, Loader2, ChevronUp, ChevronDown } from "lucide-react"
 import { Reel } from "@/apis/reel.api"
 import { ReelPlayer } from "./ReelPlayer"
 import Link from "next/link"
@@ -29,11 +29,65 @@ export function ReelViewer({
     const [activeIndex, setActiveIndex] = useState(startIndex)
     const [isGlobalMuted, setIsGlobalMuted] = useState(true)
     const containerRef = useRef<HTMLDivElement>(null)
+    const reelRefs = useRef<(HTMLDivElement | null)[]>([])
 
     const toggleGlobalMute = useCallback((e: React.MouseEvent) => {
         e.stopPropagation()
         setIsGlobalMuted(prev => !prev)
     }, [])
+
+    // Lần đầu load: Check nếu có reel_id trên URL thì cuộn tới nó
+    useEffect(() => {
+        if (reels.length > 0 && typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search)
+            const reelId = params.get("reel_id")
+            if (reelId) {
+                const foundIndex = reels.findIndex(r => r.id === reelId)
+                if (foundIndex !== -1) {
+                    setTimeout(() => {
+                        reelRefs.current[foundIndex]?.scrollIntoView({ behavior: 'auto' })
+                    }, 50)
+                }
+            } else {
+                const url = new URL(window.location.href)
+                url.searchParams.set("reel_id", reels[0].id)
+                window.history.replaceState({}, "", url.toString())
+            }
+        }
+    }, [reels])
+
+    // Intersection Observer để phát hiện reel nào đang xem
+    useEffect(() => {
+        const currentContainer = containerRef.current;
+        if (!currentContainer) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                // Check if element is mostly in view
+                if (entry.isIntersecting) {
+                    const index = Number(entry.target.getAttribute('data-index'));
+                    setActiveIndex(index);
+
+                    // Update URL
+                    const currentReel = reels[index];
+                    if (currentReel && typeof window !== 'undefined') {
+                        const url = new URL(window.location.href);
+                        url.searchParams.set("reel_id", currentReel.id);
+                        window.history.replaceState({}, "", url.toString());
+                    }
+                }
+            });
+        }, {
+            root: currentContainer,
+            threshold: 0.6 // Cần hiển thị > 60% để tính là active
+        });
+
+        reelRefs.current.forEach(ref => {
+            if (ref) observer.observe(ref);
+        });
+
+        return () => observer.disconnect();
+    }, [reels]);
 
     // Khi gần cuối danh sách, gọi loadMore
     useEffect(() => {
@@ -44,10 +98,10 @@ export function ReelViewer({
 
     const goToReel = useCallback((index: number) => {
         if (index < 0 || index >= reels.length) return
-        setActiveIndex(index)
+        reelRefs.current[index]?.scrollIntoView({ behavior: 'smooth' })
     }, [reels.length])
 
-    // Keyboard: ↑↓ hoặc j/k
+    // Keyboard navigation
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === "ArrowDown" || e.key === "j") goToReel(activeIndex + 1)
@@ -55,56 +109,6 @@ export function ReelViewer({
         }
         window.addEventListener("keydown", handleKeyDown)
         return () => window.removeEventListener("keydown", handleKeyDown)
-    }, [activeIndex, goToReel])
-
-    // Scroll wheel
-    useEffect(() => {
-        const container = containerRef.current
-        if (!container) return
-
-        let isScrolling = false
-        let timeout: NodeJS.Timeout
-
-        const handleWheel = (e: WheelEvent) => {
-            e.preventDefault()
-            if (isScrolling) return
-            isScrolling = true
-
-            if (e.deltaY > 0) goToReel(activeIndex + 1)
-            else if (e.deltaY < 0) goToReel(activeIndex - 1)
-
-            timeout = setTimeout(() => { isScrolling = false }, 600)
-        }
-
-        container.addEventListener("wheel", handleWheel, { passive: false })
-        return () => {
-            container.removeEventListener("wheel", handleWheel)
-            clearTimeout(timeout)
-        }
-    }, [activeIndex, goToReel])
-
-    // Touch swipe
-    useEffect(() => {
-        const container = containerRef.current
-        if (!container) return
-
-        let startY = 0
-
-        const onTouchStart = (e: TouchEvent) => { startY = e.touches[0].clientY }
-        const onTouchEnd = (e: TouchEvent) => {
-            const diff = startY - e.changedTouches[0].clientY
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) goToReel(activeIndex + 1)
-                else goToReel(activeIndex - 1)
-            }
-        }
-
-        container.addEventListener("touchstart", onTouchStart, { passive: true })
-        container.addEventListener("touchend", onTouchEnd, { passive: true })
-        return () => {
-            container.removeEventListener("touchstart", onTouchStart)
-            container.removeEventListener("touchend", onTouchEnd)
-        }
     }, [activeIndex, goToReel])
 
     if (reels.length === 0 && !loading) {
@@ -119,40 +123,71 @@ export function ReelViewer({
     }
 
     return (
-        <div ref={containerRef} className="fixed inset-0 bg-black z-50 overflow-hidden">
+        <div
+            ref={containerRef}
+            className="fixed inset-0 bg-black z-50 overflow-y-scroll snap-y snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        >
             {/* Nút quay lại */}
             <button
                 onClick={() => window.history.back()}
-                className="fixed top-5 left-5 z-[60] p-2.5 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 hover:bg-black/60 transition-all"
+                className="fixed top-5 left-5 z-[60] p-2.5 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 hover:bg-black/60 transition-all cursor-pointer"
             >
                 <ArrowLeft className="w-5 h-5 text-white/80" />
             </button>
 
-            {/* Reels slides */}
-            <div
-                className="h-full w-full transition-transform duration-500 ease-out"
-                style={{ transform: `translateY(-${activeIndex * 100}%)` }}
-            >
+            {/* Reels list */}
+            <div className="flex flex-col w-full relative">
                 {reels.map((reel, index) => (
-                    <ReelPlayer
+                    <div
                         key={reel.id}
-                        reel={reel}
-                        isActive={index === activeIndex}
-                        isMuted={isGlobalMuted}
-                        toggleMute={toggleGlobalMute}
-                    />
+                        ref={el => {
+                            if (el) reelRefs.current[index] = el
+                        }}
+                        data-index={index}
+                        className="w-full h-screen snap-start snap-always shrink-0"
+                    >
+                        <ReelPlayer
+                            reel={reel}
+                            isActive={index === activeIndex}
+                            isAdjacent={Math.abs(index - activeIndex) <= 1}
+                            isMuted={isGlobalMuted}
+                            toggleMute={toggleGlobalMute}
+                        />
+                    </div>
                 ))}
 
                 {/* Loading khi đang tải thêm */}
                 {loading && (
-                    <div className="h-screen w-full flex items-center justify-center">
-                        <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
+                    <div className="h-[20vh] w-full flex items-center justify-center snap-start shrink-0 text-brand-primary">
+                        <Loader2 className="w-8 h-8 animate-spin" />
                     </div>
                 )}
             </div>
 
+            {/* Mobile Swipe Notice (Invisible, functional through Touch Events) */}
+
+            {/* Nút Navigation Lên/Xuống */}
+            <div className="hidden sm:flex fixed right-5 top-1/2 -translate-y-1/2 z-[60] flex-col gap-4">
+                <button
+                    onClick={() => goToReel(activeIndex - 1)}
+                    disabled={activeIndex <= 0}
+                    className="p-3 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 hover:bg-black/60 transition-all text-white/80 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    aria-label="Previous reel"
+                >
+                    <ChevronUp className="w-6 h-6" />
+                </button>
+                <button
+                    onClick={() => goToReel(activeIndex + 1)}
+                    disabled={activeIndex >= reels.length - 1 && !hasMore}
+                    className="p-3 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 hover:bg-black/60 transition-all text-white/80 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                    aria-label="Next reel"
+                >
+                    <ChevronDown className="w-6 h-6" />
+                </button>
+            </div>
+
             {/* Số thứ tự */}
-            <div className="fixed left-1/2 -translate-x-1/2 bottom-3 z-[60] text-[10px] text-white/30 font-medium bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full">
+            <div className="fixed left-1/2 -translate-x-1/2 bottom-3 z-[60] text-[10px] text-white/30 font-medium bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full pointer-events-none">
                 {activeIndex + 1} / {reels.length}
             </div>
         </div>

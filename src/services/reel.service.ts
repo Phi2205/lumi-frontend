@@ -1,4 +1,13 @@
-import { getMyReelsApi, getUserReelsApi, likeReelApi, getReelLikesApi } from "../apis/reel.api";
+import {
+    getMyReelsApi,
+    getUserReelsApi,
+    likeReelApi,
+    getReelLikesApi,
+    getReelCommentsApi,
+    getReelCommentRepliesApi,
+    createReelCommentApi,
+    deleteReelCommentApi
+} from "../apis/reel.api";
 
 export const getMyReelsService = async (cursor?: string, limit: number = 12) => {
     try {
@@ -36,6 +45,46 @@ export const getReelLikesService = async (reelId: string, cursor?: string, limit
         return response.data;
     } catch (error) {
         console.error('Error fetching reel likes:', error);
+        throw error;
+    }
+};
+
+export const getReelCommentsService = async (reelId: string, cursor?: string, limit: number = 10) => {
+    try {
+        const response = await getReelCommentsApi(reelId, cursor, limit);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching reel comments:', error);
+        throw error;
+    }
+};
+
+export const getReelCommentRepliesService = async (reelId: string, parentId: string, cursor?: string, limit: number = 10) => {
+    try {
+        const response = await getReelCommentRepliesApi(reelId, parentId, cursor, limit);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching reel comment replies:', error);
+        throw error;
+    }
+};
+
+export const createReelCommentService = async (reelId: string, content: string, parentId?: string) => {
+    try {
+        const response = await createReelCommentApi(reelId, content, parentId);
+        return response.data;
+    } catch (error) {
+        console.error('Error creating reel comment:', error);
+        throw error;
+    }
+};
+
+export const deleteReelCommentService = async (reelId: string, commentId: string) => {
+    try {
+        const response = await deleteReelCommentApi(reelId, commentId);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting reel comment:', error);
         throw error;
     }
 };
