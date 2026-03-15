@@ -1,6 +1,7 @@
 import axiosInstance from './axiosInstance';
 import axios from 'axios';
 import { reconnectSocket } from '@/lib/socket';
+import { User } from '@/types/user.type';
 
 export interface LoginPayload {
   email: string;
@@ -16,6 +17,11 @@ export interface RegisterPayload {
 export interface VerifyPayload{
   email: string;
   otp: string;
+}
+
+export interface UserResponse extends User {
+  birthday: string;
+  bio: string;
 }
 
 export const loginApi = (data: LoginPayload) => 
@@ -46,3 +52,6 @@ const axiosRefresh = axios.create({
 
 export const refreshTokenApi = () => 
   axiosRefresh.post('/auth/refresh');
+
+export const getMeApi = () => 
+  axiosInstance.get('/auth/me');

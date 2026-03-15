@@ -49,3 +49,12 @@ export const resendOtp = async (data: { email: string }) => {
         throw error;
     }
 }
+
+export const getMe = async () => {
+    try {
+        const response = await authApi.getMeApi();
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

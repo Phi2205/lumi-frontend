@@ -2,9 +2,7 @@
 
 import type React from "react"
 
-interface GlassCardProps {
-  children: React.ReactNode
-  className?: string
+interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "sm" | "lg"
   interactive?: boolean
   vibrant?: boolean
@@ -13,15 +11,16 @@ interface GlassCardProps {
   desktopIntensity?: "light" | "medium" | "strong"
 }
 
-export function GlassCardVariant({ 
-  children, 
-  className = "", 
-  variant = "default", 
+export function GlassCardVariant({
+  children,
+  className = "",
+  variant = "default",
   interactive = false,
   vibrant = false,
   intensity, // Deprecated
   mobileIntensity,
-  desktopIntensity
+  desktopIntensity,
+  ...props
 }: GlassCardProps) {
   // Map intensity to actual classes
   const intensityMap = {
@@ -52,15 +51,18 @@ export function GlassCardVariant({
     lg: "p-8",
   }
 
-  const interactiveStyles = interactive 
-    ? "glass-interactive cursor-pointer" 
+  const interactiveStyles = interactive
+    ? "glass-interactive cursor-pointer"
     : ""
 
   // Combine mobile và desktop intensity classes
   const overlayClasses = `${intensityMap[finalMobileIntensity]} ${desktopIntensityMap[finalDesktopIntensity]}`
 
   return (
-    <div className={`${baseStyles} ${variantStyles[variant]} ${interactiveStyles} ${className}`}>
+    <div
+      className={`${baseStyles} ${variantStyles[variant]} ${interactiveStyles} ${className}`}
+      {...props}
+    >
       <div className="relative z-10">{children}</div>
     </div>
   )

@@ -1,3 +1,5 @@
+import { Location } from "./location.type";
+
 export type FriendshipStatus = 'none' | 'friend' | 'pending' | 'accepted' | 'rejected' | 'received_pending';
 
 export interface User {
@@ -10,5 +12,7 @@ export interface User {
   friend_status?: FriendshipStatus;
   location?: string;
   website?: string;
-  joinDate?: string;
+  created_at?: string;
+  birthday?: string;
+  user_location?: Location;
 }

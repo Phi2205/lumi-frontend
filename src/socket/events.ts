@@ -4,6 +4,13 @@ export const SocketEvents = {
   NEW_COMMENT: "new_comment",
   DELETE_COMMENT: "delete_comment",
 
+  // reel comment
+  JOIN_REEL: "join_reel",
+  LEAVE_REEL: "leave_reel",
+  NEW_REEL_COMMENT: "new_reel_comment",
+  DELETE_REEL_COMMENT: "delete_reel_comment",
+
+
   // message
   SEND_MESSAGE: "send_message",
   NEW_MESSAGE: "new_message",

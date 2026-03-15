@@ -5,11 +5,14 @@ import { Analytics } from "@vercel/analytics/next"
 import { AuthProviderWrapper } from "@/components/providers/AuthProviderWrapper"
 import { SocketProvider } from "@/contexts/SocketContext"
 import { MiniChatProvider } from "@/components/messages/MiniChatContext"
+import { UploadProvider } from "@/contexts/UploadContext"
+import { UploadStack } from "@/components/common/UploadStack"
+import { ReelProvider } from "@/contexts/ReelContext"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
-const dancingScript = Dancing_Script({ 
+const dancingScript = Dancing_Script({
   subsets: ["latin"],
   variable: "--font-dancing-script",
   weight: ["400", "500", "600", "700"]
@@ -46,14 +49,19 @@ export default function RootLayout({
   modal: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased ${dancingScript.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`font-sans antialiased ${dancingScript.variable}`} suppressHydrationWarning>
         <AuthProviderWrapper>
           <SocketProvider>
-            <MiniChatProvider>
-              {children}
-              {modal}
-            </MiniChatProvider>
+            <UploadProvider>
+              <MiniChatProvider>
+                <ReelProvider>
+                  {children}
+                  {modal}
+                  <UploadStack />
+                </ReelProvider>
+              </MiniChatProvider>
+            </UploadProvider>
           </SocketProvider>
         </AuthProviderWrapper>
         <Analytics />

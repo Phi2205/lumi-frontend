@@ -12,6 +12,8 @@ import { LikesModal } from "./LikesModal"
 import { ShareModal } from "./ShareModal"
 import { useState } from "react"
 import { formatTime } from "@/utils/format"
+import { UserHoverCard } from "../UserHoverCard"
+import { PostMediaCarousel } from "./PostMediaCarousel"
 
 export interface Post {
   id: string
@@ -31,7 +33,7 @@ export interface Post {
 }
 
 export interface PostMedia {
-  id: string; 
+  id: string;
   media_url: string;
   media_type: string;
   order: number;
@@ -43,83 +45,6 @@ interface PostCardProps {
 }
 
 
-function  PostMediaGrid({ media }: { media: PostMedia[] }) {
-  const count = media.length
-  const allImages = media.filter(m => m.media_type !== "video").map(m => m.media_url)
-
-  if (count === 0) return null
-
-  if (count === 1) {
-    const item = media[0]
-    return (
-      <div className="overflow-hidden rounded-xl mb-4">
-        {item.media_type === "video" ? (
-          <video src={item.media_url} controls className="w-full max-h-[500px] object-cover" />
-        ) : (
-          <ImagePreview src={item.media_url} allImages={allImages} className="w-full object-cover" />
-        )}
-      </div>
-    )
-  }
-
-  if (count === 2) {
-    return (
-      <div className="grid grid-cols-2 gap-1 mb-4 overflow-hidden rounded-lg">
-        {media.map((item) => (
-          <div key={item.id} className="relative">
-            {item.media_type === "video" ? (
-              <video src={item.media_url} controls className="h-60 w-full object-cover" />
-            ) : (
-              <ImagePreview src={item.media_url} allImages={allImages} className="h-60 w-full object-cover" />
-            )}
-          </div>
-        ))}
-      </div>
-    )
-  }
-
-  if (count === 3) {
-    return (
-      <div className="grid grid-cols-2 gap-1 mb-4 overflow-hidden rounded-lg">
-        <div className="col-span-2 relative">
-          {media[0].media_type === "video" ? (
-            <video src={media[0].media_url} controls className="h-64 w-full object-cover" />
-          ) : (
-            <ImagePreview src={media[0].media_url} allImages={allImages} className="h-64 w-full object-cover" />
-          )}
-        </div>
-        <div className="relative">
-          {media[1].media_type === "video" ? (
-            <video src={media[1].media_url} controls className="h-40 w-full object-cover" />
-          ) : (
-            <ImagePreview src={media[1].media_url} allImages={allImages} className="h-40 w-full object-cover" />
-          )}
-        </div>
-        <div className="relative">
-          {media[2].media_type === "video" ? (
-            <video src={media[2].media_url} controls className="h-40 w-full object-cover" />
-          ) : (
-            <ImagePreview src={media[2].media_url} allImages={allImages} className="h-40 w-full object-cover" />
-          )}
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="grid grid-cols-2 gap-1 mb-4 overflow-hidden rounded-lg">
-      {media.slice(0, 4).map((item, index) => (
-        <div key={item.id} className="relative">
-          {item.media_type === "video" ? (
-            <video src={item.media_url} controls className="h-48 w-full object-cover" />
-          ) : (
-            <ImagePreview src={item.media_url} allImages={allImages} count={count} index={index} className="h-48 w-full object-cover" />
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
 
 /** Embedded preview of the original post inside a share — Facebook-style */
 function SharedPostPreview({ post }: { post: Post }) {
@@ -146,7 +71,7 @@ function SharedPostPreview({ post }: { post: Post }) {
       {/* Media — full grid, same as normal post */}
       {post.media?.length > 0 && (
         <div className="overflow-hidden">
-          <PostMediaGrid media={post.media} />
+          <PostMediaCarousel media={post.media} />
         </div>
       )}
 
@@ -179,7 +104,15 @@ export function PostCard({ post, onLike }: PostCardProps) {
       {/* Post Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <StoryAvatar className="h-12 w-12" src={post.user.avatar_url || "/avatar-default.jpg"} alt={post.user.name} hasStory={false} isSeen={false} />
+          <UserHoverCard
+            userId={"user-1"}
+            name={post.user.name}
+            avatar={post.user.avatar_url || "default-avatar.jpg"}
+            education={""}
+            location={""}
+          >
+            <StoryAvatar className="h-12 w-12" src={post.user.avatar_url || "/avatar-default.jpg"} alt={post.user.name} hasStory={false} isSeen={false} />
+          </UserHoverCard>
           <div>
             <p className="font-semibold text-white">{post.user.name}</p>
             <div className="flex items-center gap-1.5 mt-0.5">
@@ -212,7 +145,7 @@ export function PostCard({ post, onLike }: PostCardProps) {
         {isShared ? (
           <SharedPostPreview post={post.original_post!} />
         ) : (
-          post.media && <PostMediaGrid media={post.media} />
+          post.media && <PostMediaCarousel media={post.media} />
         )}
       </div>
 

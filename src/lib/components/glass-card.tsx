@@ -2,14 +2,18 @@
 
 import type React from "react"
 
-interface GlassCardProps {
-  children: React.ReactNode
-  className?: string
+interface GlassCardProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "sm" | "lg"
   interactive?: boolean
 }
 
-export function GlassCard({ children, className = "", variant = "default", interactive = false }: GlassCardProps) {
+export function GlassCard({
+  children,
+  className = "",
+  variant = "default",
+  interactive = false,
+  ...props
+}: GlassCardProps) {
   const baseStyles =
     "backdrop-blur-3xl bg-white/12 border border-white/20 rounded-2xl shadow-xl transition-all duration-300"
 
@@ -21,5 +25,12 @@ export function GlassCard({ children, className = "", variant = "default", inter
 
   const interactiveStyles = interactive ? "hover:bg-white/15 hover:shadow-2xl hover:border-white/30" : ""
 
-  return <div className={`${baseStyles} ${variantStyles[variant]} ${interactiveStyles} ${className}`}>{children}</div>
+  return (
+    <div
+      className={`${baseStyles} ${variantStyles[variant]} ${interactiveStyles} ${className}`}
+      {...props}
+    >
+      {children}
+    </div>
+  )
 }

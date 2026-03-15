@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { GlassCard } from "./glass-card"
+import { cn } from "@/lib/utils"
 
 interface GlassStatCardProps {
   label: string
@@ -9,9 +10,10 @@ interface GlassStatCardProps {
   icon?: React.ReactNode
   change?: string
   changeType?: "up" | "down" | "neutral"
+  onClick?: () => void
 }
 
-export function GlassStatCard({ label, value, icon, change, changeType = "neutral" }: GlassStatCardProps) {
+export function GlassStatCard({ label, value, icon, change, changeType = "neutral", onClick }: GlassStatCardProps) {
   const changeColor = {
     up: "text-green-400",
     down: "text-red-400",
@@ -19,7 +21,7 @@ export function GlassStatCard({ label, value, icon, change, changeType = "neutra
   }
 
   return (
-    <GlassCard variant="sm" interactive>
+    <GlassCard variant="sm" interactive onClick={onClick} className={cn(onClick && "cursor-pointer active:scale-95 transition-transform")}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm text-white/60 mb-1">{label}</p>
