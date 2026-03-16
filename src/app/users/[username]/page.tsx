@@ -8,7 +8,12 @@ import { RightSidebar } from "@/components/RightSidebar"
 import { cn } from "@/lib/utils"
 import { getUserByUsername } from "@/services/user.service"
 import { sendFriendRequest, acceptFriendRequest, rejectFriendRequest, cancelFriendRequest } from "@/services/friendRequest.service"
+import { deleteFriendService } from "@/services/friend.service"
 import { User, FriendshipStatus } from "@/types/user.type"
+import { Modal } from "@/lib/components/modal"
+import { Button } from "@/components/ui/button"
+import { GlassButton } from "@/lib/components"
+import { UserMinus, AlertCircle } from "lucide-react"
 import { useMiniChat } from "@/components/messages/MiniChatContext"
 import { getOrCreatePrivateConversationApi } from "@/apis/conversation.api"
 import { useAuth } from "@/contexts/AuthContext"
@@ -32,6 +37,7 @@ export default function UserProfilePage() {
   const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
   const { openChat } = useMiniChat()
   const [isStartingChat, setIsStartingChat] = useState(false)
+  const [showUnfriendModal, setShowUnfriendModal] = useState(false)
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -100,6 +106,26 @@ export default function UserProfilePage() {
     }
   };
 
+  const handleDeleteFriend = async () => {
+    if (!userProfile?.id || isLoading) return;
+    setShowUnfriendModal(true);
+  };
+
+  const confirmDeleteFriend = async () => {
+    if (!userProfile?.id || isLoading) return;
+
+    try {
+      setIsLoading(true);
+      await deleteFriendService(userProfile.id);
+      setUserProfile(prev => prev ? { ...prev, friend_status: 'none' } : null);
+      setShowUnfriendModal(false);
+    } catch (error) {
+      console.error("Unfriend failed:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleStartChat = async () => {
     if (!userProfile?.id || isStartingChat) return
     try {
@@ -124,22 +150,6 @@ export default function UserProfilePage() {
     }
   }
 
-  const getButtonConfig = (status: FriendshipStatus | undefined) => {
-    switch (status) {
-      case 'none': return { text: 'Add Friend', onClick: handleAddFriend, disabled: isLoading, className: 'bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap' };
-      case 'friend': return { text: 'Friends', onClick: undefined, disabled: true, className: 'bg-white/10 whitespace-nowrap' };
-      case 'pending': return { text: isLoading ? 'Processing...' : 'Request Sent', onClick: handleCancelRequest, disabled: isLoading, className: 'bg-white/10 hover:bg-white/20 whitespace-nowrap' };
-      case 'accepted': return { text: 'Friends', onClick: undefined, disabled: true, className: 'bg-white/10 whitespace-nowrap' };
-      case 'rejected': return { text: 'Add Friend', onClick: handleAddFriend, disabled: isLoading, className: 'bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap' };
-      case 'received_pending': return { text: isLoading ? 'Processing...' : 'Accept Request', onClick: handleAcceptRequest, disabled: isLoading, className: 'bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap' };
-      default: return { text: 'Add Friend', onClick: handleAddFriend, disabled: isLoading, className: 'bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap' };
-    }
-  };
-
-  const buttonConfig = useMemo(() => {
-    if (!userProfile || isInitialLoading) return { text: 'Add Friend', onClick: undefined, disabled: true, className: 'bg-white/10 whitespace-nowrap' };
-    return getButtonConfig(userProfile.friend_status);
-  }, [userProfile, isLoading, isInitialLoading]);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -159,12 +169,51 @@ export default function UserProfilePage() {
           isOwnProfile={isOwnProfile}
           isLoading={isLoading}
           isStartingChat={isStartingChat}
-          buttonConfig={buttonConfig}
           handleAcceptRequest={handleAcceptRequest}
           handleRejectRequest={handleRejectRequest}
+          handleCancelRequest={handleCancelRequest}
+          handleAddFriend={handleAddFriend}
+          handleDeleteFriend={handleDeleteFriend}
           handleStartChat={handleStartChat}
           onProfileUpdate={(updated) => setUserProfile(updated)}
         />
+
+        <Modal
+          isOpen={showUnfriendModal}
+          onClose={() => setShowUnfriendModal(false)}
+          title={
+            <div className="flex items-center gap-3 text-red-500">
+              <AlertCircle className="w-6 h-6" />
+              <span>Unfriend?</span>
+            </div>
+          }
+          maxWidthClassName="max-w-md"
+        >
+          <div className="space-y-6">
+            <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
+              <p className="text-white/80 text-center leading-relaxed">
+                Are you sure you want to unfriend <span className="text-white font-bold">{userProfile?.name}</span>?
+                This will remove them from your friend list.
+              </p>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <GlassButton
+                className="flex-1 bg-white/5 hover:bg-white/10"
+                onClick={() => setShowUnfriendModal(false)}
+              >
+                Cancel
+              </GlassButton>
+              <GlassButton
+                className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/30 font-bold h-11 rounded-xl"
+                onClick={confirmDeleteFriend}
+                disabled={isLoading}
+              >
+                {isLoading ? "Processing..." : "Unfriend"}
+              </GlassButton>
+            </div>
+          </div>
+        </Modal>
       </main>
       <RightSidebar />
     </div>

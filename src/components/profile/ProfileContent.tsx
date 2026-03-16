@@ -16,6 +16,7 @@ import { getFriendsService, getMutualFriendsService, getCountFriendsService } fr
 import { getMyReelsService, getUserReelsService } from "@/services/reel.service"
 import { useReelContext } from "@/contexts/ReelContext"
 import { Reel } from "@/apis/reel.api"
+import { FriendActionButton } from "./FriendActionButton"
 
 interface Post {
     id: number
@@ -39,6 +40,9 @@ interface ProfileContentProps {
     };
     handleAcceptRequest?: () => void;
     handleRejectRequest?: () => void;
+    handleCancelRequest?: () => void;
+    handleAddFriend?: () => void;
+    handleDeleteFriend?: () => void;
     handleStartChat?: () => void;
     onProfileUpdate: (user: User) => void;
 }
@@ -52,6 +56,9 @@ export function ProfileContent({
     buttonConfig,
     handleAcceptRequest,
     handleRejectRequest,
+    handleCancelRequest,
+    handleAddFriend,
+    handleDeleteFriend,
     handleStartChat,
     onProfileUpdate
 }: ProfileContentProps) {
@@ -165,8 +172,8 @@ export function ProfileContent({
                     <Image src="/bg12.jpg" alt="Profile cover" fill className="object-cover h-[50%]" />
                 </GlassCard>
 
-                <GlassCardVariant className="relative -mt-37 md:-mt-57 mb-8 p-4 md:p-8 !rounded-b-3xl">
-                    <div className="flex flex-row items-end gap-4 md:gap-6">
+                <GlassCardVariant className="relative -mt-37 md:-mt-57 mb-8 p-4 md:p-8 !rounded-b-3xl !overflow-visible">
+                    <div className="flex flex-row items-end gap-4 md:gap-6 !overflow-visible">
                         <div className="shrink-0">
                             <Avatar className="h-20 w-20 md:h-40 md:w-40 ring-4 ring-white/20 shadow-2xl">
                                 <AvatarImage src={userProfile?.avatar_url || "/avatar-default.jpg"} alt={userProfile?.name || ""} />
@@ -188,20 +195,16 @@ export function ProfileContent({
                                     </GlassButton>
                                 ) : (
                                     <>
-                                        {userProfile?.friend_status === 'received_pending' ? (
-                                            <>
-                                                <GlassButton onClick={handleAcceptRequest} disabled={isLoading} className="bg-linear-to-r from-brand-primary to-brand-primary-dark text-xs md:text-base">
-                                                    {isLoading ? 'Processing...' : 'Accept'}
-                                                </GlassButton>
-                                                <GlassButton onClick={handleRejectRequest} disabled={isLoading} className="bg-white/10 hover:bg-white/20 text-xs md:text-base">
-                                                    {isLoading ? 'Processing...' : 'Reject'}
-                                                </GlassButton>
-                                            </>
-                                        ) : (
-                                            <GlassButton onClick={buttonConfig?.onClick} disabled={buttonConfig?.disabled} className={cn(buttonConfig?.className, "text-xs md:text-base")}>
-                                                {buttonConfig?.text}
-                                            </GlassButton>
-                                        )}
+                                        <FriendActionButton
+                                            status={userProfile?.friend_status}
+                                            name={userProfile?.name || ""}
+                                            onAddFriend={handleAddFriend || (() => { })}
+                                            onUnfriend={handleDeleteFriend || (() => { })}
+                                            onCancelRequest={handleCancelRequest || (() => { })}
+                                            onAcceptRequest={handleAcceptRequest || (() => { })}
+                                            isLoading={isLoading || false}
+                                            className="text-xs md:text-base"
+                                        />
                                         <GlassButton className="bg-white/10 hover:bg-white/20" title="Send message" onClick={handleStartChat} disabled={isStartingChat}>
                                             <Send className="w-4 h-4 md:w-6 md:h-6" />
                                         </GlassButton>

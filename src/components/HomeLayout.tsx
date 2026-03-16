@@ -96,16 +96,15 @@ export function HomeLayout({ children }: HomeLayoutProps) {
       <main className={`${activeTab === "messages" ? "md:ml-20" : "md:ml-64"} lg:mr-80 pt-20 pb-20 md:pb-4 relative z-10 transition-all duration-300 ${isDarkMode ? 'backdrop-blur-[0.5px]' : ''
         }`}>
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-          {activeTab === "home" && (
-            <Feed />
+          {children ? (
+            children
+          ) : (
+            activeTab === "home" && <Feed />
           )}
         </div>
       </main>
 
       <RightSidebar />
-
-      {/* Modal overlay slot */}
-      {children}
     </div>
   )
 }

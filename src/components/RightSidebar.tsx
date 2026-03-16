@@ -2,10 +2,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
 import { getFriendRequests, acceptFriendRequest, rejectFriendRequest } from "@/services/friendRequest.service"
+import { getRecommendedUsers } from "@/services/recommend.service"
 import { SkeletonFriendRequests } from "@/components/skeleton"
-import { Check, X } from "lucide-react"
+import { Check, X, UserPlus } from "lucide-react"
 import type { FriendRequestItem } from "@/apis/friendRequest.api"
+import type { RecommendedUser } from "@/apis/recommend.api"
 import { formatTime } from "@/utils/format"
+import { useRouter } from "next/navigation"
 
 export function RightSidebar() {
   const onlineFriends = [
@@ -15,30 +18,35 @@ export function RightSidebar() {
     { id: 4, name: "Alex Rivera", avatar: "/placeholder.svg" },
   ]
 
-  const suggestedUsers = [
-    { id: 1, name: "Julia Anderson", mutual: "12 mutual friends" },
-    { id: 2, name: "Tom Wilson", mutual: "8 mutual friends" },
-    { id: 3, name: "Lisa Park", mutual: "15 mutual friends" },
-  ]
-
+  const router = useRouter()
   const [requestFriendList, setRequestFriendList] = useState<FriendRequestItem[]>([]);
+  const [recommendedUsers, setRecommendedUsers] = useState<RecommendedUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRecommendLoading, setIsRecommendLoading] = useState(false);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const fetchRequestFriendList = async () => {
+    const fetchSidebarData = async () => {
+      setIsLoading(true);
+      setIsRecommendLoading(true);
+
       try {
-        setIsLoading(true);
-        const response = await getFriendRequests(1, 10);
-        console.log(response);
-        setRequestFriendList(response.data.items || []);
+        const [requestsRes, recommendsRes] = await Promise.all([
+          getFriendRequests(1, 10),
+          getRecommendedUsers(5)
+        ]);
+
+        setRequestFriendList(requestsRes.data.items || []);
+        setRecommendedUsers(recommendsRes.data.recommendations || []);
       } catch (error) {
-        console.error("Fetch request friend list failed:", error);
+        console.error("Fetch sidebar data failed:", error);
       } finally {
         setIsLoading(false);
+        setIsRecommendLoading(false);
       }
     }
-    fetchRequestFriendList();
+
+    fetchSidebarData();
   }, []);
 
   const handleAcceptRequest = async (requestId: string) => {
@@ -159,25 +167,50 @@ export function RightSidebar() {
 
       {/* Suggested Users */}
       <div className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl p-4">
-        <h3 className="text-sm font-semibold text-white mb-3 pb-3 border-b border-white/10">Suggested Users</h3>
+        <div className="flex items-center justify-between mb-3 pb-3 border-b border-white/10">
+          <h3 className="text-sm font-semibold text-white">Suggested Users</h3>
+          <button
+            onClick={() => router.push('/suggested-users')}
+            className="text-xs font-medium text-brand-primary hover:text-brand-primary-light transition-colors cursor-pointer"
+          >
+            See All
+          </button>
+        </div>
         <div className="space-y-4">
-          {suggestedUsers.map((user) => (
-            <div key={user.id} className="space-y-2">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8 ring-2 ring-blue-400/50">
-                  <AvatarImage src="/placeholder.svg" alt={user.name} />
-                  <AvatarFallback>{user.name[0]}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-white">{user.name}</p>
-                  <p className="text-xs text-white/50">{user.mutual}</p>
+          {isRecommendLoading ? (
+            <SkeletonFriendRequests count={3} />
+          ) : recommendedUsers.length > 0 ? (
+            recommendedUsers.map((item) => (
+              <div key={item.user.id} className="space-y-2">
+                <div
+                  className="flex items-center gap-3 cursor-pointer group"
+                  onClick={() => router.push(`/users/${item.user.username}`)}
+                >
+                  <Avatar className="h-8 w-8 ring-2 ring-blue-400/50 group-hover:ring-blue-400 transition-all">
+                    <AvatarImage src={item.user.avatar_url || "/avatar-default.jpg"} alt={item.user.name} />
+                    <AvatarFallback className="bg-linear-to-br from-brand-primary to-brand-primary-dark text-xs">
+                      {item.user.name[0].toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate group-hover:text-blue-300 transition-colors">{item.user.name}</p>
+                    <p className="text-xs text-white/50 truncate">@{item.user.username}</p>
+                  </div>
                 </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full text-xs bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-lg"
+                  onClick={() => router.push(`/users/${item.user.username}`)}
+                >
+                  <UserPlus className="w-3 h-3 mr-1" />
+                  View Profile
+                </Button>
               </div>
-              <Button size="sm" variant="outline" className="w-full text-xs bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-lg">
-                Follow
-              </Button>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-sm text-white/50 text-center py-4">No suggestions found</p>
+          )}
         </div>
       </div>
     </aside>
