@@ -91,10 +91,12 @@ export function Feed() {
 
   const loadMorePosts = async () => {
     if (isFetchingMore) return;
+    console.log("loading more posts");
+
     setIsFetchingMore(true);
     try {
-      const response = await postService.getUnseenPosts(5, 1);
-      const newItems = response.data.items;
+      const response = await postService.getUnseenPosts(5);
+      const newItems = response.data;
 
       if (newItems.length === 0) {
         setHideLoader(true);
@@ -107,8 +109,9 @@ export function Feed() {
         return [...prev, ...uniqueItems];
       });
 
-      // If we successfully loaded posts, ensure loader is visible for next batch
-      setHideLoader(false);
+      // If we successfully loaded posts, hide the loader. 
+      // It will be re-enabled by the scroll listener once the user scrolls away from the bottom.
+      setHideLoader(true);
 
     } catch (error) {
       console.error("Error loading more posts:", error);
@@ -120,10 +123,10 @@ export function Feed() {
   const fetchPosts = async () => {
     setIsLoading(true)
     try {
-      const response = await postService.getUnseenPosts(5, 1);
-      // console.log("response", response);
-
-      setPosts(response.data.items.map(mapPost));
+      const response = await postService.getUnseenPosts(5);
+      if (!response.data) return;
+      setPosts(response.data.map(mapPost));
+      setHideLoader(true);
     } catch (error) {
       console.error("Error fetching posts:", error);
     } finally {

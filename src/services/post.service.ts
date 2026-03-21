@@ -34,9 +34,9 @@ export const createPost = async (content: string, media: PostMediaItem[]) => {
     }
 }
 
-export const getUnseenPosts = async (limit: number, page: number) => {
+export const getUnseenPosts = async (limit: number = 5) => {
     try {
-        const response = await postApi.getUnseenPosts(limit, page);
+        const response = await postApi.getUnseenPosts(limit);
         return response.data;
     } catch (error) {
         throw error;

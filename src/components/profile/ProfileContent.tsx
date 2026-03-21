@@ -19,6 +19,7 @@ import { useReelContext } from "@/contexts/ReelContext"
 import { Reel } from "@/apis/reel.api"
 import { Post as ApiPost } from "@/apis/post.api"
 import { FriendActionButton } from "./FriendActionButton"
+import { setCachedPost } from "@/lib/post-cache"
 
 interface ProfileContentProps {
     userProfile: User | null;
@@ -304,18 +305,20 @@ export function ProfileContent({
                     </div>
                 </GlassCard>
 
-                <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className={cn("grid gap-4 mb-8", isOwnProfile ? "grid-cols-2" : "grid-cols-3")}>
                     <GlassStatCard label="Posts" value={userStats.posts.toString()} />
                     <GlassStatCard
                         label="Friends"
                         value={friendsCount.toString()}
                         onClick={() => { setFriendModalType("friends"); setIsFriendModalOpen(true); }}
                     />
-                    <GlassStatCard
-                        label="Mutual Friends"
-                        value={mutualCount.toString()}
-                        onClick={() => { setFriendModalType("mutual"); setIsFriendModalOpen(true); }}
-                    />
+                    {!isOwnProfile && (
+                        <GlassStatCard
+                            label="Mutual Friends"
+                            value={mutualCount.toString()}
+                            onClick={() => { setFriendModalType("mutual"); setIsFriendModalOpen(true); }}
+                        />
+                    )}
                 </div>
 
                 <div className="mb-12">
@@ -379,9 +382,16 @@ export function ProfileContent({
                                 </div>
                             ) : (
                                 <>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div className="grid grid-cols-3 gap-0.5 md:gap-4">
                                         {posts.map((post) => (
-                                            <div key={post.id} className="group overflow-hidden cursor-pointer relative rounded-2xl h-64">
+                                            <div
+                                                key={post.id}
+                                                className="group overflow-hidden cursor-pointer relative aspect-[3/4] rounded-sm md:rounded-2xl bg-white/5"
+                                                onClick={() => {
+                                                    setCachedPost(post.id, post);
+                                                    router.push(`/p/${post.id}`, { scroll: false });
+                                                }}
+                                            >
                                                 {post.post_media?.[0]?.media_url ? (
                                                     <Image
                                                         src={post.post_media[0].media_url}
@@ -391,10 +401,10 @@ export function ProfileContent({
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/20 p-4 text-center">
-                                                        <span className="text-sm italic">{post.content.slice(0, 50)}...</span>
+                                                        <span className="text-xs md:text-sm italic line-clamp-4">{post.content.slice(0, 80)}...</span>
                                                     </div>
                                                 )}
-                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 hidden md:flex">
                                                     <div className="flex gap-4">
                                                         <div className="flex items-center gap-1 text-white bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-md">
                                                             <Heart className="w-4 h-4 fill-current" />

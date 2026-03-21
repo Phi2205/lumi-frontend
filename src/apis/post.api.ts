@@ -47,8 +47,7 @@ export interface Post {
 }
 
 export interface PostFeedResponse {
-  items: Post[];
-  pagination: Pagination;
+  data: Post[];
 }
 
 export interface PostMeResponse {
@@ -102,11 +101,10 @@ export const createPostApi = (data: CreatePostPayload) => {
   });
 };
 
-export const getUnseenPosts = (limit: number, page: number) => {
-  return axiosInstance.get<ApiResponse<PostFeedResponse>>("/posts/unseen", {
+export const getUnseenPosts = (limit: number = 5) => {
+  return axiosInstance.get<ApiResponse<Post[]>>("/posts/recommendations", {
     params: {
-      limit,
-      page,
+      limit
     },
   });
 };
@@ -165,7 +163,7 @@ export const markAsSeenApi = (postIds: string[]) => {
   return axiosInstance.post<ApiResponse<any>>(`/posts/seen`, { postIds });
 }
 
-export const getPostsByMe = (cursor?: string, limit: number) => {
+export const getPostsByMe = (cursor?: string, limit: number = 12) => {
   return axiosInstance.get<ApiResponse<PostMeResponse>>(`/posts/me`, {
     params: {
       cursor,
