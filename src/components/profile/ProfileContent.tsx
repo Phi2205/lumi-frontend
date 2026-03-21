@@ -14,17 +14,11 @@ import { FriendListModal } from "@/components/profile/FriendListModal"
 import { CreateReelModal } from "@/components/profile/CreateReelModal"
 import { getFriendsService, getMutualFriendsService, getCountFriendsService } from "@/services/friend.service"
 import { getMyReelsService, getUserReelsService } from "@/services/reel.service"
+import { getPostsByMe, getPostsByUserId } from "@/services/post.service"
 import { useReelContext } from "@/contexts/ReelContext"
 import { Reel } from "@/apis/reel.api"
+import { Post as ApiPost } from "@/apis/post.api"
 import { FriendActionButton } from "./FriendActionButton"
-
-interface Post {
-    id: number
-    image: string
-    likes: number
-    comments: number
-    views: number
-}
 
 interface ProfileContentProps {
     userProfile: User | null;
@@ -73,14 +67,23 @@ export function ProfileContent({
     const [activeContentTab, setActiveContentTab] = useState<"posts" | "reels">("posts")
     const [isCreateReelModalOpen, setIsCreateReelModalOpen] = useState(false)
 
+    // Posts state
+    const [posts, setPosts] = useState<ApiPost[]>([])
+    const [postsLoading, setPostsLoading] = useState(false)
+    const [postsCursor, setPostsCursor] = useState<string | undefined>(undefined)
+    const [postsHasMore, setPostsHasMore] = useState(true)
+    const [postsInitialLoaded, setPostsInitialLoaded] = useState(false)
+
     // Reels state
     const [reels, setReels] = useState<Reel[]>([])
     const [reelsLoading, setReelsLoading] = useState(false)
     const [reelsCursor, setReelsCursor] = useState<string | undefined>(undefined)
     const [reelsHasMore, setReelsHasMore] = useState(true)
     const [reelsInitialLoaded, setReelsInitialLoaded] = useState(false)
-    const observerRef = useRef<IntersectionObserver | null>(null)
-    const loadMoreRef = useRef<HTMLDivElement | null>(null)
+    const postsObserverRef = useRef<IntersectionObserver | null>(null)
+    const reelsObserverRef = useRef<IntersectionObserver | null>(null)
+    const loadMorePostsRef = useRef<HTMLDivElement | null>(null)
+    const loadMoreReelsRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
         const fetchCounts = async () => {
@@ -97,6 +100,29 @@ export function ProfileContent({
         }
         fetchCounts()
     }, [userProfile?.id])
+
+    // Fetch posts
+    const fetchPosts = useCallback(async (cursor?: string) => {
+        if (!userProfile?.id || postsLoading) return
+        setPostsLoading(true)
+        try {
+            const res = isOwnProfile
+                ? await getPostsByMe(cursor)
+                : await getPostsByUserId(userProfile.id, cursor)
+
+            if (res.success) {
+                const { items, nextCursor } = res.data
+                setPosts(prev => cursor ? [...prev, ...items] : items)
+                setPostsCursor(nextCursor || undefined)
+                setPostsHasMore(!!nextCursor)
+            }
+        } catch (error) {
+            console.error("Error fetching posts:", error)
+        } finally {
+            setPostsLoading(false)
+            setPostsInitialLoaded(true)
+        }
+    }, [userProfile?.id, isOwnProfile, postsLoading])
 
     // Fetch reels
     const fetchReels = useCallback(async (cursor?: string) => {
@@ -121,6 +147,17 @@ export function ProfileContent({
         }
     }, [userProfile?.id, isOwnProfile, reelsLoading])
 
+    // Fetch posts when component mounts or user changes
+    useEffect(() => {
+        if (userProfile?.id) {
+            setPosts([])
+            setPostsCursor(undefined)
+            setPostsHasMore(true)
+            setPostsInitialLoaded(false)
+            fetchPosts()
+        }
+    }, [userProfile?.id])
+
     // Fetch reels when switching to reels tab
     useEffect(() => {
         if (activeContentTab === "reels" && !reelsInitialLoaded && userProfile?.id) {
@@ -128,33 +165,42 @@ export function ProfileContent({
         }
     }, [activeContentTab, reelsInitialLoaded, userProfile?.id])
 
-    // Infinite scroll observer
+    // Infinite scroll observer for posts
     useEffect(() => {
-        if (observerRef.current) observerRef.current.disconnect()
+        if (postsObserverRef.current) postsObserverRef.current.disconnect()
 
-        observerRef.current = new IntersectionObserver((entries) => {
+        postsObserverRef.current = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && postsHasMore && !postsLoading) {
+                fetchPosts(postsCursor)
+            }
+        }, { threshold: 0.1 })
+
+        if (loadMorePostsRef.current) {
+            postsObserverRef.current.observe(loadMorePostsRef.current)
+        }
+
+        return () => postsObserverRef.current?.disconnect()
+    }, [postsCursor, postsHasMore, postsLoading, fetchPosts])
+
+    // Infinite scroll observer for reels
+    useEffect(() => {
+        if (reelsObserverRef.current) reelsObserverRef.current.disconnect()
+
+        reelsObserverRef.current = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && reelsHasMore && !reelsLoading) {
                 fetchReels(reelsCursor)
             }
         }, { threshold: 0.1 })
 
-        if (loadMoreRef.current) {
-            observerRef.current.observe(loadMoreRef.current)
+        if (loadMoreReelsRef.current) {
+            reelsObserverRef.current.observe(loadMoreReelsRef.current)
         }
 
-        return () => observerRef.current?.disconnect()
-    }, [reelsCursor, reelsHasMore, reelsLoading])
+        return () => reelsObserverRef.current?.disconnect()
+    }, [reelsCursor, reelsHasMore, reelsLoading, fetchReels])
 
     // Mock stats
-    const userStats = { followers: 1250, following: 450, posts: 42 }
-    const userPosts: Post[] = [
-        { id: 1, image: "/bg3.jpg", likes: 298, comments: 38, views: 4000000 },
-        { id: 2, image: "/bg3.jpg", likes: 412, comments: 56, views: 7100000 },
-        { id: 3, image: "/bg3.jpg", likes: 567, comments: 89, views: 2600000 },
-        { id: 4, image: "/bg2.jpg", likes: 234, comments: 29, views: 1500000 },
-        { id: 5, image: "/bg3.jpg", likes: 489, comments: 72, views: 1400000 },
-        { id: 6, image: "/bg1.jpg", likes: 345, comments: 48, views: 1800000 },
-    ]
+    const userStats = { followers: 1250, following: 450, posts: userProfile?.post_count || 0 }
 
     if (isInitialLoading) return <ProfileSkeleton />
 
@@ -318,19 +364,62 @@ export function ProfileContent({
                     </div>
 
                     {activeContentTab === "posts" ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {userPosts.map((post) => (
-                                <div key={post.id} className="group overflow-hidden cursor-pointer relative rounded-2xl h-64">
-                                    <Image src={post.image} alt="Post" fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                        <div className="flex gap-4">
-                                            <div className="flex items-center gap-1 text-white bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-md"><Heart className="w-4 h-4 fill-current" />{post.likes}</div>
-                                            <div className="flex items-center gap-1 text-white bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-md"><MessageSquare className="w-4 h-4" />{post.comments}</div>
-                                        </div>
-                                    </div>
+                        <>
+                            {postsLoading && !postsInitialLoaded ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {[...Array(6)].map((_, i) => (
+                                        <div key={i} className="rounded-2xl h-64 bg-white/5 animate-pulse" />
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+                            ) : posts.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-20 text-white/40">
+                                    <LayoutGrid className="w-12 h-12 mb-4 opacity-30" />
+                                    <p className="text-lg font-semibold">No posts yet</p>
+                                    <p className="text-sm mt-1">Posts will appear here.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                        {posts.map((post) => (
+                                            <div key={post.id} className="group overflow-hidden cursor-pointer relative rounded-2xl h-64">
+                                                {post.post_media?.[0]?.media_url ? (
+                                                    <Image
+                                                        src={post.post_media[0].media_url}
+                                                        alt="Post"
+                                                        fill
+                                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/20 p-4 text-center">
+                                                        <span className="text-sm italic">{post.content.slice(0, 50)}...</span>
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                                    <div className="flex gap-4">
+                                                        <div className="flex items-center gap-1 text-white bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-md">
+                                                            <Heart className="w-4 h-4 fill-current" />
+                                                            {post.like_count}
+                                                        </div>
+                                                        <div className="flex items-center gap-1 text-white bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-md">
+                                                            <MessageSquare className="w-4 h-4" />
+                                                            {post.comment_count}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {/* Infinite scroll trigger for posts */}
+                                    {postsHasMore && (
+                                        <div ref={loadMorePostsRef} className="flex justify-center py-8">
+                                            {postsLoading && (
+                                                <Loader2 className="w-6 h-6 text-brand-primary animate-spin" />
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </>
                     ) : (
                         <>
                             {reelsLoading && !reelsInitialLoaded ? (
@@ -383,9 +472,9 @@ export function ProfileContent({
                                         ))}
                                     </div>
 
-                                    {/* Infinite scroll trigger */}
+                                    {/* Infinite scroll trigger for reels */}
                                     {reelsHasMore && (
-                                        <div ref={loadMoreRef} className="flex justify-center py-8">
+                                        <div ref={loadMoreReelsRef} className="flex justify-center py-8">
                                             {reelsLoading && (
                                                 <Loader2 className="w-6 h-6 text-brand-primary animate-spin" />
                                             )}

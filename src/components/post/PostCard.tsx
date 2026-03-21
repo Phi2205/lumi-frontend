@@ -10,10 +10,12 @@ import { LikeButton } from "../LikeButton"
 import { CommentSection } from "./CommentSection"
 import { LikesModal } from "./LikesModal"
 import { ShareModal } from "./ShareModal"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { formatTime } from "@/utils/format"
 import { UserHoverCard } from "../UserHoverCard"
 import { PostMediaCarousel } from "./PostMediaCarousel"
+import { markAsViewed } from "@/services/post.service"
+
 
 export interface Post {
   id: string
@@ -98,9 +100,34 @@ export function PostCard({ post, onLike }: PostCardProps) {
   const [showLikes, setShowLikes] = useState(false)
   const [showShare, setShowShare] = useState(false)
   const isShared = post.original_post != null
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const currentRef = cardRef.current
+    if (!currentRef) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            markAsViewed(post.id)
+            observer.unobserve(currentRef)
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(currentRef)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [post.id])
 
   return (
-    <div className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:bg-white/8 overflow-hidden mb-4">
+    <div ref={cardRef} className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:bg-white/8 overflow-hidden mb-4">
+
       {/* Post Header */}
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="flex items-center gap-3">

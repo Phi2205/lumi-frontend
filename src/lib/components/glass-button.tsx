@@ -66,7 +66,7 @@ export function GlassButton({
   const clampedRefraction = Math.max(0, Math.min(1, refraction))
   const clampedDepth = Math.max(0, Math.min(10, depth))
 
-  const baseStyles = "cursor-pointer bg-gradient-to-br font-medium transition-all duration-300 ease-out rounded-2xl active:scale-[0.98] border"
+  const baseStyles = "inline-flex items-center justify-center cursor-pointer bg-gradient-to-br font-medium transition-all duration-300 ease-out rounded-2xl active:scale-[0.98] border gap-1.5"
 
   // const variantStyles = {
   //   primary: "from-blue-500/30 via-blue-500/20 to-blue-500/10 border-blue-400/40 text-white hover:from-blue-500/40 hover:via-blue-500/30 hover:to-blue-500/15 hover:border-blue-400/60",
@@ -89,7 +89,7 @@ export function GlassButton({
   }
 
   return (
-    <button 
+    <button
       className={`${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       style={{
         backdropFilter: `blur(${clampedBlur}px)`,

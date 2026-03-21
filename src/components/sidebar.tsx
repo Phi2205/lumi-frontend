@@ -1,6 +1,4 @@
-"use client"
-
-import { Home, BookOpen, Zap, MessageSquare, User, Settings, Search } from "lucide-react"
+import { Home, BookOpen, Zap, MessageSquare, User, Settings, Search, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchPanel } from "@/components/SearchPanel"
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
@@ -16,15 +14,22 @@ interface SidebarProps {
 
 const menuItems = [
   { id: "home", label: "Home", icon: Home },
-  { id: "search", label: "Tìm kiếm", icon: Search },
+  { id: "search", label: "Search", icon: Search },
   { id: "blog", label: "Blog", icon: BookOpen },
   { id: "stories", label: "Stories", icon: Zap },
+  { id: "friends", label: "Friends", icon: Users },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "profile", label: "Profile", icon: User },
   { id: "settings", label: "Settings", icon: Settings },
 ]
 
-const mobileItems = menuItems.slice(0, 5)
+const mobileItems = [
+  { id: "home", label: "Home", icon: Home },
+  { id: "search", label: "Search", icon: Search },
+  { id: "friends", label: "Friends", icon: Users },
+  { id: "messages", label: "Messages", icon: MessageSquare },
+  { id: "profile", label: "Profile", icon: User },
+]
 
 export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: SidebarProps) {
   const router = useRouter()

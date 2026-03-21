@@ -51,6 +51,11 @@ export interface PostFeedResponse {
   pagination: Pagination;
 }
 
+export interface PostMeResponse {
+  items: Post[];
+  nextCursor: string | null;
+}
+
 export interface Comment {
   id: string;
   user_id: string;
@@ -153,8 +158,28 @@ export const deleteComment = (postId: string, commentId: string) => {
 }
 
 export const sharePost = (postId: string, content: string) => {
-  return axiosInstance.post<ApiResponse<Post>>(`/posts/${postId}/share`,{originalPostId: postId, content});
+  return axiosInstance.post<ApiResponse<Post>>(`/posts/${postId}/share`, { originalPostId: postId, content });
 }
 
+export const markAsSeenApi = (postIds: string[]) => {
+  return axiosInstance.post<ApiResponse<any>>(`/posts/seen`, { postIds });
+}
 
+export const getPostsByMe = (cursor?: string, limit: number) => {
+  return axiosInstance.get<ApiResponse<PostMeResponse>>(`/posts/me`, {
+    params: {
+      cursor,
+      limit,
+    },
+  });
+}
+
+export const getPostsByUserId = (userId: string, cursor?: string, limit: number = 12) => {
+  return axiosInstance.get<ApiResponse<PostMeResponse>>(`/posts/user/${userId}`, {
+    params: {
+      cursor,
+      limit,
+    },
+  });
+}
 

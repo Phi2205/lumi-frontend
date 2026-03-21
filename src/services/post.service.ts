@@ -1,6 +1,30 @@
 import * as postApi from '@/apis/post.api';
 import { PostMediaItem } from '@/apis/post.api';
 
+const viewedQueue = new Set<string>();
+const localViewed = new Set<string>();
+
+export const markAsViewed = (postId: string) => {
+    if (localViewed.has(postId)) return;
+    localViewed.add(postId);
+    viewedQueue.add(postId);
+}
+
+setInterval(async () => {
+    if (viewedQueue.size === 0) return;
+
+    const postIds = Array.from(viewedQueue);
+    viewedQueue.clear();
+
+    try {
+        await postApi.markAsSeenApi(postIds);
+        console.log('Sent viewed posts:', postIds);
+    } catch (error) {
+        console.error('Failed to send viewed posts:', error);
+    }
+}, 3000);
+
+
 export const createPost = async (content: string, media: PostMediaItem[]) => {
     try {
         const response = await postApi.createPostApi({ content, media });
@@ -85,6 +109,33 @@ export const sharePost = async (postId: string, content: string) => {
 export const getPostById = async (postId: string) => {
     try {
         const response = await postApi.getPostById(postId);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const markAsSeen = async (postIds: string[]) => {
+    try {
+        const response = await postApi.markAsSeenApi(postIds);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getPostsByMe = async (cursor?: string, limit: number = 12) => {
+    try {
+        const response = await postApi.getPostsByMe(cursor, limit);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getPostsByUserId = async (userId: string, cursor?: string, limit: number = 12) => {
+    try {
+        const response = await postApi.getPostsByUserId(userId, cursor, limit);
         return response.data;
     } catch (error) {
         throw error;

@@ -6,7 +6,6 @@ import { SkeletonFeed } from "@/components/skeleton"
 import { useEffect, useState, useRef } from "react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { ImageIcon, Ghost, Loader2 } from "lucide-react"
 import { Modal } from "@/lib/components/modal"
 import { GlassButton } from "@/lib/components/glass-button"
@@ -47,12 +46,12 @@ export function Feed() {
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hideLoader, setHideLoader] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
-  
+
   useEffect(() => {
     // If initially loading or fetching more, we don't need to re-attach observer yet, 
     // BUT we must ensure we attach it when loading finishes.
     // Actually, always observing loaderRef is safer, conditional logic inside callback.
-    if (isLoading || isFetchingMore || hideLoader) return; 
+    if (isLoading || isFetchingMore || hideLoader) return;
 
     const observer = new IntersectionObserver(
       entries => {
@@ -102,11 +101,15 @@ export function Feed() {
         return;
       }
 
-      setPosts(prev => [...prev, ...newItems.map(mapPost)]);
-      
+      setPosts(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const uniqueItems = newItems.filter(item => !existingIds.has(item.id)).map(mapPost);
+        return [...prev, ...uniqueItems];
+      });
+
       // If we successfully loaded posts, ensure loader is visible for next batch
       setHideLoader(false);
-      
+
     } catch (error) {
       console.error("Error loading more posts:", error);
     } finally {
@@ -196,7 +199,7 @@ export function Feed() {
           name: created.user?.name || created.user?.username || "You",
           avatar_url: created.user?.avatar_url || "/avatar-default.jpg",
         },
-        timestamp: "just now",
+        timestamp: new Date().toISOString(),
         content: created.content,
         media: created.post_media,
         likes: 0,
@@ -292,30 +295,30 @@ export function Feed() {
         maxWidthClassName="max-w-[640px]"
         footer={
           <div className="flex gap-3 justify-end">
-            <Button
+            <GlassButton
               variant="ghost"
-              className="text-white/80 hover:text-white hover:bg-white/10"
+              className="text-white/70 hover:text-white"
               onClick={() => {
                 if (isSubmitting) return
                 setIsCreateOpen(false)
               }}
             >
               Cancel
-            </Button>
-            <Button
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600"
+            </GlassButton>
+            <GlassButton
+              variant="primary"
               onClick={handlePostSubmit}
               disabled={isSubmitting || (!draftContent.trim() && draftMedia.length === 0)}
             >
               {isSubmitting ? "Posting..." : "Post"}
-            </Button>
+            </GlassButton>
           </div>
         }
       >
         <div className="space-y-4">
           <div className="flex gap-3 items-start">
             <Avatar className="h-10 w-10 flex-shrink-0 ring-2 ring-blue-400/50">
-              <AvatarImage src="/placeholder.svg" alt="You" />
+              <AvatarImage src={user?.avatar_url || "/avatar-default.jpg"} alt="You" />
               <AvatarFallback>Y</AvatarFallback>
             </Avatar>
             <textarea
@@ -380,9 +383,8 @@ export function Feed() {
                       key={m.order}
                       type="button"
                       onClick={() => setSelectedMediaIndex(idx)}
-                      className={`relative aspect-square rounded-xl overflow-hidden border ${
-                        idx === selectedMediaIndex ? "border-white/40 ring-2 ring-white/20" : "border-white/10"
-                      } bg-black/25`}
+                      className={`relative aspect-square rounded-xl overflow-hidden border ${idx === selectedMediaIndex ? "border-white/40 ring-2 ring-white/20" : "border-white/10"
+                        } bg-black/25`}
                       aria-label={`Select ${m.file.name}`}
                     >
                       {m.media_type === "image" ? (
@@ -416,7 +418,7 @@ export function Feed() {
             </div>
             <h3 className="text-xl font-semibold text-white/90 mb-2">No posts yet</h3>
             <p className="text-white/50 max-w-[280px] leading-relaxed">
-              Your feed is quiet for now. Follow more people or create a new post to get started!
+              Your feed is quiet for now. Add more friends or create a new post to get started!
             </p>
           </div>
         ) : (
@@ -430,8 +432,8 @@ export function Feed() {
           </>
         )}
       </div>
-      <div 
-        ref={loaderRef} 
+      <div
+        ref={loaderRef}
         className={`flex items-center justify-center p-4 py-6 ${hideLoader ? 'hidden' : ''}`}
       >
         <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-sm">
