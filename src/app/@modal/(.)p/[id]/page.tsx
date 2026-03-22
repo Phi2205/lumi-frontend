@@ -13,6 +13,8 @@ import { CommentSection, CommentInput } from "@/components/post/CommentSection"
 import { ShareModal } from "@/components/post/ShareModal"
 import { LikeButton } from "@/components/LikeButton"
 import { Button } from "@/components/ui/button"
+import { SharedPostPreview } from "@/components/post/PostCard"
+import { cn } from "@/lib/utils"
 
 export interface UI_Post {
   id: string
@@ -28,6 +30,8 @@ export interface UI_Post {
   comments: number
   shares: number
   has_liked?: boolean
+  original_post_id?: string
+  original_post?: UI_Post
 }
 
 function mapPost(post: ApiPost): UI_Post {
@@ -45,6 +49,8 @@ function mapPost(post: ApiPost): UI_Post {
     comments: post.comment_count,
     shares: post.share_count,
     has_liked: post.has_liked,
+    original_post_id: post.original_post_id,
+    original_post: post.original_post ? mapPost(post.original_post) : undefined,
   }
 }
 
@@ -77,6 +83,27 @@ export default function PostModal() {
   }, [handleClose])
 
   useEffect(() => {
+    const handlePostUpdate = (e: any) => {
+      const { id, has_liked, like_count, comment_count, share_count } = e.detail;
+      if (post && post.id === id) {
+        setPost(prev => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            has_liked: has_liked !== undefined ? has_liked : prev.has_liked,
+            likes: like_count !== undefined ? like_count : prev.likes,
+            comments: comment_count !== undefined ? comment_count : prev.comments,
+            shares: share_count !== undefined ? share_count : prev.shares
+          };
+        });
+      }
+    };
+
+    window.addEventListener('postUpdate', handlePostUpdate);
+    return () => window.removeEventListener('postUpdate', handlePostUpdate);
+  }, [post]);
+
+  useEffect(() => {
     if (!postId) return
     const fetchPost = async () => {
       // Don't set loading if we already have cached data
@@ -99,12 +126,26 @@ export default function PostModal() {
 
   const handleLike = () => {
     if (!post) return
-    likePost(post.id)
+    const newHasLiked = !post.has_liked
+    const newLikes = post.likes + (post.has_liked ? -1 : 1)
+
+    // Optimistic UI update
     setPost({
       ...post,
-      has_liked: !post.has_liked,
-      likes: post.likes + (post.has_liked ? -1 : 1),
+      has_liked: newHasLiked,
+      likes: newLikes,
     })
+
+    likePost(post.id)
+
+    // Notify lists to update
+    window.dispatchEvent(new CustomEvent('postUpdate', {
+      detail: {
+        id: post.id,
+        has_liked: newHasLiked,
+        like_count: newLikes
+      }
+    }));
   }
 
   if (isLoading && !post) {
@@ -131,33 +172,52 @@ export default function PostModal() {
   return (
     <>
       <div
-        className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
+        className={cn(
+          "fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm animate-in fade-in duration-300",
+          showShare && "hidden"
+        )}
         onClick={handleClose}
       />
 
-      <div className="fixed inset-0 z-[201] pointer-events-none flex items-center justify-center p-2 md:p-10">
+      <div className={cn("fixed inset-0 z-[201] pointer-events-none flex items-center justify-center p-2 md:p-10", showShare && "hidden")}>
         <div
-          className="bg-black/60 border border-white/10 w-full max-w-[1200px] max-h-[90vh] h-full rounded-2xl md:rounded-3xl overflow-hidden pointer-events-auto flex flex-col md:flex-row shadow-2xl relative animate-in zoom-in-[0.98] fade-in duration-300 ease-out will-change-transform"
+          className={cn(
+            "bg-black/60 border border-white/10 w-full max-w-[1200px] max-h-[90vh] h-full rounded-2xl md:rounded-3xl overflow-hidden pointer-events-auto flex flex-col md:flex-row shadow-2xl relative animate-in zoom-in-[0.98] fade-in duration-300 ease-out will-change-transform",
+          )}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close button - Top Right */}
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 z-[210] p-2 bg-black/50 hover:bg-black/80 rounded-full text-white/70 hover:text-white transition-all backdrop-blur-md md:hidden"
+            className={cn("absolute top-4 right-4 z-[210] p-2 bg-black/50 hover:bg-black/80 rounded-full text-white/70 hover:text-white transition-all backdrop-blur-md md:hidden", showShare && "hidden")}
           >
             <X size={20} />
           </button>
 
           <X
             size={24}
-            className="absolute top-4 right-[-48px] text-white/70 hover:text-white cursor-pointer hidden md:block"
+            className={cn("absolute top-4 right-[-48px] text-white/70 hover:text-white cursor-pointer hidden md:block", showShare && "hidden")}
             onClick={handleClose}
           />
 
           {/* Left Column - Media */}
           <div className="w-full md:w-[60%] lg:w-[65%] bg-black/20 flex items-center justify-center h-[50vh] md:h-full relative select-none">
-            {post.media && post.media.length > 0 ? (
-              <PostMediaCarousel media={post.media} />
+            {post.original_post ? (
+              <div className="w-full h-full p-4 md:p-8 overflow-y-auto scroll-glass flex items-center justify-center">
+                <div className="w-full max-w-lg">
+                  <p className="text-white/40 text-xs mb-3 flex items-center gap-2">
+                    <Share2 size={12} />
+                    Đã chia sẻ một bài viết
+                  </p>
+                  <SharedPostPreview post={post.original_post as any} />
+                </div>
+              </div>
+            ) : post.media && post.media.length > 0 ? (
+              <PostMediaCarousel
+                media={post.media}
+                aspectRatio="h-full w-full"
+                className="space-y-0"
+              />
             ) : (
               <div className="p-10 text-center">
                 <p className="text-white/40 italic">{post.content}</p>
@@ -213,26 +273,33 @@ export default function PostModal() {
             {/* Actions & Input Footer */}
             <div className="px-4 py-3 border-t border-white/10 bg-transparent shrink-0">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-4">
-                  <button onClick={handleLike} className={post.has_liked ? "text-red-500" : "text-white hover:text-white/70"}>
-                    <Heart size={24} fill={post.has_liked ? "currentColor" : "none"} />
+                <div className="flex items-center gap-5">
+                  <button onClick={handleLike} className={cn("transition-all hover:scale-110 active:scale-95", post.has_liked ? "text-red-500" : "text-white hover:text-white/70")}>
+                    <Heart size={26} fill={post.has_liked ? "currentColor" : "none"} strokeWidth={2.5} />
                   </button>
-                  <button className="text-white hover:text-white/70">
-                    <MessageSquare size={24} />
-                  </button>
-                  <button onClick={() => setShowShare(true)} className="text-white hover:text-white/70">
-                    <Share2 size={24} />
+                  <button onClick={() => setShowShare(true)} className="text-white hover:text-green-400 transition-all hover:scale-110 active:scale-95">
+                    <Share2 size={26} strokeWidth={2.5} />
                   </button>
                 </div>
-                <button className="text-white hover:text-white/70">
+                {/* <button className="text-white hover:text-white/70">
                   <Bookmark size={24} />
-                </button>
+                </button> */}
               </div>
 
-              <div className="font-bold text-white text-[14px] mb-1">
-                {post.likes.toLocaleString()} likes
+              <div className="flex items-center gap-3 mb-2">
+                <div className="font-bold text-white text-[14px]">
+                  {post.likes.toLocaleString()} likes
+                </div>
+                <span className="text-white/20 text-[10px]">·</span>
+                <div className="text-white/60 text-[14px]">
+                  {post.comments.toLocaleString()} comments
+                </div>
+                <span className="text-white/20 text-[10px]">·</span>
+                <div className="text-white/60 text-[14px]">
+                  {post.shares.toLocaleString()} shares
+                </div>
               </div>
-              <div className="text-white/40 text-[10px] uppercase tracking-tighter mb-2">
+              <div className="text-white/30 text-[10px] uppercase tracking-wider mb-2 font-semibold">
                 {new Date(post.timestamp).toLocaleDateString()}
               </div>
 
@@ -249,6 +316,7 @@ export default function PostModal() {
         <ShareModal
           post={post as any}
           onClose={() => setShowShare(false)}
+          onShared={handleClose}
         />
       )}
     </>

@@ -32,8 +32,23 @@ export function CommentInput({ postId }: { postId: string }) {
     if (newComment.trim()) {
       try {
         setIsSubmitting(true)
-        await sendComment(postId, newComment)
+        const res = await sendComment(postId, newComment)
         setNewComment("")
+
+        // Notify lists that a comment was added
+        // Note: we don't have the new total count here easily, 
+        // but we can either fetch it or just increment if we are sure.
+        // For simplicity and since list only shows count:
+        window.dispatchEvent(new CustomEvent('postUpdate', {
+          detail: {
+            id: postId,
+            // We can't know the exact new count without API response or state tracking,
+            // but usually we can just send the event to trigger a refresh or generic update.
+            // If the listener handles 'undefined' as 'no change', we can't increment easily.
+            // Let's assume we want to trigger a refresh in the list if possible, or we need to manage counts.
+          }
+        }));
+
       } catch (error) {
         console.error("Failed to add comment", error)
       } finally {

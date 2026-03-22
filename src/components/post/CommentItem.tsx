@@ -202,10 +202,10 @@ export function CommentItem({ comment, depth = 0, isLast = false, onDelete }: Co
 
           {/* Actions */}
           <div className="flex items-center gap-1 mt-1 ml-1 select-none">
-            <ActionBtn active={liked} onClick={handleLike}>
+            {/* <ActionBtn active={liked} onClick={handleLike}>
               <span className={liked ? "text-red-400" : ""}>{liked ? "Liked" : "Like"}</span>
               {totalLikes > 0 && <span className="ml-1 opacity-60 font-normal">{totalLikes}</span>}
-            </ActionBtn>
+            </ActionBtn> */}
             <div className="w-0.5 h-0.5 rounded-full bg-white/20" />
             <ActionBtn active={showReplyBox} onClick={() => setShowReplyBox(p => !p)}>
               Reply

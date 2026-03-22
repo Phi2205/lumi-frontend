@@ -49,7 +49,7 @@ interface PostCardProps {
 
 
 /** Embedded preview of the original post inside a share — Facebook-style */
-function SharedPostPreview({ post }: { post: Post }) {
+export function SharedPostPreview({ post }: { post: Post }) {
   return (
     <div className="rounded-xl border border-white/15 overflow-hidden bg-white/[0.03] hover:bg-white/[0.06] transition-colors cursor-pointer">
       {/* Header */}

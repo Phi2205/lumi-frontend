@@ -183,6 +183,27 @@ export function ProfileContent({
         return () => postsObserverRef.current?.disconnect()
     }, [postsCursor, postsHasMore, postsLoading, fetchPosts])
 
+    useEffect(() => {
+        const handlePostUpdate = (e: any) => {
+            const { id, has_liked, like_count, comment_count, share_count } = e.detail;
+            setPosts(prev => prev.map(p => {
+                if (p.id === id) {
+                    return {
+                        ...p,
+                        has_liked: has_liked !== undefined ? has_liked : p.has_liked,
+                        like_count: like_count !== undefined ? like_count : p.like_count,
+                        comment_count: comment_count !== undefined ? comment_count : p.comment_count,
+                        share_count: share_count !== undefined ? share_count : p.share_count
+                    };
+                }
+                return p;
+            }));
+        };
+
+        window.addEventListener('postUpdate', handlePostUpdate);
+        return () => window.removeEventListener('postUpdate', handlePostUpdate);
+    }, []);
+
     // Infinite scroll observer for reels
     useEffect(() => {
         if (reelsObserverRef.current) reelsObserverRef.current.disconnect()

@@ -135,6 +135,27 @@ export function Feed() {
   };
 
   useEffect(() => {
+    const handlePostUpdate = (e: any) => {
+      const { id, has_liked, like_count, comment_count, share_count } = e.detail;
+      setPosts(prev => prev.map(p => {
+        if (p.id === id) {
+          return {
+            ...p,
+            has_liked: has_liked !== undefined ? has_liked : p.has_liked,
+            likes: like_count !== undefined ? like_count : p.likes,
+            comments: comment_count !== undefined ? comment_count : p.comments,
+            shares: share_count !== undefined ? share_count : p.shares
+          };
+        }
+        return p;
+      }));
+    };
+
+    window.addEventListener('postUpdate', handlePostUpdate);
+    return () => window.removeEventListener('postUpdate', handlePostUpdate);
+  }, []);
+
+  useEffect(() => {
     fetchPosts();
   }, []);
 
