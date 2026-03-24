@@ -18,8 +18,11 @@ function mapPost(post: ApiPost): Post {
   return {
     id: post.id,
     user: {
+      id: post.user?.id || "",
+      username: post.user?.username || "",
       name: post.user?.name || "You",
       avatar_url: post.user?.avatar_url || "/avatar-default.jpg",
+      has_story: post.user?.has_story || false,
     },
     timestamp: post.created_at,
     content: post.content,
@@ -156,6 +159,24 @@ export function Feed() {
   }, []);
 
   useEffect(() => {
+    const handleStoryUpdate = (e: any) => {
+      const { userId, hasStory } = e.detail;
+      setPosts(prev => prev.map(p => {
+        if (p.user.id === userId) {
+          return {
+            ...p,
+            user: { ...p.user, has_story: hasStory }
+          };
+        }
+        return p;
+      }));
+    };
+
+    window.addEventListener('storyUpdate', handleStoryUpdate);
+    return () => window.removeEventListener('storyUpdate', handleStoryUpdate);
+  }, []);
+
+  useEffect(() => {
     fetchPosts();
   }, []);
 
@@ -220,8 +241,11 @@ export function Feed() {
       const uiPost: Post = {
         id: created.id,
         user: {
+          id: created.user?.id || "",
+          username: created.user?.username || "",
           name: created.user?.name || created.user?.username || "You",
           avatar_url: created.user?.avatar_url || "/avatar-default.jpg",
+          has_story: created.user?.has_story || false,
         },
         timestamp: new Date().toISOString(),
         content: created.content,

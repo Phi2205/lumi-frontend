@@ -59,7 +59,7 @@ export function CommentInput({ postId }: { postId: string }) {
 
   return (
     <div className="flex gap-3 items-center">
-      <StoryAvatar className="w-10 h-10 shrink-0" src={user?.avatar_url || "/avatar-default.jpg"} alt={user?.name || "You"} />
+      <StoryAvatar className="w-10 h-10 shrink-0" src={user?.avatar_url || "/avatar-default.jpg"} alt={user?.name || "You"} username={user?.username} />
       <div className="flex-1">
         <div className="relative flex items-end">
           <TextareaAutosize

@@ -12,6 +12,7 @@ import { formatTime } from "@/utils/format"
 import { useRouter } from "next/navigation"
 import { User } from "@/types/user.type"
 import { usePresenceRealtime } from "@/socket/presence/usePresenceRealtime"
+import { useStoryRealtime } from "@/socket/story/useStoryRealtime"
 import { getOnlineUsers } from "@/socket/presence/presence.socket"
 
 export function RightSidebar() {
@@ -57,6 +58,18 @@ export function RightSidebar() {
     }
   });
 
+  useStoryRealtime({
+    onStoryStatusChanged: (data) => {
+      console.log(data)
+      setOnlineFriends(prev => prev.map(u => {
+        if (u.id === data.userId) {
+          return { ...u, has_story: data.hasStory };
+        }
+        return u;
+      }));
+    }
+  });
+
   return (
     <aside className="hidden lg:flex flex-col fixed right-0 top-16 h-[calc(100vh-64px)] w-80 border-l border-white/20 backdrop-blur-3xl bg-white/5 px-6 py-8 gap-6 overflow-y-auto scroll-glass">
       {/* Online Friends Card */}
@@ -82,6 +95,7 @@ export function RightSidebar() {
                   <StoryAvatar
                     src={friend.avatar_url || "/avatar-default.jpg"}
                     alt={friend.name}
+                    hasStory={friend.has_story}
                     isOnline={true}
                     className="h-9 w-9 shrink-0"
                   />

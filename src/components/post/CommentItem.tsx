@@ -187,7 +187,7 @@ export function CommentItem({ comment, depth = 0, isLast = false, onDelete }: Co
                     </div>
                 )}
              </div> */}
-          <StoryAvatar className="w-10 h-10" src={comment.user.avatar_url || "/avatar-default.jpg"} alt={comment.user.name || "You"} />
+          <StoryAvatar className="w-10 h-10" src={comment.user.avatar_url || "/avatar-default.jpg"} alt={comment.user.name || "You"} username={comment.user.username} />
         </div>
 
         {/* Content Column */}
@@ -230,7 +230,7 @@ export function CommentItem({ comment, depth = 0, isLast = false, onDelete }: Co
           {showReplyBox && (
             <div className="flex gap-3 mt-3 mb-2 animation-fadeSlide">
               {/* Avatar */}
-              <StoryAvatar className="w-8 h-8 shrink-0" src={user?.avatar_url || "/avatar-default.jpg"} alt={user?.name || "You"} />
+              <StoryAvatar className="w-8 h-8 shrink-0" src={user?.avatar_url || "/avatar-default.jpg"} alt={user?.name || "You"} username={user?.username} />
 
               {/* Input */}
               <div className="flex-1 relative flex items-end">

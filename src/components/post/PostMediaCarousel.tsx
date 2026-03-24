@@ -17,19 +17,19 @@ const variants = {
     enter: (direction: number) => ({
         x: direction > 0 ? "100%" : "-100%",
         opacity: 0,
-        scale: 0.95
+        filter: "blur(10px)"
     }),
     center: {
         zIndex: 1,
         x: 0,
         opacity: 1,
-        scale: 1
+        filter: "blur(0px)"
     },
     exit: (direction: number) => ({
         zIndex: 0,
         x: direction < 0 ? "100%" : "-100%",
         opacity: 0,
-        scale: 0.95
+        filter: "blur(10px)"
     })
 };
 
@@ -43,94 +43,35 @@ export function PostMediaCarousel({
     aspectRatio = "aspect-[4/5] sm:aspect-square md:aspect-[4/3] rounded-2xl border border-white/10 shadow-2xl",
     className
 }: PostMediaCarouselProps) {
-    const images = useMemo(() => media.filter(m => m.media_type !== "video"), [media])
-    const videos = useMemo(() => media.filter(m => m.media_type === "video"), [media])
-
-    const [activeTab, setActiveTab] = useState<'all' | 'images' | 'videos'>(
-        images.length > 0 && videos.length > 0 ? 'all' : images.length > 0 ? 'images' : 'videos'
-    )
-
-    const currentMedia = useMemo(() => {
-        if (activeTab === 'all') return media
-        if (activeTab === 'images') return images
-        if (activeTab === 'videos') return videos
-        return media
-    }, [activeTab, media, images, videos])
-
     const [[page, direction], setPage] = useState([0, 0]);
 
+    if (!media || media.length === 0) return null
+
     // Use modular arithmetic to get index
-    const currentIndex = ((page % currentMedia.length) + currentMedia.length) % currentMedia.length;
+    const currentIndex = ((page % media.length) + media.length) % media.length;
 
     const paginate = (newDirection: number) => {
         setPage([page + newDirection, newDirection]);
     }
 
-    // Reset index when tab changes
-    useEffect(() => {
-        setPage([0, 0])
-    }, [activeTab])
-
-    const showTabs = images.length > 0 && videos.length > 0
-
-    if (!media || media.length === 0) return null
-
-    const currentItem = currentMedia[currentIndex];
+    const currentMedia = media;
+    const currentItem = media[currentIndex];
 
     return (
         <div className={cn("space-y-4 w-full h-full flex flex-col", className)}>
-            {/* Tab Switcher - Only show if we have both types */}
-            {showTabs && (
-                <div className="flex gap-1 p-1 bg-black/40 backdrop-blur-md rounded-xl border border-white/10 w-fit mx-auto shrink-0 z-20">
-                    <button
-                        onClick={() => setActiveTab('all')}
-                        className={cn(
-                            "px-4 py-1.5 text-[11px] font-semibold rounded-lg transition-all flex items-center gap-1.5 uppercase tracking-wider",
-                            activeTab === 'all' ? "bg-white/10 text-white shadow-lg border border-white/10" : "text-white/40 hover:text-white/70 hover:bg-white/5"
-                        )}
-                    >
-                        Tất cả
-                    </button>
-                    {images.length > 0 && (
-                        <button
-                            onClick={() => setActiveTab('images')}
-                            className={cn(
-                                "px-4 py-1.5 text-[11px] font-semibold rounded-lg transition-all flex items-center gap-1.5 uppercase tracking-wider",
-                                activeTab === 'images' ? "bg-white/10 text-white shadow-lg border border-white/10" : "text-white/40 hover:text-white/70 hover:bg-white/5"
-                            )}
-                        >
-                            <Image size={12} />
-                            Ảnh
-                        </button>
-                    )}
-                    {videos.length > 0 && (
-                        <button
-                            onClick={() => setActiveTab('videos')}
-                            className={cn(
-                                "px-4 py-1.5 text-[11px] font-semibold rounded-lg transition-all flex items-center gap-1.5 uppercase tracking-wider",
-                                activeTab === 'videos' ? "bg-white/10 text-white shadow-lg border border-white/10" : "text-white/40 hover:text-white/70 hover:bg-white/5"
-                            )}
-                        >
-                            <Video size={12} />
-                            Video
-                        </button>
-                    )}
-                </div>
-            )}
-
             {/* Media Display Area */}
             <div className={cn(
                 "relative flex-1 group overflow-hidden bg-black/50 w-full flex items-center justify-center",
                 aspectRatio
             )}>
                 {/* Media Counter */}
-                {currentMedia.length > 1 && (
+                {media.length > 1 && (
                     <div className="absolute top-4 right-4 z-20 px-3 py-1 rounded-full bg-black/40 backdrop-blur-xl border border-white/10 text-[11px] font-bold text-white/90">
-                        {currentIndex + 1} / {currentMedia.length}
+                        {currentIndex + 1} / {media.length}
                     </div>
                 )}
 
-                <AnimatePresence initial={false} custom={direction} mode="popLayout">
+                <AnimatePresence initial={false} custom={direction}>
                     <motion.div
                         key={page}
                         custom={direction}
@@ -139,9 +80,9 @@ export function PostMediaCarousel({
                         animate="center"
                         exit="exit"
                         transition={{
-                            x: { type: "spring", stiffness: 300, damping: 30 },
-                            opacity: { duration: 0.2 },
-                            scale: { duration: 0.2 }
+                            x: { type: "spring", stiffness: 260, damping: 28 },
+                            opacity: { duration: 0.35 },
+                            filter: { duration: 0.35 }
                         }}
                         drag={currentMedia.length > 1 ? "x" : false}
                         dragConstraints={{ left: 0, right: 0 }}
@@ -150,9 +91,9 @@ export function PostMediaCarousel({
                             if (currentMedia.length <= 1) return;
                             const swipe = swipePower(offset.x, velocity.x);
 
-                            if (swipe < -swipeConfidenceThreshold) {
+                            if (swipe < -swipeConfidenceThreshold || offset.x < -100) {
                                 paginate(1);
-                            } else if (swipe > swipeConfidenceThreshold) {
+                            } else if (swipe > swipeConfidenceThreshold || offset.x > 100) {
                                 paginate(-1);
                             }
                         }}
@@ -174,7 +115,7 @@ export function PostMediaCarousel({
                                     src={currentItem.media_url}
                                     alt="Post media"
                                     className="max-w-full max-h-full object-contain rounded-none pointer-events-none"
-                                    allImages={images.map(i => i.media_url)}
+                                    allImages={media.filter(m => m.media_type !== "video").map(i => i.media_url)}
                                 />
                                 <div className="absolute inset-0 bg-black/5 pointer-events-none" />
                             </div>

@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
+import Link from "next/link"
 
 import { cn } from "@/lib/utils"
 
@@ -57,6 +58,7 @@ interface StoryAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   hasStory?: boolean
   isSeen?: boolean
   isOnline?: boolean
+  username?: string
 }
 
 function StoryAvatar({
@@ -65,10 +67,11 @@ function StoryAvatar({
   hasStory = false,
   isSeen = false,
   isOnline = false,
+  username,
   className,
   ...props
 }: StoryAvatarProps) {
-  return (
+  const content = (
     <div className={cn("relative shrink-0", className)} {...props}>
       {hasStory && (
         <>
@@ -104,6 +107,17 @@ function StoryAvatar({
       )}
     </div>
   )
+
+  if (username) {
+    console.log(username)
+    return (
+      <Link href={`/users/${username}`} className="block">
+        {content}
+      </Link>
+    )
+  }
+
+  return content
 }
 
 export { Avatar, AvatarImage, AvatarFallback, StoryAvatar }

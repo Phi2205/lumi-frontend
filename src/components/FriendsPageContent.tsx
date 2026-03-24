@@ -72,7 +72,11 @@ export function FriendsPageContent() {
         try {
             setProcessingIds((prev) => new Set(prev).add(requestId))
             await acceptFriendRequest(requestId)
-            setRequestFriendList((prev) => prev.filter((req) => (req.id ?? req.requester_id) !== requestId))
+            setRequestFriendList((prev) => prev.map((req) => {
+                const id = req.id ?? req.requester_id
+                if (id === requestId) return { ...req, actionStatus: 'accepted' as const }
+                return req
+            }))
         } catch (error) {
             console.error("Accept friend request failed:", error)
         } finally {
@@ -89,7 +93,11 @@ export function FriendsPageContent() {
         try {
             setProcessingIds((prev) => new Set(prev).add(requestId))
             await rejectFriendRequest(requestId)
-            setRequestFriendList((prev) => prev.filter((req) => (req.id ?? req.requester_id) !== requestId))
+            setRequestFriendList((prev) => prev.map((req) => {
+                const id = req.id ?? req.requester_id
+                if (id === requestId) return { ...req, actionStatus: 'rejected' as const }
+                return req
+            }))
         } catch (error) {
             console.error("Reject friend request failed:", error)
         } finally {
@@ -167,28 +175,43 @@ export function FriendsPageContent() {
                                                 <p className="text-[10px] text-white/40 mt-1">{formatTime(req.created_at)}</p>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2">
-                                            <GlassButton
-                                                size="sm"
-                                                variant="ghost"
-                                                className="flex-1 text-xs rounded-xl bg-green-500/10 border-green-500/20 text-green-300 hover:bg-green-500/20 hover:border-green-500/30 disabled:opacity-50 h-9"
-                                                onClick={() => handleAcceptRequest(requestId)}
-                                                disabled={isProcessing}
-                                            >
-                                                <Check className="w-3 h-3" />
-                                                {isProcessing ? 'Processing...' : 'Accept'}
-                                            </GlassButton>
-                                            <GlassButton
-                                                size="sm"
-                                                variant="ghost"
-                                                className="flex-1 text-xs rounded-xl bg-red-500/10 border-red-500/20 text-red-300 hover:bg-red-500/20 hover:border-red-500/30 disabled:opacity-50 h-9"
-                                                onClick={() => handleRejectRequest(requestId)}
-                                                disabled={isProcessing}
-                                            >
-                                                <X className="w-3 h-3" />
-                                                {isProcessing ? 'Processing...' : 'Reject'}
-                                            </GlassButton>
-                                        </div>
+                                        {((req as any).actionStatus) ? (
+                                            <div className="flex items-center justify-center py-2 px-4 bg-white/5 rounded-xl border border-white/10 w-full animate-in zoom-in-95 duration-300">
+                                                <div className="flex items-center gap-2">
+                                                    {(req as any).actionStatus === 'accepted' ? (
+                                                        <Check className="w-4 h-4 text-green-400" />
+                                                    ) : (
+                                                        <X className="w-4 h-4 text-red-400" />
+                                                    )}
+                                                    <span className={((req as any).actionStatus === 'accepted') ? "text-green-400 text-xs font-bold" : "text-red-400 text-xs font-bold"}>
+                                                        {(req as any).actionStatus === 'accepted' ? 'Đã chấp nhận lời mời' : 'Đã từ chối lời mời'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="flex gap-2">
+                                                <GlassButton
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="flex-1 text-xs rounded-xl bg-green-500/10 border-green-500/20 text-green-300 hover:bg-green-500/20 hover:border-green-500/30 disabled:opacity-50 h-9"
+                                                    onClick={() => handleAcceptRequest(requestId)}
+                                                    disabled={isProcessing}
+                                                >
+                                                    <Check className="w-3 h-3" />
+                                                    {isProcessing ? 'Processing...' : 'Accept'}
+                                                </GlassButton>
+                                                <GlassButton
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="flex-1 text-xs rounded-xl bg-red-500/10 border-red-500/20 text-red-300 hover:bg-red-500/20 hover:border-red-500/30 disabled:opacity-50 h-9"
+                                                    onClick={() => handleRejectRequest(requestId)}
+                                                    disabled={isProcessing}
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                    {isProcessing ? 'Processing...' : 'Reject'}
+                                                </GlassButton>
+                                            </div>
+                                        )}
                                     </div>
                                 )
                             })}

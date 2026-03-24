@@ -1,4 +1,4 @@
-import { User } from "@/types/user.type";
+import { User, UserHoverCard } from "@/types/user.type";
 import axiosInstance from "./axiosInstance"
 import { ApiResponse } from "@/types/response.type";
 
@@ -20,7 +20,6 @@ export interface EditProfilePayload extends Location{
   birthday?: string;
 }
 
-
 export const filterUserApi = (data: FilterUserPayload) =>
   axiosInstance.get<ApiResponse<FilterUserResponse>>('/users', { params: data });
 
@@ -29,3 +28,6 @@ export const getUserByUsernameApi = (username: string) =>
 
 export const editProfileApi = (data: EditProfilePayload) =>
   axiosInstance.patch<ApiResponse<User>>(`/users/profile`, data);
+
+export const userHoverCardApi = (userId: string) =>
+  axiosInstance.get<ApiResponse<UserHoverCard>>(`/users/${userId}/hover-card`);

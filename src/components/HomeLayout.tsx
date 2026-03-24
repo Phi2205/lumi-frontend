@@ -10,6 +10,7 @@ import { Feed } from "@/components/Feed"
 import { useDarkMode } from "@/hooks/useDarkMode"
 import { useBackgroundImage } from "@/hooks/useBackgroundImage"
 import { BackgroundRenderer } from "@/components/BackgroundRenderer"
+import { useStoryRealtime } from "@/socket/story/useStoryRealtime"
 
 interface HomeLayoutProps {
   children?: React.ReactNode
@@ -22,6 +23,9 @@ export function HomeLayout({ children }: HomeLayoutProps) {
   const { user, isLoading } = useAuth()
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
   const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
+
+  // Listen for story status changes and broadcast them via window events
+  useStoryRealtime()
 
   // Sync activeTab with query param if it changes
   useEffect(() => {

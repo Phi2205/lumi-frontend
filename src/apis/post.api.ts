@@ -20,6 +20,7 @@ export interface PostUser {
   username: string;
   name: string;
   avatar_url: string | null;
+  has_story: boolean;
 }
 
 

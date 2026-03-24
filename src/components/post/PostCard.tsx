@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils"
 
 import { Globe, MoreHorizontal, Share2 } from "lucide-react"
+import Link from "next/link"
 import { Avatar, AvatarImage, AvatarFallback, StoryAvatar } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import ImagePreview from "@/components/ui/ImagePreview"
@@ -20,8 +21,11 @@ import { markAsViewed } from "@/services/post.service"
 export interface Post {
   id: string
   user: {
+    id: string
+    username: string
     name: string
     avatar_url: string
+    has_story: boolean
   }
   timestamp: string
   content: string
@@ -54,7 +58,7 @@ export function SharedPostPreview({ post }: { post: Post }) {
     <div className="rounded-xl border border-white/15 overflow-hidden bg-white/[0.03] hover:bg-white/[0.06] transition-colors cursor-pointer">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 pt-3 pb-2">
-        <StoryAvatar className="h-10 w-10" src={post.user.avatar_url || "/avatar-default.jpg"} alt={post.user.name} hasStory={false} isSeen={false} />
+        <StoryAvatar className="h-10 w-10" src={post.user.avatar_url || "/avatar-default.jpg"} alt={post.user.name} hasStory={false} isSeen={false} username={post.user.username} />
         <div className="min-w-0 flex-1">
           <p className="text-white text-[13px] font-semibold leading-tight truncate">{post.user.name}</p>
           <div className="flex items-center gap-1 mt-0.5">
@@ -125,6 +129,7 @@ export function PostCard({ post, onLike }: PostCardProps) {
     }
   }, [post.id])
 
+  console.log("PostCard rendering user:", post.user.username)
   return (
     <div ref={cardRef} className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:bg-white/8 overflow-hidden mb-4">
 
@@ -132,16 +137,19 @@ export function PostCard({ post, onLike }: PostCardProps) {
       <div className="flex items-center justify-between p-4 border-b border-white/10">
         <div className="flex items-center gap-3">
           <UserHoverCard
-            userId={"user-1"}
+            userId={post.user.id}
             name={post.user.name}
-            avatar={post.user.avatar_url || "default-avatar.jpg"}
+            avatar={post.user.avatar_url || "/avatar-default.jpg"}
+            username={post.user.username}
             education={""}
             location={""}
           >
-            <StoryAvatar className="h-12 w-12" src={post.user.avatar_url || "/avatar-default.jpg"} alt={post.user.name} hasStory={false} isSeen={false} />
+            <StoryAvatar className="h-12 w-12" src={post.user.avatar_url || "/avatar-default.jpg"} alt={post.user.name} hasStory={post.user.has_story} isSeen={false} username={post.user.username} />
           </UserHoverCard>
           <div>
-            <p className="font-semibold text-white">{post.user.name}</p>
+            <Link href={`/users/${post.user.username}`} className="font-semibold text-white hover:underline decoration-1 underline-offset-4">
+              {post.user.name}
+            </Link>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-xs text-white/50">{formatTime(post.timestamp)}</span>
               {isShared && (
