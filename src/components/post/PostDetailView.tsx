@@ -237,7 +237,8 @@ export function PostDetailView({ postId, onClose, isModal = false }: PostDetailV
                                             className="cursor-pointer"
                                             onClick={() => {
                                                 if (onClose) onClose()
-                                                router.push(`/users/${post.user.username}`)
+                                                const href = post.user.has_story ? `/stories/${post.user.username}` : `/users/${post.user.username}`
+                                                router.push(href)
                                             }}
                                         >
                                             <StoryAvatar className="h-10 w-10" src={post.user.avatar_url} alt={post.user.name} hasStory={post.user.has_story} isSeen={false} username={post.user.username} />
@@ -245,7 +246,7 @@ export function PostDetailView({ postId, onClose, isModal = false }: PostDetailV
                                         <div className="flex flex-col">
                                             <div className="flex items-center gap-1">
                                                 <span
-                                                    className="font-bold text-white text-[14px] hover:underline cursor-pointer"
+                                                    className="font-bold text-white text-[14px] hover:text-white/80 transition-colors cursor-pointer"
                                                     onClick={() => {
                                                         if (onClose) onClose()
                                                         router.push(`/users/${post.user.username}`)

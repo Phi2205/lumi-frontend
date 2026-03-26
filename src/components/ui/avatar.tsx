@@ -109,9 +109,10 @@ function StoryAvatar({
   )
 
   if (username) {
-    console.log(username)
+    const href = hasStory ? `/stories/${username}` : `/users/${username}`
+    console.log(href)
     return (
-      <Link href={`/users/${username}`} className="block">
+      <Link href={href} className="block">
         {content}
       </Link>
     )

@@ -23,6 +23,7 @@ interface UserHoverCardProps {
     onFollow?: () => void
     onMessage?: () => void
     username?: string
+    hasStory?: boolean
     children: React.ReactNode
     className?: string
 }
@@ -38,6 +39,7 @@ export function UserHoverCard({
     onFollow,
     onMessage,
     username,
+    hasStory = false,
     children,
     className,
 }: UserHoverCardProps) {
@@ -111,7 +113,8 @@ export function UserHoverCard({
                 onClick={(e) => {
                     if (username) {
                         e.stopPropagation()
-                        router.push(`/users/${username}`)
+                        const href = hasStory ? `/stories/${username}` : `/users/${username}`
+                        router.push(href)
                     }
                 }}
             >
@@ -315,7 +318,7 @@ export function UserNameWithHover({
             onMessage={onMessage}
             className={className}
         >
-            <span className="text-blue-400 hover:underline cursor-pointer font-semibold">
+            <span className="text-blue-400 hover:text-blue-500 transition-colors cursor-pointer font-semibold">
                 {name}
             </span>
         </UserHoverCard>

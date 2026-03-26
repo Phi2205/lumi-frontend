@@ -285,6 +285,85 @@ export const SkeletonStories = ({ count = 5, className = "" }: { count?: number;
   </div>
 );
 
+// Inner part of the story skeleton (without the full-screen backdrop)
+export const StorySkeletonContent = () => (
+  <div
+    className="relative bg-black rounded-3xl overflow-hidden shadow-2xl w-full h-full"
+    style={{
+      height: '100%',
+      aspectRatio: '9/16',
+      maxHeight: '100%'
+    }}
+  >
+    {/* Main content skeleton */}
+    <Skeleton
+      height="h-full"
+      className="rounded-3xl bg-white/10"
+      width="w-full"
+    />
+
+    {/* Header skeleton */}
+    <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-4 flex items-center justify-between z-10">
+      <div className="flex items-center gap-3">
+        <Skeleton
+          height="h-8"
+          width="w-8"
+          rounded="rounded-full"
+          className="bg-white/20 ring-2 ring-white/50"
+        />
+        <div className="space-y-2">
+          <Skeleton
+            height="h-4"
+            width="w-24"
+            className="bg-white/20 rounded"
+          />
+          <Skeleton
+            height="h-3"
+            width="w-20"
+            className="bg-white/15 rounded"
+          />
+        </div>
+      </div>
+      <Skeleton
+        height="h-8"
+        width="w-8"
+        rounded="rounded-full"
+        className="bg-white/20"
+      />
+    </div>
+
+    {/* Progress bars skeleton */}
+    <div className="absolute top-0 left-0 right-0 flex gap-1 p-2 h-1 z-10">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Skeleton
+          key={i}
+          height="h-0.5"
+          width="w-full"
+          className="bg-white/20 rounded-full"
+        />
+      ))}
+    </div>
+
+    {/* Navigation buttons skeleton */}
+    <div className="absolute left-4 top-1/2 -translate-y-1/2">
+      <Skeleton
+        height="h-12"
+        width="w-12"
+        rounded="rounded-full"
+        className="bg-white/20"
+      />
+    </div>
+    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+      <Skeleton
+        height="h-12"
+        width="w-12"
+        rounded="rounded-full"
+        className="bg-white/20"
+      />
+    </div>
+  </div>
+);
+
 // Story Page Skeleton Component
 export const StorySkeleton = () => (
   <div
@@ -295,79 +374,13 @@ export const StorySkeleton = () => (
     }}
   >
     <div
-      className="relative bg-black rounded-3xl overflow-hidden shadow-2xl"
       style={{
         height: '100%',
         aspectRatio: '9/16',
         maxHeight: '100%'
       }}
     >
-      {/* Main content skeleton */}
-      <Skeleton
-        height="h-full"
-        className="rounded-3xl bg-white/10"
-        width="w-full"
-      />
-
-      {/* Header skeleton */}
-      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Skeleton
-            height="h-8"
-            width="w-8"
-            rounded="rounded-full"
-            className="bg-white/20 ring-2 ring-white/50"
-          />
-          <div className="space-y-2">
-            <Skeleton
-              height="h-4"
-              width="w-24"
-              className="bg-white/20 rounded"
-            />
-            <Skeleton
-              height="h-3"
-              width="w-20"
-              className="bg-white/15 rounded"
-            />
-          </div>
-        </div>
-        <Skeleton
-          height="h-8"
-          width="w-8"
-          rounded="rounded-full"
-          className="bg-white/20"
-        />
-      </div>
-
-      {/* Progress bars skeleton */}
-      <div className="absolute top-0 left-0 right-0 flex gap-1 p-2 h-1">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton
-            key={i}
-            height="h-0.5"
-            width="w-full"
-            className="bg-white/20 rounded-full"
-          />
-        ))}
-      </div>
-
-      {/* Navigation buttons skeleton */}
-      <div className="absolute left-4 top-1/2 -translate-y-1/2">
-        <Skeleton
-          height="h-12"
-          width="w-12"
-          rounded="rounded-full"
-          className="bg-white/20"
-        />
-      </div>
-      <div className="absolute right-4 top-1/2 -translate-y-1/2">
-        <Skeleton
-          height="h-12"
-          width="w-12"
-          rounded="rounded-full"
-          className="bg-white/20"
-        />
-      </div>
+      <StorySkeletonContent />
     </div>
   </div>
 );
@@ -487,5 +500,68 @@ export const SkeletonSettingsList = ({ count = 3, className = "" }: { count?: nu
     {Array.from({ length: count }).map((_, i) => (
       <SkeletonSettingsRow key={i} />
     ))}
+  </div>
+);
+// Reel Page Skeleton Component
+export const ReelSkeleton = () => (
+  <div
+    className="relative w-full h-full bg-black/80 flex items-center justify-center"
+    style={{
+      width: '100%',
+      height: '100%'
+    }}
+  >
+    <div
+      className="relative bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl"
+      style={{
+        height: '100%',
+        aspectRatio: '9/16',
+        maxHeight: '100%'
+      }}
+    >
+      {/* Background Pulse */}
+      <div className="absolute inset-0 bg-white/5 animate-pulse" />
+
+      {/* Top Progress Bar */}
+      <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/10">
+        <div className="h-full w-1/3 bg-white/30 animate-pulse" />
+      </div>
+
+      {/* Info Bottom Left */}
+      <div className="absolute bottom-8 left-4 right-[72px] space-y-4 z-10">
+        <div className="flex items-center gap-3">
+          <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/20 ring-2 ring-white/10" />
+          <Skeleton height="h-4" width="w-32" className="bg-white/15 rounded" />
+          <Skeleton height="h-7" width="w-20" className="bg-white/10 rounded-lg" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton height="h-3" width="w-full" className="bg-white/10 rounded" />
+          <Skeleton height="h-3" width="w-2/3" className="bg-white/5 rounded" />
+        </div>
+        <div className="pt-2">
+          <Skeleton height="h-8" width="w-40" rounded="rounded-full" className="bg-white/15 border border-white/10" />
+        </div>
+      </div>
+
+      {/* Actions Right */}
+      <div className="absolute right-3 bottom-10 flex flex-col items-center gap-6 z-10">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="flex flex-col items-center gap-2">
+            <Skeleton height="h-12" width="w-12" rounded="rounded-full" className="bg-white/15 backdrop-blur-md" />
+            <Skeleton height="h-2" width="w-6" className="bg-white/10 rounded" />
+          </div>
+        ))}
+        <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/10" />
+        <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/25 border-2 border-white/20 animate-[spin_4s_linear_infinite]" />
+      </div>
+
+      {/* Volume button skeleton */}
+      <div className="absolute top-8 right-6">
+        <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/20" />
+      </div>
+
+      {/* Bottom Gradient overlay for skeleton feel */}
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+    </div>
   </div>
 );

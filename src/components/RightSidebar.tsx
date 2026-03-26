@@ -88,11 +88,11 @@ export function RightSidebar() {
             onlineFriends.map((friend) => (
               <div
                 key={friend.id}
-                className="flex items-center justify-between cursor-pointer group hover:bg-white/5 p-2 -mx-2 rounded-xl transition-all"
-                onClick={() => router.push(`/users/${friend.username}`)}
+                className="flex items-center justify-between group hover:bg-white/5 p-2 -mx-2 rounded-xl transition-all"
               >
                 <div className="flex items-center gap-3">
                   <StoryAvatar
+                    username={friend.username}
                     src={friend.avatar_url || "/avatar-default.jpg"}
                     alt={friend.name}
                     hasStory={friend.has_story}
@@ -100,7 +100,10 @@ export function RightSidebar() {
                     className="h-9 w-9 shrink-0"
                   />
                   <div className="flex flex-col min-w-0">
-                    <span className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors truncate">
+                    <span
+                      className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors truncate cursor-pointer"
+                      onClick={() => router.push(`/users/${friend.username}`)}
+                    >
                       {friend.name}
                     </span>
                   </div>

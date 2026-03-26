@@ -143,13 +143,24 @@ export function PostCard({ post, onLike }: PostCardProps) {
             username={post.user.username}
             education={""}
             location={""}
+            hasStory={post.user.has_story}
           >
             <StoryAvatar className="h-12 w-12" src={post.user.avatar_url || "/avatar-default.jpg"} alt={post.user.name} hasStory={post.user.has_story} isSeen={false} username={post.user.username} />
           </UserHoverCard>
           <div>
-            <Link href={`/users/${post.user.username}`} className="font-semibold text-white hover:underline decoration-1 underline-offset-4">
-              {post.user.name}
-            </Link>
+            <UserHoverCard
+              userId={post.user.id}
+              name={post.user.name}
+              avatar={post.user.avatar_url || "/avatar-default.jpg"}
+              username={post.user.username}
+              education={""}
+              location={""}
+              hasStory={false} // Always go to profile when clicking name
+            >
+              <Link href={`/users/${post.user.username}`} className="font-semibold text-white hover:text-white/80 transition-colors">
+                {post.user.name}
+              </Link>
+            </UserHoverCard>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-xs text-white/50">{formatTime(post.timestamp)}</span>
               {isShared && (
@@ -188,7 +199,7 @@ export function PostCard({ post, onLike }: PostCardProps) {
       <div className="flex items-center justify-around px-4 py-2 border-t border-b border-white/10 text-xs text-white/50">
         <button
           onClick={() => setShowLikes(true)}
-          className="hover:text-white/80 hover:underline underline-offset-2 transition-colors cursor-pointer"
+          className="hover:text-white/80 transition-colors cursor-pointer"
         >
           {post.likes} likes
         </button>

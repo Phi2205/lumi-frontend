@@ -37,6 +37,15 @@ export interface StoriesResponse {
   stories: Story[];
 }
 
+export interface UserStoryView extends User {
+  viewed_at: string;
+}
+
+export interface StoryViewsResponse {
+  items: UserStoryView[];
+  nextCursor: string | null;
+}
+
 export const createStoryApi = (file: File) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -60,3 +69,11 @@ export const getStoryFriendsApi = (page: number, limit: number) => {
 
 export const getStoriesApi = (userId: string) => 
   axiosInstance.get<ApiResponse<StoriesResponse>>(`/stories/user/${userId}`);
+
+export const viewStoryApi = (storyId: string) =>
+  axiosInstance.post<ApiResponse<void>>(`/stories/${storyId}/view`);
+
+export const getStoryViewsApi = (storyId: string, cursor?: string, limit: number = 10) =>
+  axiosInstance.get<ApiResponse<StoryViewsResponse>>(`/stories/${storyId}/views`, {
+    params: { cursor, limit }
+  });

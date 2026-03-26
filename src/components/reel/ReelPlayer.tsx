@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Reel } from "@/apis/reel.api"
 import { likeReelService } from "@/services/reel.service"
 import { ReelCommentSection } from "./ReelCommentSection"
+import { ReelSkeleton } from "@/components/skeleton"
 
 // Hàm format số lượng 
 const formatCount = (count: number) => {
@@ -32,6 +33,7 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
     const [showFullCaption, setShowFullCaption] = useState(false)
     const [showPlayIcon, setShowPlayIcon] = useState(false)
     const [showComments, setShowComments] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
     const playIconTimeout = useRef<NodeJS.Timeout | null>(null)
 
     // Đồng bộ state khi nhận được Reel mới (đổi sang video khác) 
@@ -135,7 +137,18 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
                         preload={isActive || isAdjacent ? "auto" : "metadata"}
                         poster={reel.thumbnail_url}
                         onClick={togglePlay}
+                        onLoadStart={() => setIsLoading(true)}
+                        onLoadedData={() => setIsLoading(false)}
+                        onWaiting={() => setIsLoading(true)}
+                        onPlaying={() => setIsLoading(false)}
                     />
+
+                    {/* ─── Skeleton ─── */}
+                    {isLoading && (
+                        <div className="absolute inset-0 z-20">
+                            <ReelSkeleton />
+                        </div>
+                    )}
 
                     {/* ─── Play/Pause Icon trung tâm ─── */}
                     {showPlayIcon && (
@@ -173,7 +186,7 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
                                     </AvatarFallback>
                                 </Avatar>
                             </Link>
-                            <Link href={`/users/${reel.user?.id}`} className="text-white font-bold text-[14px] hover:underline drop-shadow-md">
+                            <Link href={`/users/${reel.user?.id}`} className="text-white font-bold text-[14px] hover:text-white/80 transition-colors drop-shadow-md">
                                 {reel.user?.name || "Unknown"}
                             </Link>
                             {reel.user_id !== reel.user?.id && (

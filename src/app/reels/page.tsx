@@ -8,12 +8,10 @@ import { useReelContext } from "@/contexts/ReelContext"
 import { ReelViewer } from "@/components/reel/ReelViewer"
 import { Loader2 } from "lucide-react"
 
+import { ReelSkeleton } from "@/components/skeleton"
+
 /**
  * Trang Reels — linh hoạt theo query params:
- *
- * /reels              → Reels của chính mình
- * /reels?userId=xxx   → Reels của user xxx
- * /reels?startIndex=2 → Bắt đầu từ reel thứ 3
  */
 
 function ReelsContent() {
@@ -87,11 +85,7 @@ function ReelsContent() {
 
     // Loading ban đầu
     if (!initialLoaded) {
-        return (
-            <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
-            </div>
-        )
+        return <ReelSkeleton />
     }
 
     return (
@@ -107,11 +101,7 @@ function ReelsContent() {
 
 export default function ReelsPage() {
     return (
-        <Suspense fallback={
-            <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-brand-primary animate-spin" />
-            </div>
-        }>
+        <Suspense fallback={<ReelSkeleton />}>
             <ReelsContent />
         </Suspense>
     )

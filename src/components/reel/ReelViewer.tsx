@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, ChevronUp, ChevronDown } from "lucide-react"
 import { Reel } from "@/apis/reel.api"
 import { ReelPlayer } from "./ReelPlayer"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 interface ReelViewerProps {
     /** Danh sách reels hiện tại */
@@ -28,6 +29,7 @@ export function ReelViewer({
 }: ReelViewerProps) {
     const [activeIndex, setActiveIndex] = useState(startIndex)
     const [isGlobalMuted, setIsGlobalMuted] = useState(true)
+    const [isReady, setIsReady] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
     const reelRefs = useRef<(HTMLDivElement | null)[]>([])
 
@@ -36,25 +38,50 @@ export function ReelViewer({
         setIsGlobalMuted(prev => !prev)
     }, [])
 
-    // Lần đầu load: Check nếu có reel_id trên URL thì cuộn tới nó
+    // Lần đầu load: Cuộn tới reel được chọn (theo ID hoặc Index)
     useEffect(() => {
         if (reels.length > 0 && typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search)
             const reelId = params.get("reel_id")
+            let targetIndex = -1
+
             if (reelId) {
-                const foundIndex = reels.findIndex(r => r.id === reelId)
-                if (foundIndex !== -1) {
-                    setTimeout(() => {
-                        reelRefs.current[foundIndex]?.scrollIntoView({ behavior: 'auto' })
-                    }, 50)
+                targetIndex = reels.findIndex(r => r.id === reelId)
+            } else if (startIndex > 0 && startIndex < reels.length) {
+                targetIndex = startIndex
+            }
+
+            // Nếu tìm thấy reel mục tiêu, cuộn tới nó
+            if (targetIndex !== -1) {
+                // Nếu là reel đầu tiên, không cần cuộn dài và không cần ẩn
+                if (targetIndex === 0) {
+                    setIsReady(true)
                 }
-            } else {
+
+                setTimeout(() => {
+                    if (reelRefs.current[targetIndex]) {
+                        reelRefs.current[targetIndex]?.scrollIntoView({ behavior: 'auto' })
+                        setActiveIndex(targetIndex)
+                        // Một chút delay cho việc scroll hoàn tất trước khi hiện
+                        setTimeout(() => setIsReady(true), 150)
+                    }
+                }, 100)
+
+                // Cập nhật URL nếu thiếu reel_id
+                if (!reelId) {
+                    const url = new URL(window.location.href)
+                    url.searchParams.set("reel_id", reels[targetIndex].id)
+                    window.history.replaceState({}, "", url.toString())
+                }
+            } else if (!reelId && reels[0]) {
+                // Mặc định là reel đầu tiên
                 const url = new URL(window.location.href)
                 url.searchParams.set("reel_id", reels[0].id)
                 window.history.replaceState({}, "", url.toString())
+                setIsReady(true)
             }
         }
-    }, [reels])
+    }, [reels, startIndex])
 
     // Intersection Observer để phát hiện reel nào đang xem
     useEffect(() => {
@@ -125,7 +152,10 @@ export function ReelViewer({
     return (
         <div
             ref={containerRef}
-            className="fixed inset-0 bg-black z-50 overflow-y-scroll snap-y snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            className={cn(
+                "fixed inset-0 bg-black z-50 overflow-y-scroll snap-y snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-opacity duration-300",
+                isReady ? "opacity-100 scale-100" : "opacity-0 scale-105"
+            )}
         >
             {/* Nút quay lại */}
             <button

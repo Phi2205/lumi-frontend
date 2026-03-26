@@ -480,8 +480,8 @@ export function ProfileContent({
                                                         userId: isOwnProfile ? undefined : userProfile?.id,
                                                     })
                                                     router.push(isOwnProfile
-                                                        ? `/reels?startIndex=${index}`
-                                                        : `/reels?userId=${userProfile?.id}&startIndex=${index}`
+                                                        ? `/reels?startIndex=${index}&reel_id=${reel.id}`
+                                                        : `/reels?userId=${userProfile?.id}&startIndex=${index}&reel_id=${reel.id}`
                                                     )
                                                 }}
                                             >
