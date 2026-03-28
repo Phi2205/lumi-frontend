@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { useRouter } from "next/navigation"
-import { Plus, X, Upload, Image as ImageIcon, Video } from "lucide-react"
+import { Plus, X, Upload, Image as ImageIcon, Video, ChevronRight, ChevronLeft } from "lucide-react"
+import { GlassButton } from "@/lib/components/glass-button"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { createStory, getStoryFriends, getStories } from "@/services/story.service"
@@ -11,19 +13,9 @@ import type { StoryFriend, Story as StoryApi } from "@/apis/story.api"
 import { playHlsPreview } from "@/lib/hls"
 import { SkeletonStories } from "@/components/skeleton"
 import { ModalStory } from "@/components/ModalStory"
-
-interface StoryItem {
-  id: string
-  username: string
-  name: string
-  avatar: string
-  image: string
-  timestamp: string
-  hasViewed: boolean
-  storyCount: number
-  latest_story_media_url?: string
-  latest_story_media_type?: string
-}
+import type { User } from "@/types/user.type"
+import { useStoryContext } from "@/contexts/StoryContext"
+import { StoryAvatar } from "@/components/ui/avatar"
 
 const cdnUrl = (publicId: string, mediaType: string) => {
   console.log(publicId, mediaType);
@@ -52,7 +44,8 @@ if (typeof window !== 'undefined') {
 
 export function Stories() {
   const router = useRouter()
-  const [stories, setStories] = useState<StoryItem[]>([])
+  const storyCtx = useStoryContext()
+  const [stories, setStories] = useState<StoryFriend[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedStory, setSelectedStory] = useState<string | null>(null)
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
@@ -67,37 +60,93 @@ export function Stories() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
   const previewRef = useRef<{ stop: () => void } | null>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const cacheUserStories = useRef<Record<string, StoryApi[]>>({})
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+
+  // Clean up object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (preview && preview.startsWith('blob:')) {
+        URL.revokeObjectURL(preview)
+      }
+    }
+  }, [preview])
 
   // Fetch stories from API
-  const fetchStories = async () => {
+  const fetchStories = async (p: number = 1, append: boolean = false) => {
     try {
-      setIsLoading(true)
-      const response = await getStoryFriends(1, 20)
+      if (append) setIsLoadingMore(true)
+      else setIsLoading(true)
+
+      const response = await getStoryFriends(p, 20)
       const storyFriends: StoryFriend[] = response.data.items || []
-      console.log(storyFriends)
-      // Map StoryFriend to StoryItem format
-      const mappedStories: StoryItem[] = storyFriends.map((friend) => ({
-        id: friend.id,
-        username: friend.username,
-        name: friend.name,
-        avatar: friend.avatar_url || "/avatar-default.jpg",
-        image: friend.avatar_url || "/placeholder.svg", // Using avatar as placeholder for story image
-        timestamp: formatTime(friend.lastest_story_time),
-        hasViewed: false, // TODO: Implement viewed status from API if available
-        storyCount: friend.story_count,
-        latest_story_media_url: friend.latest_story_media_url || '',
-        latest_story_media_type: friend.latest_story_media_type || 'video',
-      }))
-      console.log(mappedStories)
-      setStories(mappedStories)
+      const pagination = response.data.pagination
+
+      if (append) {
+        setStories(prev => [...prev, ...storyFriends])
+      } else {
+        setStories(storyFriends)
+      }
+
+      setHasMore(p < pagination.totalPages)
+      setPage(p)
     } catch (error) {
       console.error("Fetch stories failed:", error)
-      setStories([])
+      if (!append) setStories([])
     } finally {
       setIsLoading(false)
+      setIsLoadingMore(false)
     }
   }
+
+  const handleLoadMore = () => {
+    if (hasMore && !isLoadingMore) {
+      fetchStories(page + 1, true)
+    }
+  }
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current
+      const scrollAmount = 400
+
+      // If moving right and nearing the end of current list, fetch more if available
+      if (direction === 'right' && hasMore && !isLoadingMore) {
+        // If we're within 150px of the end
+        if (scrollLeft + clientWidth >= scrollWidth - 150) {
+          handleLoadMore()
+        }
+      }
+
+      scrollContainerRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      })
+
+      // The scroll listener will update the arrows
+    }
+  }
+
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current
+      setCanScrollLeft(scrollLeft > 5)
+      // Allow scroll right if there is content to the right OR if we can load more
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5 || hasMore)
+    }
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkScroll()
+    }, 500) // Small delay to let initial list render
+    return () => clearTimeout(timer)
+  }, [stories, hasMore])
 
   useEffect(() => {
     fetchStories()
@@ -114,15 +163,15 @@ export function Stories() {
         setCurrentStoryIndex(0)
         return
       }
-      
+
       try {
         setIsLoadingUserStories(true)
         const response = await getStories(selectedUserId)
         const storiesData = response.data.stories || []
-        
+
         // Save to cache
         cacheUserStories.current[selectedUserId] = storiesData
-        
+
         setUserStories(storiesData)
         setCurrentStoryIndex(0)
       } catch (error) {
@@ -173,22 +222,9 @@ export function Stories() {
       }
       reader.readAsDataURL(file)
     } else {
-      const video = document.createElement('video')
-      video.preload = 'metadata'
-      video.onloadedmetadata = () => {
-        video.currentTime = 0.1
-      }
-      video.onloadeddata = () => {
-        const canvas = document.createElement('canvas')
-        canvas.width = video.videoWidth
-        canvas.height = video.videoHeight
-        const ctx = canvas.getContext('2d')
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-          setPreview(canvas.toDataURL())
-        }
-      }
-      video.src = URL.createObjectURL(file)
+      // Use Object URL for video to allow playing the actual video file
+      const url = URL.createObjectURL(file)
+      setPreview(url)
     }
   }
 
@@ -209,8 +245,8 @@ export function Stories() {
     } catch (error: any) {
       console.error("Upload story error:", error)
       setUploadError(
-        error?.response?.data?.message || 
-        error?.message || 
+        error?.response?.data?.message ||
+        error?.message ||
         "Failed to upload story. Please try again."
       )
     } finally {
@@ -251,30 +287,33 @@ export function Stories() {
 
   const onHover = async (userId: string) => {
     try {
-      let storiesData: StoryApi[] = []
-      
-      // Check cache first
-      if (cacheUserStories.current[userId]) {
-        storiesData = cacheUserStories.current[userId]
-      } else {
-        // Fetch if not in cache
-        const response = await getStories(userId)
-        storiesData = response.data.stories || []
-        // Save to cache
-        cacheUserStories.current[userId] = storiesData
-      }
-      
-      if (storiesData.length > 0) {
-        const firstStory = storiesData[0]
-        if (firstStory.media_type === 'video' && firstStory.streaming_url) {
-          const publicId = extractPublicId(firstStory.streaming_url)
-          if (publicId && previewVideoRef.current) {
-            previewRef.current = playHlsPreview(previewVideoRef.current, publicId)
-          }
+      // Find the story in our already-fetched state
+      const storyFriend = stories.find(s => s.user.id === userId)
+      if (!storyFriend || !storyFriend.stories || storyFriend.stories.length === 0) return
+
+      const storiesData = storyFriend.stories
+      const firstStory = storiesData[0]
+
+      if (firstStory.media_type === 'video' && firstStory.streaming_url) {
+        // 1. Play the tiny hidden preview if possible
+        const publicId = extractPublicId(firstStory.streaming_url)
+        if (publicId && previewVideoRef.current) {
+          previewRef.current = playHlsPreview(previewVideoRef.current, publicId)
+        }
+
+        // 2. Prefetch the HLS stream for the actual viewer
+        // This populates the browser cache so it's ready when navigating
+        if (Hls && Hls.isSupported()) {
+          const hls = new Hls({ enableWorker: true })
+          hls.loadSource(firstStory.streaming_url)
+          // Just loading the source triggers manifest and segment prefetching
+          // We don't need to attach it to an element
+          // We can destroy it after some time or keep it briefly
+          setTimeout(() => hls.destroy(), 10000)
         }
       }
     } catch (error) {
-      console.error("Failed to fetch story for preview:", error)
+      console.error("Failed to prepare story preview:", error)
     }
   }
 
@@ -282,15 +321,50 @@ export function Stories() {
     previewRef.current?.stop()
     previewRef.current = null
   }
-  
+
   return (
     <>
       {/* Stories Container */}
-      <div className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:bg-white/8 mb-6 p-4">
-        <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="relative group/stories backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl transition-all duration-300 hover:bg-white/8 mb-6 p-4 overflow-hidden">
+        {/* Navigation Buttons - Desktop Only */}
+        {canScrollLeft && (
+          <button
+            className="hidden md:flex absolute left-2 top-11 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/20 items-center justify-center opacity-0 group-hover/stories:opacity-100 transition-all shadow-lg active:scale-95 cursor-pointer"
+            onClick={() => handleScroll('left')}
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+        )}
+        {canScrollRight && (
+          <button
+            className="hidden md:flex absolute right-2 top-11 z-20 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/20 items-center justify-center opacity-0 group-hover/stories:opacity-100 transition-all shadow-lg active:scale-95 cursor-pointer"
+            onClick={() => handleScroll('right')}
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+        )}
+
+        <div
+          ref={scrollContainerRef}
+          className="flex gap-3 overflow-x-auto pb-2 scroll-smooth"
+          onScroll={checkScroll}
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          <style dangerouslySetInnerHTML={{
+            __html: `
+            @media (min-width: 768px) {
+              .flex::-webkit-scrollbar {
+                display: none;
+              }
+            }
+          `}} />
+
           {/* Add Story Card */}
           <div className="flex-shrink-0">
-            <div 
+            <div
               className="relative h-24 w-20 rounded-lg overflow-hidden border-2 border-white/30 flex items-center justify-center cursor-pointer hover:border-white/50 transition-all"
               style={{
                 background: 'linear-gradient(to bottom right, color-mix(in srgb, var(--brand-primary) 30%, transparent), color-mix(in srgb, var(--brand-primary) 30%, transparent))'
@@ -315,57 +389,81 @@ export function Stories() {
           {isLoading ? (
             <SkeletonStories count={5} />
           ) : stories.length > 0 ? (
-            stories.map((story) => (
-              <div
-                key={story.id}
-                className="flex-shrink-0 cursor-pointer group"
-                onMouseEnter={() => onHover(story.id)}
-                onMouseLeave={onLeave}
-                onClick={() => {
-                  router.push(`/stories/${story.username}`)
-                }}
-              >
+            stories.map((story) => {
+              const latestStory = story.stories && story.stories.length > 0 ? story.stories[0] : null
+              return (
                 <div
-                  className={`relative h-24 w-20 rounded-lg overflow-hidden ring-2 transition-all ${!story.hasViewed ? "" : "ring-white/30"}`}
-                  style={!story.hasViewed ? { 
-                    '--tw-ring-color': 'var(--brand-primary)',
-                    ringColor: 'var(--brand-primary)'
-                  } as React.CSSProperties & { ringColor?: string } : {}}
+                  key={story.user.id}
+                  className="flex-shrink-0 cursor-pointer group"
+                  onMouseEnter={() => onHover(story.user.id)}
+                  onMouseLeave={onLeave}
+                  onClick={() => {
+                    if (storyCtx) {
+                      storyCtx.setStoryData({ friends: stories })
+                    }
+                    router.push(`/stories/${story.user.username}`)
+                  }}
                 >
-                  <img
-                    src={story.latest_story_media_url 
-                      ? cdnUrl(story.latest_story_media_url || '', story.latest_story_media_type || 'video')
-                      : story.image || "/placeholder.svg"}
-                    alt={story.username}
-                    className="h-full w-full object-cover group-hover:scale-105 transition-transform"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                </div>
-                <div className="mt-2 flex items-center justify-center gap-1">
-                  <Avatar 
-                    className="h-6 w-6 ring-2 ring-offset-1"
-                    style={{ 
-                      '--tw-ring-color': 'color-mix(in srgb, var(--brand-primary) 50%, transparent)',
-                      ringColor: 'color-mix(in srgb, var(--brand-primary) 50%, transparent)'
-                    } as React.CSSProperties & { ringColor?: string }}
+                  <div
+                    className={`relative h-24 w-20 rounded-lg overflow-hidden ring-2 transition-all ${!story.has_unseen ? "ring-white/30" : ""}`}
+                    style={story.has_unseen ? {
+                      '--tw-ring-color': 'var(--brand-primary)',
+                      ringColor: 'var(--brand-primary)'
+                    } as React.CSSProperties & { ringColor?: string } : {}}
                   >
-                    <AvatarImage src={story.avatar || "/avatar-default.jpg"} alt={story.username} />
-                    <AvatarFallback>{story.username[0]}</AvatarFallback>
-                  </Avatar>
+                    <img
+                      src={latestStory
+                        ? cdnUrl(latestStory.media_url || '', latestStory.media_type || 'video')
+                        : story.user.avatar_url || "/avatar-default.jpg"}
+                      alt={story.user.username}
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  </div>
+                  <div className="mt-2 flex items-center justify-center gap-1">
+                    <StoryAvatar
+                      src={story.user.avatar_url || "/avatar-default.jpg"}
+                      alt={story.user.username}
+                      className="h-6 w-6"
+                      hasStory={story.stories && story.stories.length > 0}
+                      isSeen={!story.has_unseen}
+                      username={story.user.username}
+                    />
+                  </div>
+                  <p className="text-xs text-center text-white font-medium mt-1 truncate">{story.user.name}</p>
                 </div>
-                <p className="text-xs text-center text-white font-medium mt-1 truncate">{story.name}</p>
-              </div>
-            ))
+              )
+            })
           ) : (
             <div className="flex-shrink-0">
               <p className="text-xs text-center text-white/50 font-medium">No stories</p>
+            </div>
+          )}
+
+          {/* Load More Button - Mobile Only */}
+          {hasMore && stories.length > 0 && !isLoading && (
+            <div className="flex-shrink-0 md:hidden">
+              <div
+                className="relative h-24 w-20 rounded-lg overflow-hidden border-2 border-white/20 flex items-center justify-center cursor-pointer hover:border-white/40 transition-all bg-white/5"
+                onClick={handleLoadMore}
+              >
+                {isLoadingMore ? (
+                  <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <ChevronRight className="h-6 w-6 text-white/80" />
+                    <span className="text-[10px] text-white/60 font-semibold mt-1">More</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-center text-white/50 font-medium mt-2">See More</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Hidden video element for preview */}
-                    <video
+      <video
         ref={previewVideoRef}
         className="hidden"
         style={{ display: 'none' }}
@@ -374,32 +472,41 @@ export function Stories() {
       {/* Story Modal */}
       <ModalStory
         isOpen={!!selectedStory && !!selectedUserId}
-        storyFriend={selectedStory ? stories.find((s) => s.id === selectedStory) || null : null}
+        storyFriend={selectedStory ? (() => {
+          const s = stories.find((s) => s.user.id === selectedStory);
+          if (!s) return null;
+          return {
+            id: s.user.id,
+            username: s.user.username,
+            name: s.user.name,
+            avatar: s.user.avatar_url || "/avatar-default.jpg"
+          };
+        })() : null}
         userStories={userStories}
         currentStoryIndex={currentStoryIndex}
         isLoadingUserStories={isLoadingUserStories}
         onClose={() => {
-                        setSelectedStory(null)
-                        setSelectedUserId(null)
-                        setUserStories([])
-                        setCurrentStoryIndex(0)
+          setSelectedStory(null)
+          setSelectedUserId(null)
+          setUserStories([])
+          setCurrentStoryIndex(0)
         }}
         onPrevious={() => {
-                          if (currentStoryIndex > 0) {
-                            setCurrentStoryIndex(currentStoryIndex - 1)
-                          }
-                        }}
+          if (currentStoryIndex > 0) {
+            setCurrentStoryIndex(currentStoryIndex - 1)
+          }
+        }}
         onNext={() => {
-                          if (currentStoryIndex < userStories.length - 1) {
-                            setCurrentStoryIndex(currentStoryIndex + 1)
-                          }
-                        }}
+          if (currentStoryIndex < userStories.length - 1) {
+            setCurrentStoryIndex(currentStoryIndex + 1)
+          }
+        }}
       />
 
       {/* Create Story Modal */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="relative w-full max-w-md bg-black rounded-2xl overflow-hidden shadow-2xl">
+      {isCreateModalOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md bg-black/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-white/10">
               <h2 className="text-white text-lg font-semibold">Create Story</h2>
@@ -434,28 +541,20 @@ export function Stories() {
                       className="hidden"
                       id="story-file-input"
                     />
-                    <Button
+                    <GlassButton
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-white rounded-lg"
-                      style={{
-                        background: 'linear-gradient(to right, var(--brand-primary), var(--brand-primary-dark))'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(to right, var(--brand-primary-dark), var(--brand-primary))'
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'linear-gradient(to right, var(--brand-primary), var(--brand-primary-dark))'
-                      }}
+                      className="text-white min-w-[140px]"
+                      variant="primary"
                     >
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Upload className="h-4 w-4 mr-1" />
                       Select File
-                    </Button>
+                    </GlassButton>
                   </div>
                 </>
               ) : (
                 <>
                   {/* Preview */}
-                  <div className="mb-4 rounded-lg overflow-hidden bg-black">
+                  <div className="mb-4 rounded-lg overflow-hidden bg-black max-h-96 flex items-center justify-center">
                     {selectedFile.type.startsWith('image/') ? (
                       <img
                         src={preview || ""}
@@ -463,16 +562,14 @@ export function Stories() {
                         className="w-full max-h-96 object-contain"
                       />
                     ) : (
-                      <div className="relative">
-                        <img
-                          src={preview || ""}
-                          alt="Video preview"
-                          className="w-full max-h-96 object-contain"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Video className="h-16 w-16 text-white/80" />
-                        </div>
-                      </div>
+                      <video
+                        src={preview || ""}
+                        className="w-full max-h-96 object-contain"
+                        controls
+                        autoPlay
+                        muted
+                        loop
+                      />
                     )}
                   </div>
 
@@ -502,7 +599,7 @@ export function Stories() {
 
                   {/* Actions */}
                   <div className="flex gap-3">
-                    <Button
+                    <GlassButton
                       variant="ghost"
                       onClick={() => {
                         setSelectedFile(null)
@@ -513,36 +610,25 @@ export function Stories() {
                         }
                       }}
                       disabled={isUploading}
-                      className="flex-1 text-white/60 hover:text-white hover:bg-white/10 rounded-lg"
+                      className="flex-1 text-white/60 hover:text-white"
                     >
                       Change
-                    </Button>
-                    <Button
+                    </GlassButton>
+                    <GlassButton
                       onClick={handleUpload}
                       disabled={isUploading}
-                      className="flex-1 text-white rounded-lg disabled:opacity-50"
-                      style={{
-                        background: 'linear-gradient(to right, var(--brand-primary), var(--brand-primary-dark))'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isUploading) {
-                          e.currentTarget.style.background = 'linear-gradient(to right, var(--brand-primary-dark), var(--brand-primary))'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isUploading) {
-                          e.currentTarget.style.background = 'linear-gradient(to right, var(--brand-primary), var(--brand-primary-dark))'
-                        }
-                      }}
+                      className="flex-1 text-white"
+                      variant="primary"
                     >
                       {isUploading ? "Uploading..." : "Upload Story"}
-                    </Button>
+                    </GlassButton>
                   </div>
                 </>
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )

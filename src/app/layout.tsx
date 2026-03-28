@@ -8,6 +8,7 @@ import { MiniChatProvider } from "@/components/messages/MiniChatContext"
 import { UploadProvider } from "@/contexts/UploadContext"
 import { UploadStack } from "@/components/common/UploadStack"
 import { ReelProvider } from "@/contexts/ReelContext"
+import { StoryProvider } from "@/contexts/StoryContext"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -56,9 +57,11 @@ export default function RootLayout({
             <UploadProvider>
               <MiniChatProvider>
                 <ReelProvider>
-                  {children}
-                  {modal}
-                  <UploadStack />
+                  <StoryProvider>
+                    {children}
+                    {modal}
+                    <UploadStack />
+                  </StoryProvider>
                 </ReelProvider>
               </MiniChatProvider>
             </UploadProvider>

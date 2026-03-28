@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { formatTime } from "@/utils/format"
@@ -26,6 +27,8 @@ interface ModalStoryProps {
   onClose: () => void
   onPrevious: () => void
   onNext: () => void
+  hasPreviousFriend?: boolean
+  hasNextFriend?: boolean
 }
 
 const cdnUrlImage = (publicId: string) => {
@@ -43,7 +46,9 @@ export function ModalStory({
   isLoadingUserStories,
   onClose,
   onPrevious,
-  onNext
+  onNext,
+  hasPreviousFriend = false,
+  hasNextFriend = false
 }: ModalStoryProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -147,12 +152,12 @@ export function ModalStory({
 
   const currentStory = userStories[currentStoryIndex]
 
-  return (
+  return typeof document !== 'undefined' ? createPortal(
     <div
-      className="relative w-full h-full bg-black/80 flex items-center justify-center"
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100]"
       style={{
-        width: '100%',
-        height: '100%'
+        width: '100vw',
+        height: '100vh'
       }}
     >
       {/* Left clickable area - Previous story */}
@@ -180,13 +185,13 @@ export function ModalStory({
       )}
 
       {/* Navigation Buttons - Outside story container */}
-      {userStories.length > 1 && !isLoadingUserStories && currentStory && (
+      {!isLoadingUserStories && currentStory && (
         <>
           <GlassButton
             variant="ghost"
             className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 !rounded-full p-0 z-20 shadow-xl disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer group"
             onClick={onPrevious}
-            disabled={currentStoryIndex === 0}
+            disabled={currentStoryIndex === 0 && !hasPreviousFriend}
           >
             <ChevronLeft size={32} className="group-hover:-translate-x-0.5 transition-transform" />
           </GlassButton>
@@ -194,7 +199,7 @@ export function ModalStory({
             variant="ghost"
             className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 !rounded-full p-0 z-20 shadow-xl disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer group"
             onClick={onNext}
-            disabled={currentStoryIndex === userStories.length - 1}
+            disabled={currentStoryIndex === userStories.length - 1 && !hasNextFriend}
           >
             <ChevronRight size={32} className="group-hover:translate-x-0.5 transition-transform" />
           </GlassButton>
@@ -204,7 +209,7 @@ export function ModalStory({
       <div
         className="relative bg-black rounded-3xl overflow-hidden shadow-2xl z-20"
         style={{
-          height: '100%',
+          height: '90vh',
           aspectRatio: '9/16',
           maxHeight: '100%'
         }}
@@ -269,6 +274,7 @@ export function ModalStory({
           </div>
         )}
       </div>
-    </div >
-  )
+    </div >,
+    document.body
+  ) : null
 }

@@ -8,14 +8,11 @@ export interface CreateStoryPayload {
 }
 
 export interface StoryFriend {
-  id: string;
-  name: string;
-  username: string;
-  avatar_url: string;
-  story_count: number;
+  user: User;
+  has_unseen: boolean;
   lastest_story_time: string;
-  latest_story_media_url?: string;
-  latest_story_media_type?: string;
+  stories: Story[];
+  
 }
 
 export interface Story {
@@ -25,6 +22,7 @@ export interface Story {
   created_at: string;
   expires_at: string;
   streaming_url: string;
+  is_viewed: boolean;
 }
 
 export interface StoryFriendsResponse {
@@ -58,7 +56,7 @@ export const createStoryApi = (file: File) => {
 };
 
 export const getStoryFriendsApi = (page: number, limit: number) => {
-  return axiosInstance.get<ApiResponse<StoryFriendsResponse>>("/stories/feed", {
+  return axiosInstance.get<ApiResponse<StoryFriendsResponse>>("/stories/friend-feed", {
     params: {
       page,
       limit,

@@ -80,7 +80,7 @@ function StoryAvatar({
             className={cn(
               "absolute -inset-[3px] rounded-full transition-all duration-300",
               isSeen
-                ? "bg-neutral-600"
+                ? "bg-white/50"
                 : "bg-gradient-to-tr from-yellow-400 via-orange-500 to-purple-600"
             )}
           />
