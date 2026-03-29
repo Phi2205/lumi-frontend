@@ -1,71 +1,122 @@
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarImage, AvatarFallback, StoryAvatar } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { GlassButton } from "@/lib/components/glass-button"
+import { useState, useEffect, useCallback } from "react"
+import { getFriendRequests, acceptFriendRequest, rejectFriendRequest } from "@/services/friendRequest.service"
+import { getRecommendedUsers } from "@/services/recommend.service"
+import { SkeletonFriendRequests } from "@/components/skeleton"
+import { Check, X, UserPlus } from "lucide-react"
+import type { FriendRequestItem } from "@/apis/friendRequest.api"
+import type { RecommendedUser } from "@/apis/recommend.api"
+import { formatTime } from "@/utils/format"
+import { useRouter } from "next/navigation"
+import { User } from "@/types/user.type"
+import { usePresenceRealtime } from "@/socket/presence/usePresenceRealtime"
+import { useStoryRealtime } from "@/socket/story/useStoryRealtime"
+import { getOnlineUsers } from "@/socket/presence/presence.socket"
 
 export function RightSidebar() {
-  const onlineFriends = [
-    { id: 1, name: "Sarah Chen", avatar: "/placeholder.svg" },
-    { id: 2, name: "Mike Johnson", avatar: "/placeholder.svg" },
-    { id: 3, name: "Emma Davis", avatar: "/placeholder.svg" },
-    { id: 4, name: "Alex Rivera", avatar: "/placeholder.svg" },
-  ]
+  const router = useRouter()
+  const [onlineFriends, setOnlineFriends] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const suggestedUsers = [
-    { id: 1, name: "Julia Anderson", mutual: "12 mutual friends" },
-    { id: 2, name: "Tom Wilson", mutual: "8 mutual friends" },
-    { id: 3, name: "Lisa Park", mutual: "15 mutual friends" },
-  ]
+  const fetchOnlineFriends = useCallback((excludeIds: string[] = []) => {
+    getOnlineUsers({ limit: 20, exclude: excludeIds }, (users) => {
+      setOnlineFriends(prev => {
+        const currentIds = new Set(prev.map(u => u.id));
+        const newOnes = users.filter(u => !currentIds.has(u.id));
+        const combined = [...prev, ...newOnes];
+        return combined.slice(0, 20);
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchOnlineFriends();
+  }, [fetchOnlineFriends]);
+
+  usePresenceRealtime({
+    onStatusChanged: (data) => {
+      if (!data.is_online) {
+        setOnlineFriends(prev => {
+          const isCurrentlyDisplayed = prev.some(u => u.id === data.userId);
+          if (isCurrentlyDisplayed) {
+            const remaining = prev.filter(u => u.id !== data.userId);
+            fetchOnlineFriends(remaining.map(u => u.id));
+            return remaining;
+          }
+          return prev;
+        });
+      } else {
+        setOnlineFriends(prev => {
+          if (prev.length < 20 && !prev.some(u => u.id === data.userId)) {
+            fetchOnlineFriends(prev.map(u => u.id));
+          }
+          return prev;
+        });
+      }
+    }
+  });
+
+  useStoryRealtime({
+    onStoryStatusChanged: (data) => {
+      console.log(data)
+      setOnlineFriends(prev => prev.map(u => {
+        if (u.id === data.userId) {
+          return { ...u, has_story: data.hasStory };
+        }
+        return u;
+      }));
+    }
+  });
 
   return (
-    <aside className="hidden lg:flex flex-col fixed right-0 top-16 h-[calc(100vh-64px)] w-80 border-l border-border bg-card px-6 py-8 gap-6 overflow-y-auto">
-      {/* Online Friends */}
-      <Card className="border-border bg-secondary/30">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Online Friends</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {onlineFriends.map((friend) => (
-            <div key={friend.id} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={friend.avatar || "/placeholder.svg"} alt={friend.name} />
-                    <AvatarFallback>{friend.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <span className="absolute bottom-0 right-0 h-2 w-2 rounded-full bg-green-500 ring-2 ring-white dark:ring-card" />
-                </div>
-                <span className="text-sm font-medium text-foreground">{friend.name}</span>
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Suggested Users */}
-      <Card className="border-border bg-secondary/30">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Suggested Users</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {suggestedUsers.map((user) => (
-            <div key={user.id} className="space-y-2">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="/placeholder.svg" alt={user.name} />
-                  <AvatarFallback>{user.name[0]}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">{user.name}</p>
-                  <p className="text-xs text-muted-foreground">{user.mutual}</p>
+    <aside className="hidden lg:flex flex-col fixed right-0 top-16 h-[calc(100vh-64px)] w-80 border-l border-white/20 backdrop-blur-3xl bg-white/5 px-6 py-8 gap-6 overflow-y-auto scroll-glass">
+      {/* Online Friends Card */}
+      <div className="backdrop-blur-3xl bg-white/6 border border-white/20 rounded-2xl shadow-xl p-4">
+        <h3 className="text-sm font-semibold text-white mb-4 pb-3 border-b border-white/10 flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            Online Friends
+          </span>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 font-medium">
+            {onlineFriends.length}
+          </span>
+        </h3>
+        <div className="space-y-4">
+          {onlineFriends.length > 0 ? (
+            onlineFriends.map((friend) => (
+              <div
+                key={friend.id}
+                className="flex items-center justify-between group hover:bg-white/5 p-2 -mx-2 rounded-xl transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <StoryAvatar
+                    username={friend.username}
+                    src={friend.avatar_url || "/avatar-default.jpg"}
+                    alt={friend.name}
+                    hasStory={friend.has_story}
+                    isOnline={true}
+                    className="h-9 w-9 shrink-0"
+                  />
+                  <div className="flex flex-col min-w-0">
+                    <span
+                      className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors truncate cursor-pointer"
+                      onClick={() => router.push(`/users/${friend.username}`)}
+                    >
+                      {friend.name}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <Button size="sm" variant="outline" className="w-full text-xs bg-transparent">
-                Follow
-              </Button>
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6 opacity-40">
+              <p className="text-xs text-white text-center">No friends online</p>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+          )}
+        </div>
+      </div>
     </aside>
   )
 }

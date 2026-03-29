@@ -1,11 +1,23 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono, Dancing_Script } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
+import { AuthProviderWrapper } from "@/components/providers/AuthProviderWrapper"
+import { SocketProvider } from "@/contexts/SocketContext"
+import { MiniChatProvider } from "@/components/messages/MiniChatContext"
+import { UploadProvider } from "@/contexts/UploadContext"
+import { UploadStack } from "@/components/common/UploadStack"
+import { ReelProvider } from "@/contexts/ReelContext"
+import { StoryProvider } from "@/contexts/StoryContext"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
+const dancingScript = Dancing_Script({
+  subsets: ["latin"],
+  variable: "--font-dancing-script",
+  weight: ["400", "500", "600", "700"]
+})
 
 export const metadata: Metadata = {
   title: "SocialHub - Connect & Share",
@@ -32,13 +44,29 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  modal,
 }: Readonly<{
   children: React.ReactNode
+  modal: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans antialiased`}>
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className={`font-sans antialiased ${dancingScript.variable}`} suppressHydrationWarning>
+        <AuthProviderWrapper>
+          <SocketProvider>
+            <UploadProvider>
+              <MiniChatProvider>
+                <ReelProvider>
+                  <StoryProvider>
+                    {children}
+                    {modal}
+                    <UploadStack />
+                  </StoryProvider>
+                </ReelProvider>
+              </MiniChatProvider>
+            </UploadProvider>
+          </SocketProvider>
+        </AuthProviderWrapper>
         <Analytics />
       </body>
     </html>

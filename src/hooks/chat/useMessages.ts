@@ -1,0 +1,157 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { MessageUI } from "@/components/messages/ChatWindow";
+import { useAuth } from "@/contexts/AuthContext";
+import { getMessagesService } from "@/services/conversation.service";
+import { useChatRealtime } from "@/socket/chat/useChatRealtime";
+
+
+type MessageCache = {
+  messages: MessageUI[];
+  nextCursor?: string;
+  hasMore: boolean;
+  loaded: boolean;
+};
+
+// Helper function to map API message to MessageUI
+const mapMessageToUI = (m: any, currentUserId: string): MessageUI => {
+  const date = new Date(m.created_at);
+  const isToday = date.toDateString() === new Date().toDateString();
+  const time = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' });
+
+  return {
+    id: m.id,
+    sender: m.sender?.name || m.sender?.username || "Unknown",
+    senderAvatar: m.sender?.avatar_url || "/avatar-default.jpg",
+    content: m.content,
+    timestamp: isToday ? time : `${dateStr} ${time}`,
+    isOwn: m.sender?.id === currentUserId || m.sender_id === currentUserId,
+    attachments: m.attachments
+  };
+};
+
+export const useMessages = (conversationId?: string) => {
+  const { user } = useAuth();
+  const cacheRef = useRef<Record<string, MessageCache>>({});
+  const abortRef = useRef<AbortController | null>(null);
+
+  const [messages, setMessages] = useState<MessageUI[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  const loadMessages = useCallback(
+    async (cursor?: string) => {
+      if (!conversationId || !user) return;
+
+      // nếu chưa load lần đầu
+      const cache = cacheRef.current[conversationId];
+
+      if (!cursor && cache?.loaded) {
+        setMessages(cache.messages);
+        setHasMore(cache.hasMore);
+        return;
+      }
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      setLoading(true);
+
+      try {
+        const res = await getMessagesService(conversationId, cursor);
+
+        // if (!res.ok) throw new Error("Failed to load messages");
+        const result = res.data;
+        const incoming: MessageUI[] = (result.items || []).map((m: any) => mapMessageToUI(m, user.id));
+        setMessages(prev => {
+          // Tin nhắn mới nhất nằm đầu mảng
+          const merged = cursor ? [...prev, ...incoming] : incoming;
+
+          const unique = Array.from(
+            new Map(merged.map(m => [m.id, m])).values()
+          );
+
+          // update cache
+          cacheRef.current[conversationId] = {
+            messages: unique,
+            nextCursor: result.nextCursor,
+            hasMore: !!result.nextCursor,
+            loaded: true,
+          };
+
+          return unique;
+        });
+
+        setHasMore(!!result.nextCursor);
+      } catch (err: any) {
+        if (err.name !== "AbortError") {
+          console.error(err);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [conversationId, user]
+  );
+
+  // Load khi conversationId đổi
+  useEffect(() => {
+    if (!conversationId) return;
+
+    loadMessages();
+    return () => abortRef.current?.abort();
+  }, [conversationId, loadMessages]);
+
+
+
+  const loadMore = useCallback(() => {
+    if (!conversationId) return;
+
+    const cache = cacheRef.current[conversationId];
+    if (!cache?.hasMore || loading) return;
+
+    loadMessages(cache.nextCursor);
+  }, [conversationId, loadMessages, loading]);
+
+  const appendRealtimeMessage = useCallback(
+    (messageData: any) => {
+      if (!user) return;
+
+      const message = mapMessageToUI(messageData, user.id);
+      const msgConvId = messageData.conversationId || messageData.conversation_id;
+
+      if (!msgConvId) return;
+
+      // Cập nhật cache cho hội thoại tương ứng (nếu đã từng load)
+      if (cacheRef.current[msgConvId]) {
+        const cache = cacheRef.current[msgConvId];
+        if (!cache.messages.find(m => m.id === message.id)) {
+          cacheRef.current[msgConvId] = {
+            ...cache,
+            messages: [message, ...cache.messages],
+          };
+        }
+      }
+
+      // Nếu là hội thoại đang được chọn, cập nhật state UI
+      if (msgConvId === conversationId) {
+        setMessages(prev => {
+          const isExist = prev.find(m => m.id === message.id);
+          if (isExist) return prev;
+          return [message, ...prev];
+        });
+      }
+    },
+    [conversationId, user]
+  );
+
+  return {
+    messages,
+    loading,
+    hasMore,
+    loadMore,
+    appendRealtimeMessage,
+  };
+};
+
