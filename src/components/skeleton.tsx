@@ -505,63 +505,64 @@ export const SkeletonSettingsList = ({ count = 3, className = "" }: { count?: nu
 // Reel Page Skeleton Component
 export const ReelSkeleton = () => (
   <div
-    className="relative w-full h-full bg-black/80 flex items-center justify-center"
-    style={{
-      width: '100%',
-      height: '100%'
-    }}
+    className="relative w-full h-screen bg-[#0a0a0a] flex items-center justify-center overflow-hidden"
   >
-    <div
-      className="relative bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl"
-      style={{
-        height: '100%',
-        aspectRatio: '9/16',
-        maxHeight: '100%'
-      }}
-    >
-      {/* Background Pulse */}
-      <div className="absolute inset-0 bg-white/5 animate-pulse" />
+    {/* Blurred Background Simulation */}
+    <div className="hidden sm:block absolute inset-0 opacity-20 blur-3xl scale-110 bg-linear-to-br from-zinc-700 via-zinc-900 to-black pointer-events-none" />
 
-      {/* Top Progress Bar */}
-      <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/10">
-        <div className="h-full w-1/3 bg-white/30 animate-pulse" />
-      </div>
+    <div className="flex w-full h-full max-w-full justify-center relative z-10 sm:py-6">
+      <div
+        className="relative w-full h-full sm:max-w-[420px] md:max-w-[480px] lg:max-w-[600px] sm:rounded-[2rem] overflow-hidden bg-black flex items-center justify-center z-10 sm:ring-1 sm:ring-white/10 shadow-2xl flex-shrink-0"
+      >
+        {/* Simulated Grayish Background with slight pulse */}
+        <div className="absolute inset-0 bg-white/5 animate-pulse" />
 
-      {/* Info Bottom Left */}
-      <div className="absolute bottom-8 left-4 right-[72px] space-y-4 z-10">
-        <div className="flex items-center gap-3">
-          <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/20 ring-2 ring-white/10" />
-          <Skeleton height="h-4" width="w-32" className="bg-white/15 rounded" />
-          <Skeleton height="h-7" width="w-20" className="bg-white/10 rounded-lg" />
+        {/* Top Progress Bar */}
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/10 z-30">
+          <div className="h-full w-1/4 bg-white/30" />
         </div>
-        <div className="space-y-2">
-          <Skeleton height="h-3" width="w-full" className="bg-white/10 rounded" />
-          <Skeleton height="h-3" width="w-2/3" className="bg-white/5 rounded" />
-        </div>
-        <div className="pt-2">
-          <Skeleton height="h-8" width="w-40" rounded="rounded-full" className="bg-white/15 border border-white/10" />
-        </div>
-      </div>
 
-      {/* Actions Right */}
-      <div className="absolute right-3 bottom-10 flex flex-col items-center gap-6 z-10">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="flex flex-col items-center gap-2">
-            <Skeleton height="h-12" width="w-12" rounded="rounded-full" className="bg-white/15 backdrop-blur-md" />
-            <Skeleton height="h-2" width="w-6" className="bg-white/10 rounded" />
+        {/* Bottom Gradient overlay */}
+        <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-10" />
+
+        {/* Info Bottom Left */}
+        <div className="absolute bottom-6 left-4 right-20 z-20 space-y-4">
+          {/* User info */}
+          <div className="flex items-center gap-2.5">
+            <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/20 ring-2 ring-white/10" />
+            <Skeleton height="h-4" width="w-24" className="bg-white/10 rounded" />
+            <Skeleton height="h-7" width="w-16" rounded="rounded-lg" className="bg-white/5 border border-white/10" />
           </div>
-        ))}
-        <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/10" />
-        <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/25 border-2 border-white/20 animate-[spin_4s_linear_infinite]" />
-      </div>
 
-      {/* Volume button skeleton */}
-      <div className="absolute top-8 right-6">
-        <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/20" />
-      </div>
+          {/* Caption */}
+          <div className="space-y-2">
+            <Skeleton height="h-3.5" width="w-full" className="bg-white/10 rounded" />
+            <Skeleton height="h-3.5" width="w-3/4" className="bg-white/5 rounded" />
+          </div>
 
-      {/* Bottom Gradient overlay for skeleton feel */}
-      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+          {/* Music */}
+          <div className="pt-1">
+            <Skeleton height="h-7" width="w-32" rounded="rounded-full" className="bg-white/10" />
+          </div>
+        </div>
+
+        {/* Actions Right Buttons */}
+        <div className="absolute right-3 bottom-8 flex flex-col items-center gap-6 z-20">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex flex-col items-center gap-1.5">
+              <Skeleton height="h-12" width="w-12" rounded="rounded-full" className="bg-white/15 backdrop-blur-sm" />
+              <Skeleton height="h-2" width="w-5" className="bg-white/5 rounded" />
+            </div>
+          ))}
+          <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/10" />
+          <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/20 border-2 border-white/10" />
+        </div>
+
+        {/* Volume button skeleton */}
+        <div className="absolute top-6 right-4 z-20">
+          <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/20 backdrop-blur-sm" />
+        </div>
+      </div>
     </div>
   </div>
 );

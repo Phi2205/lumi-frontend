@@ -1,4 +1,4 @@
-import { Home, BookOpen, Zap, MessageSquare, User, Settings, Search, Users } from "lucide-react"
+import { Home, BookOpen, Zap, MessageSquare, User, Settings, Search, Users, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchPanel } from "@/components/SearchPanel"
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
@@ -16,6 +16,7 @@ const menuItems = [
   { id: "home", label: "Home", icon: Home },
   { id: "search", label: "Search", icon: Search },
   { id: "blog", label: "Blog", icon: BookOpen },
+  { id: "reels", label: "Reels", icon: Play },
   { id: "stories", label: "Stories", icon: Zap },
   { id: "friends", label: "Friends", icon: Users },
   { id: "messages", label: "Messages", icon: MessageSquare },
@@ -25,7 +26,7 @@ const menuItems = [
 
 const mobileItems = [
   { id: "home", label: "Home", icon: Home },
-  { id: "search", label: "Search", icon: Search },
+  { id: "reels", label: "Reels", icon: Play },
   { id: "friends", label: "Friends", icon: Users },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "profile", label: "Profile", icon: User },

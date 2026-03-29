@@ -477,12 +477,9 @@ export function ProfileContent({
                                                         reels,
                                                         cursor: reelsCursor,
                                                         hasMore: reelsHasMore,
-                                                        userId: isOwnProfile ? undefined : userProfile?.id,
+                                                        userId: userProfile?.id,
                                                     })
-                                                    router.push(isOwnProfile
-                                                        ? `/reels?startIndex=${index}&reel_id=${reel.id}`
-                                                        : `/reels?userId=${userProfile?.id}&startIndex=${index}&reel_id=${reel.id}`
-                                                    )
+                                                    router.push(`/reels?userId=${userProfile?.id}&startIndex=${index}&reel_id=${reel.id}`)
                                                 }}
                                             >
                                                 <Image src={reel.thumbnail_url} alt={reel.caption || "Reel"} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
