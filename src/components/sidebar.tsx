@@ -10,6 +10,8 @@ interface SidebarProps {
   activeTab?: string
   onTabChange?: (tab: string) => void
   isMobileHidden?: boolean
+  isSearchOpen?: boolean
+  onSearchToggle?: () => void
 }
 
 const menuItems = [
@@ -32,11 +34,10 @@ const mobileItems = [
   { id: "profile", label: "Profile", icon: User },
 ]
 
-export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: SidebarProps) {
+export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden, isSearchOpen, onSearchToggle }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { user } = useAuth()
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({})
   const mobileNavRef = useRef<HTMLDivElement>(null)
   const [animatingTab, setAnimatingTab] = useState<string | null>(null)
@@ -80,7 +81,7 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: 
   }, [currentActiveId])
 
   const handleSearchToggle = () => {
-    setIsSearchOpen(!isSearchOpen)
+    onSearchToggle?.()
   }
 
   const getItemHref = (id: string) => {
@@ -147,8 +148,7 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: 
         </nav>
       </aside>
 
-      {/* Search Panel */}
-      <SearchPanel isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      {/* Desktop Sidebar Toggle Logic (SearchPanel is now in HomeLayout) */}
 
       {/* Mobile Bottom Navigation */}
       <nav className={`fixed bottom-0 left-0 right-0 md:hidden h-16 border-t border-white/20 bg-black/20 backdrop-blur-md px-4 z-50 transform translate-z-0 ${isMobileHidden ? 'hidden' : 'flex'

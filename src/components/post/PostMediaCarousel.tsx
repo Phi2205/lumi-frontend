@@ -40,7 +40,7 @@ const swipePower = (offset: number, velocity: number) => {
 
 export function PostMediaCarousel({
     media,
-    aspectRatio = "aspect-[4/5] sm:aspect-square md:aspect-[4/3] rounded-2xl border border-white/10 shadow-2xl",
+    aspectRatio = "aspect-square rounded-2xl border border-white/10 shadow-2xl",
     className
 }: PostMediaCarouselProps) {
     const [[page, direction], setPage] = useState([0, 0]);
@@ -105,7 +105,7 @@ export function PostMediaCarousel({
                         {currentItem.media_type === "video" ? (
                             <video
                                 src={currentItem.media_url}
-                                className="w-full h-full object-contain pointer-events-auto"
+                                className="w-full h-full object-cover pointer-events-auto"
                                 controls
                                 playsInline
                             />
@@ -114,7 +114,7 @@ export function PostMediaCarousel({
                                 <ImagePreview
                                     src={currentItem.media_url}
                                     alt="Post media"
-                                    className="max-w-full max-h-full object-contain rounded-none pointer-events-none"
+                                    className="w-full h-full object-cover rounded-none pointer-events-none"
                                     allImages={media.filter(m => m.media_type !== "video").map(i => i.media_url)}
                                 />
                                 <div className="absolute inset-0 bg-black/5 pointer-events-none" />

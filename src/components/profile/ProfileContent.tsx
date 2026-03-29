@@ -414,12 +414,19 @@ export function ProfileContent({
                                                 }}
                                             >
                                                 {post.post_media?.[0]?.media_url ? (
-                                                    <Image
-                                                        src={post.post_media[0].media_url}
-                                                        alt="Post"
-                                                        fill
-                                                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                                                    />
+                                                    <>
+                                                        <Image
+                                                            src={post.post_media[0].media_type === 'video' ? post.post_media[0].media_url.replace('.mp4', '.jpg') : post.post_media[0].media_url}
+                                                            alt="Post"
+                                                            fill
+                                                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        />
+                                                        {/* {post.post_media[0].media_type === 'video' && (
+                                                            <div className="absolute top-2 right-2 z-10">
+                                                                <Play className="w-4 h-4 text-white drop-shadow-lg" />
+                                                            </div>
+                                                        )} */}
+                                                    </>
                                                 ) : (
                                                     <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/20 p-4 text-center">
                                                         <span className="text-xs md:text-sm italic line-clamp-4">{post.content.slice(0, 80)}...</span>
