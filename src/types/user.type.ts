@@ -15,4 +15,16 @@ export interface User {
   created_at?: string;
   birthday?: string;
   user_location?: Location;
+  post_count?: number;
+  has_story?: boolean;
 }
+
+export interface UserHoverCard {
+  id: string;
+  username: string;
+  name: string;
+  avatar_url?: string;
+  address?: string;
+  friend_count?: number;
+}
+

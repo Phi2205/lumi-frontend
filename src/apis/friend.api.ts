@@ -19,3 +19,6 @@ export const getFriendsUserIdApi = (userId: string, limit: string, page: string)
 
 export const getCountFriendsApi = (userId: string) =>
     axiosInstance.get<ApiResponse<CountFriendsResponse>>(`/friends/count-with-mutual/${userId}`);
+
+export const deleteFriendApi = (userId: string) =>
+    axiosInstance.delete<ApiResponse<void>>(`/friends/${userId}`);

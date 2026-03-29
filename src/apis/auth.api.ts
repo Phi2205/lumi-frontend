@@ -14,7 +14,7 @@ export interface RegisterPayload {
   name: string;
 }
 
-export interface VerifyPayload{
+export interface VerifyPayload {
   email: string;
   otp: string;
 }
@@ -24,19 +24,27 @@ export interface UserResponse extends User {
   bio: string;
 }
 
-export const loginApi = (data: LoginPayload) => 
-  axiosInstance.post('/auth/login', data);
+export const loginApi = async (data: LoginPayload) => {
+  if (typeof window !== 'undefined') {
+    // Clear old auth data
+    localStorage.removeItem('user');
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  }
+  return axiosInstance.post('/auth/login', data);
+};
 
-export const logoutApi = () => 
+export const logoutApi = () =>
   axiosInstance.post('/auth/logout');
 
-export const registerApi = (data: RegisterPayload) => 
+export const registerApi = (data: RegisterPayload) =>
   axiosInstance.post('/auth/register', data);
 
-export const verifyOtpApi = (data: VerifyPayload) => 
+export const verifyOtpApi = (data: VerifyPayload) =>
   axiosInstance.post('/auth/verify-otp', data);
 
-export const resendOtpApi = (data: { email: string }) => 
+export const resendOtpApi = (data: { email: string }) =>
   axiosInstance.post('/auth/resend-otp', data);
 
 // Axios instance riêng cho refresh token (không dùng interceptor chung)
@@ -50,8 +58,8 @@ const axiosRefresh = axios.create({
   },
 });
 
-export const refreshTokenApi = () => 
+export const refreshTokenApi = () =>
   axiosRefresh.post('/auth/refresh');
 
-export const getMeApi = () => 
+export const getMeApi = () =>
   axiosInstance.get('/auth/me');

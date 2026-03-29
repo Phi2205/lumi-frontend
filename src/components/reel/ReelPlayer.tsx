@@ -5,8 +5,9 @@ import Link from "next/link"
 import { Play, Pause, Volume2, VolumeX, Heart, MessageCircle, Send, Music2, MoreHorizontal, ChevronDown } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Reel } from "@/apis/reel.api"
-import { likeReelService } from "@/services/reel.service"
+import { likeReelService, viewReelService } from "@/services/reel.service"
 import { ReelCommentSection } from "./ReelCommentSection"
+import { ReelSkeleton } from "@/components/skeleton"
 
 // Hàm format số lượng 
 const formatCount = (count: number) => {
@@ -32,6 +33,7 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
     const [showFullCaption, setShowFullCaption] = useState(false)
     const [showPlayIcon, setShowPlayIcon] = useState(false)
     const [showComments, setShowComments] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
     const playIconTimeout = useRef<NodeJS.Timeout | null>(null)
 
     // Đồng bộ state khi nhận được Reel mới (đổi sang video khác) 
@@ -56,6 +58,15 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
             setIsPlaying(false)
         }
     }, [isActive])
+
+    // Tracking xem Reel (View) - Tính là view ngay khi vừa hiện
+    useEffect(() => {
+        if (isActive) {
+            viewReelService(reel.id).catch(err =>
+                console.error(`Failed to mark reel ${reel.id} as seen:`, err)
+            );
+        }
+    }, [isActive, reel.id]);
 
     // Theo dõi progress
     useEffect(() => {
@@ -111,13 +122,7 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
     const captionTruncated = reel.caption && reel.caption.length > 60
 
     return (
-        <div className="h-screen w-full relative flex items-center justify-center bg-[#0a0a0a] select-none sm:py-6">
-
-            {/* ─── Blurred Background Overlay for Desktop ─── */}
-            <div
-                className="hidden sm:block absolute inset-0 opacity-30 blur-3xl scale-110 bg-center bg-cover pointer-events-none"
-                style={{ backgroundImage: `url(${reel.thumbnail_url})` }}
-            />
+        <div className="h-screen w-full relative flex items-center justify-center bg-transparent select-none sm:py-6">
 
             <div className="flex w-full h-full max-w-full justify-center relative z-10 transition-all duration-300 ease-in-out">
                 {/* ─── Main Player Container ─── */}
@@ -135,7 +140,18 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
                         preload={isActive || isAdjacent ? "auto" : "metadata"}
                         poster={reel.thumbnail_url}
                         onClick={togglePlay}
+                        onLoadStart={() => setIsLoading(true)}
+                        onLoadedData={() => setIsLoading(false)}
+                        onWaiting={() => setIsLoading(true)}
+                        onPlaying={() => setIsLoading(false)}
                     />
+
+                    {/* ─── Skeleton ─── */}
+                    {isLoading && (
+                        <div className="absolute inset-0 z-20">
+                            <ReelSkeleton />
+                        </div>
+                    )}
 
                     {/* ─── Play/Pause Icon trung tâm ─── */}
                     {showPlayIcon && (
@@ -173,7 +189,7 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
                                     </AvatarFallback>
                                 </Avatar>
                             </Link>
-                            <Link href={`/users/${reel.user?.id}`} className="text-white font-bold text-[14px] hover:underline drop-shadow-md">
+                            <Link href={`/users/${reel.user?.id}`} className="text-white font-bold text-[14px] hover:text-white/80 transition-colors drop-shadow-md">
                                 {reel.user?.name || "Unknown"}
                             </Link>
                             {reel.user_id !== reel.user?.id && (

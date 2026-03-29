@@ -61,8 +61,8 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error('Login error:', error);
       setErrorMessage(
-        error?.response?.data?.message || 
-        error?.message || 
+        error?.response?.data?.message ||
+        error?.message ||
         'Login failed. Please check your credentials and try again.'
       );
     } finally {
@@ -71,23 +71,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative min-h-screen"
     >
-      <BackgroundRenderer 
-        isDarkMode={isDarkMode} 
-        imageLoaded={imageLoaded} 
+      <BackgroundRenderer
+        isDarkMode={isDarkMode}
+        imageLoaded={imageLoaded}
         imageError={imageError}
       />
-      
+
       <section className="py-28">
         <div className="container mx-auto px-4">
           {/* Lumi Logo */}
           <div className="flex justify-center mb-12">
-            <span 
+            <span
               className="text-7xl md:text-8xl font-normal text-white block"
-              style={{ 
+              style={{
                 fontFamily: 'var(--font-dancing-script), "Brush Script MT", cursive',
                 letterSpacing: '4px',
                 fontWeight: 500,
@@ -105,7 +105,7 @@ export default function LoginPage() {
             <div className="w-full md:w-1/2 lg:w-1/3">
               <div className="relative text-white/90">
                 <h3 className="mb-6 text-center text-white font-light">Have an account?</h3>
-                
+
                 <form onSubmit={handleSubmit} className="signin-form">
                   {/* Email Field */}
                   <div className="relative mb-4">
@@ -151,8 +151,8 @@ export default function LoginPage() {
 
                   {/* Sign In Button */}
                   <div className="mb-4">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       disabled={isLoading || authLoading}
                       className="w-full h-[50px] rounded-full text-sm uppercase font-normal cursor-pointer transition-all duration-300 focus:outline-none shadow-none disabled:opacity-50 disabled:cursor-not-allowed border"
                       style={{
@@ -241,8 +241,8 @@ export default function LoginPage() {
                 {/* Sign Up Link */}
                 <p className="mt-8 text-center text-sm text-white/90">
                   Don't have an account?{" "}
-                  <Link 
-                    href="/register" 
+                  <Link
+                    href="/register"
                     className="font-medium transition-all duration-300 hover:opacity-80"
                     style={{ color: 'var(--brand-primary)' }}
                   >

@@ -26,3 +26,21 @@ export const getStories = async (userId: string) => {
         throw error;
     }
 }
+
+export const viewStory = async (storyId: string) => {
+    try {
+        const response = await storyApi.viewStoryApi(storyId);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const getStoryViews = async (storyId: string, cursor?: string, limit: number = 10) => {
+    try {
+        const response = await storyApi.getStoryViewsApi(storyId, cursor, limit);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

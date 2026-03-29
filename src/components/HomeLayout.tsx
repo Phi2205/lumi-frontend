@@ -10,6 +10,8 @@ import { Feed } from "@/components/Feed"
 import { useDarkMode } from "@/hooks/useDarkMode"
 import { useBackgroundImage } from "@/hooks/useBackgroundImage"
 import { BackgroundRenderer } from "@/components/BackgroundRenderer"
+import { useStoryRealtime } from "@/socket/story/useStoryRealtime"
+import { SearchPanel } from "@/components/SearchPanel"
 
 interface HomeLayoutProps {
   children?: React.ReactNode
@@ -22,6 +24,10 @@ export function HomeLayout({ children }: HomeLayoutProps) {
   const { user, isLoading } = useAuth()
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
   const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+  // Listen for story status changes and broadcast them via window events
+  useStoryRealtime()
 
   // Sync activeTab with query param if it changes
   useEffect(() => {
@@ -37,6 +43,8 @@ export function HomeLayout({ children }: HomeLayoutProps) {
       router.push("/login")
     }
   }, [user, isLoading, router])
+
+  const toggleSearch = () => setIsSearchOpen(!isSearchOpen)
 
   // Show loading or nothing while checking auth or redirecting
   if (isLoading || !user) {
@@ -90,22 +98,33 @@ export function HomeLayout({ children }: HomeLayoutProps) {
         imageError={imageError}
       />
 
-      <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Header
+        isDarkMode={isDarkMode}
+        onDarkModeToggle={handleDarkModeToggle}
+        onSearchToggle={toggleSearch}
+      />
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isSearchOpen={isSearchOpen}
+        onSearchToggle={toggleSearch}
+      />
 
-      <main className={`${activeTab === "messages" ? "md:ml-20" : "md:ml-64"} lg:mr-80 pt-20 pb-20 md:pb-4 relative z-10 transition-all duration-300 ${isDarkMode ? 'backdrop-blur-[0.5px]' : ''
+      <SearchPanel isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      <main className={`${(activeTab === "messages" || isSearchOpen) ? "md:ml-20" : "md:ml-64"} lg:mr-80 pt-20 pb-20 md:pb-4 relative z-10 transition-all duration-300 ${isDarkMode ? 'backdrop-blur-[0.5px]' : ''
         }`}>
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-          {activeTab === "home" && (
-            <Feed />
+          {children ? (
+            children
+          ) : (
+            activeTab === "home" && <Feed />
           )}
         </div>
       </main>
 
       <RightSidebar />
-
-      {/* Modal overlay slot */}
-      {children}
     </div>
   )
 }
+

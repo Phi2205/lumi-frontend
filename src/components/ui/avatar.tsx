@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import * as AvatarPrimitive from "@radix-ui/react-avatar"
+import Link from "next/link"
 
 import { cn } from "@/lib/utils"
 
@@ -57,6 +58,7 @@ interface StoryAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   hasStory?: boolean
   isSeen?: boolean
   isOnline?: boolean
+  username?: string
 }
 
 function StoryAvatar({
@@ -65,38 +67,57 @@ function StoryAvatar({
   hasStory = false,
   isSeen = false,
   isOnline = false,
+  username,
   className,
   ...props
 }: StoryAvatarProps) {
-  return (
-    <div
-      className={cn(
-        "relative flex shrink-0 rounded-full transition-all duration-300",
-        hasStory && "p-[3px] bg-gradient-to-tr from-yellow-400 via-orange-500 to-purple-600",
-        hasStory && isSeen && "bg-neutral-600 bg-none",
-        className
-      )}
-      {...props}
-    >
-      <div className={cn("size-full rounded-full bg-background p-[2px]", !hasStory && "p-0")}>
-        <Avatar className="size-full overflow-hidden">
-          <AvatarImage
-            src={src}
-            alt={alt}
-            className="size-full object-cover transition-transform duration-500 ease-in-out hover:scale-110"
+  const content = (
+    <div className={cn("relative shrink-0", className)} {...props}>
+      {hasStory && (
+        <>
+          {/* Lớp gradient bọc ngoài cùng (từ -4px đến -2px) */}
+          <div
+            className={cn(
+              "absolute -inset-[3px] rounded-full transition-all duration-300",
+              isSeen
+                ? "bg-white/50"
+                : "bg-gradient-to-tr from-yellow-400 via-orange-500 to-purple-600"
+            )}
           />
-          <AvatarFallback>{alt?.slice(0, 2).toUpperCase()}</AvatarFallback>
-        </Avatar>
-      </div>
+          {/* Lớp nền đen để tạo khoảng trống giữa gradient và avatar (từ -1.5px đến 0px) */}
+          <div className="absolute -inset-[1px] rounded-full bg-background" />
+        </>
+      )}
+
+      {/* Main Avatar - Giữ nguyên kích thước gốc không bị đè bởi padding */}
+      <Avatar className="size-full overflow-hidden border-none ring-0 relative z-0">
+        <AvatarImage
+          src={src}
+          alt={alt}
+          className="size-full object-cover transition-transform duration-500 ease-in-out hover:scale-110"
+        />
+        <AvatarFallback className="bg-white/10 text-white/50">{alt?.slice(0, 2).toUpperCase()}</AvatarFallback>
+      </Avatar>
 
       {isOnline && (
         <span className={cn(
-          "absolute bottom-0 right-0 size-[28%] min-w-3 min-h-3 rounded-full border-2 border-background bg-green-500 z-10",
-          hasStory && "bottom-[5%] right-[5%]"
+          "absolute -bottom-[2px] -right-[2px] size-[30%] min-w-3 min-h-3 rounded-full bg-green-500 z-10",
+          hasStory && "-bottom-[3px] -right-[3px]"
         )} />
       )}
     </div>
   )
+
+  if (username) {
+    const href = hasStory ? `/stories/${username}` : `/users/${username}`
+    return (
+      <Link href={href} className="block">
+        {content}
+      </Link>
+    )
+  }
+
+  return content
 }
 
 export { Avatar, AvatarImage, AvatarFallback, StoryAvatar }

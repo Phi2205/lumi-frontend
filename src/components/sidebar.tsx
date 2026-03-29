@@ -1,6 +1,4 @@
-"use client"
-
-import { Home, BookOpen, Zap, MessageSquare, User, Settings, Search } from "lucide-react"
+import { Home, BookOpen, Zap, MessageSquare, User, Settings, Search, Users, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchPanel } from "@/components/SearchPanel"
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
@@ -12,25 +10,34 @@ interface SidebarProps {
   activeTab?: string
   onTabChange?: (tab: string) => void
   isMobileHidden?: boolean
+  isSearchOpen?: boolean
+  onSearchToggle?: () => void
 }
 
 const menuItems = [
   { id: "home", label: "Home", icon: Home },
-  { id: "search", label: "Tìm kiếm", icon: Search },
+  { id: "search", label: "Search", icon: Search },
   { id: "blog", label: "Blog", icon: BookOpen },
+  { id: "reels", label: "Reels", icon: Play },
   { id: "stories", label: "Stories", icon: Zap },
+  { id: "friends", label: "Friends", icon: Users },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "profile", label: "Profile", icon: User },
   { id: "settings", label: "Settings", icon: Settings },
 ]
 
-const mobileItems = menuItems.slice(0, 5)
+const mobileItems = [
+  { id: "home", label: "Home", icon: Home },
+  { id: "reels", label: "Reels", icon: Play },
+  { id: "friends", label: "Friends", icon: Users },
+  { id: "messages", label: "Messages", icon: MessageSquare },
+  { id: "profile", label: "Profile", icon: User },
+]
 
-export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: SidebarProps) {
+export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden, isSearchOpen, onSearchToggle }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const { user } = useAuth()
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [indicatorStyle, setIndicatorStyle] = useState<React.CSSProperties>({})
   const mobileNavRef = useRef<HTMLDivElement>(null)
   const [animatingTab, setAnimatingTab] = useState<string | null>(null)
@@ -74,7 +81,7 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: 
   }, [currentActiveId])
 
   const handleSearchToggle = () => {
-    setIsSearchOpen(!isSearchOpen)
+    onSearchToggle?.()
   }
 
   const getItemHref = (id: string) => {
@@ -141,8 +148,7 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden }: 
         </nav>
       </aside>
 
-      {/* Search Panel */}
-      <SearchPanel isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      {/* Desktop Sidebar Toggle Logic (SearchPanel is now in HomeLayout) */}
 
       {/* Mobile Bottom Navigation */}
       <nav className={`fixed bottom-0 left-0 right-0 md:hidden h-16 border-t border-white/20 bg-black/20 backdrop-blur-md px-4 z-50 transform translate-z-0 ${isMobileHidden ? 'hidden' : 'flex'

@@ -89,3 +89,12 @@ export const createReelCommentApi = (reelId: string, content: string, parentId?:
 
 export const deleteReelCommentApi = (reelId: string, commentId: string) =>
     axiosInstance.delete<ApiResponse<any>>(`/reels/${reelId}/comments/${commentId}`);
+
+export const markReelsAsSeenApi = (reelIds: string[]) =>
+    axiosInstance.post<ApiResponse<any>>("/reels/seen", { reelIds });
+
+
+export const getReelRecommendationsApi = (limit: number = 5) =>
+    axiosInstance.get<ApiResponse<Reel[]>>("/reels/recommendations", {
+        params: { limit }
+    });

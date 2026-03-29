@@ -12,6 +12,7 @@ import { StorySkeleton } from "@/components/skeleton"
 import { useDarkMode } from "@/hooks/useDarkMode"
 import { useBackgroundImage } from "@/hooks/useBackgroundImage"
 import { BackgroundRenderer } from "@/components/BackgroundRenderer"
+import { useStoryContext } from "@/contexts/StoryContext"
 
 export default function StoryPage() {
   const params = useParams()
@@ -26,11 +27,25 @@ export default function StoryPage() {
   const [error, setError] = useState<string | null>(null)
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
   const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
+  const storyCtx = useStoryContext()
 
   // Fetch user info and stories
   useEffect(() => {
     const fetchData = async () => {
       if (!username) return
+
+      // Check context first
+      if (storyCtx?.data?.friends) {
+        const friend = storyCtx.data.friends.find(f => f.user.username === username)
+        if (friend) {
+          console.log("Using story data from context", friend)
+          setUser(friend.user)
+          setUserStories(friend.stories || [])
+          setCurrentStoryIndex(0)
+          setIsLoading(false)
+          return
+        }
+      }
 
       try {
         setIsLoading(true)
@@ -71,6 +86,15 @@ export default function StoryPage() {
   const handlePrevious = () => {
     if (currentStoryIndex > 0) {
       setCurrentStoryIndex(currentStoryIndex - 1)
+    } else {
+      // Navigate to previous friend's stories if available in context
+      if (storyCtx?.data?.friends) {
+        const currentIndex = storyCtx.data.friends.findIndex(f => f.user.username === username)
+        if (currentIndex > 0) {
+          const prevFriend = storyCtx.data.friends[currentIndex - 1]
+          router.replace(`/stories/${prevFriend.user.username}`)
+        }
+      }
     }
   }
 
@@ -78,8 +102,18 @@ export default function StoryPage() {
     if (currentStoryIndex < userStories.length - 1) {
       setCurrentStoryIndex(currentStoryIndex + 1)
     } else {
-      // If last story, go back
-      router.back()
+      // Navigate to next friend's stories if available in context
+      if (storyCtx?.data?.friends) {
+        const currentIndex = storyCtx.data.friends.findIndex(f => f.user.username === username)
+        if (currentIndex !== -1 && currentIndex < storyCtx.data.friends.length - 1) {
+          const nextFriend = storyCtx.data.friends[currentIndex + 1]
+          router.replace(`/stories/${nextFriend.user.username}`)
+        } else {
+          router.back()
+        }
+      } else {
+        router.back()
+      }
     }
   }
 
@@ -94,9 +128,9 @@ export default function StoryPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        <BackgroundRenderer 
-          isDarkMode={isDarkMode} 
-          imageLoaded={imageLoaded} 
+        <BackgroundRenderer
+          isDarkMode={isDarkMode}
+          imageLoaded={imageLoaded}
           imageError={imageError}
         />
         <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
@@ -110,9 +144,9 @@ export default function StoryPage() {
   if (error || !user) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        <BackgroundRenderer 
-          isDarkMode={isDarkMode} 
-          imageLoaded={imageLoaded} 
+        <BackgroundRenderer
+          isDarkMode={isDarkMode}
+          imageLoaded={imageLoaded}
           imageError={imageError}
         />
         <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
@@ -132,11 +166,15 @@ export default function StoryPage() {
     )
   }
 
+  const currentIndex = storyCtx?.data?.friends?.findIndex(f => f.user.username === username) ?? -1
+  const hasPreviousFriend = currentIndex > 0
+  const hasNextFriend = currentIndex !== -1 && currentIndex < (storyCtx?.data?.friends?.length ?? 0) - 1
+
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <BackgroundRenderer 
-        isDarkMode={isDarkMode} 
-        imageLoaded={imageLoaded} 
+      <BackgroundRenderer
+        isDarkMode={isDarkMode}
+        imageLoaded={imageLoaded}
         imageError={imageError}
       />
       <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
@@ -150,6 +188,8 @@ export default function StoryPage() {
           onClose={handleClose}
           onPrevious={handlePrevious}
           onNext={handleNext}
+          hasPreviousFriend={hasPreviousFriend}
+          hasNextFriend={hasNextFriend}
         />
       </div>
     </div>

@@ -20,6 +20,7 @@ export interface PostUser {
   username: string;
   name: string;
   avatar_url: string | null;
+  has_story: boolean;
 }
 
 
@@ -47,8 +48,12 @@ export interface Post {
 }
 
 export interface PostFeedResponse {
+  data: Post[];
+}
+
+export interface PostMeResponse {
   items: Post[];
-  pagination: Pagination;
+  nextCursor: string | null;
 }
 
 export interface Comment {
@@ -97,11 +102,10 @@ export const createPostApi = (data: CreatePostPayload) => {
   });
 };
 
-export const getUnseenPosts = (limit: number, page: number) => {
-  return axiosInstance.get<ApiResponse<PostFeedResponse>>("/posts/unseen", {
+export const getUnseenPosts = (limit: number = 5) => {
+  return axiosInstance.get<ApiResponse<Post[]>>("/posts/recommendations", {
     params: {
-      limit,
-      page,
+      limit
     },
   });
 };
@@ -153,8 +157,28 @@ export const deleteComment = (postId: string, commentId: string) => {
 }
 
 export const sharePost = (postId: string, content: string) => {
-  return axiosInstance.post<ApiResponse<Post>>(`/posts/${postId}/share`,{originalPostId: postId, content});
+  return axiosInstance.post<ApiResponse<Post>>(`/posts/${postId}/share`, { originalPostId: postId, content });
 }
 
+export const markAsSeenApi = (postIds: string[]) => {
+  return axiosInstance.post<ApiResponse<any>>(`/posts/seen`, { postIds });
+}
 
+export const getPostsByMe = (cursor?: string, limit: number = 12) => {
+  return axiosInstance.get<ApiResponse<PostMeResponse>>(`/posts/me`, {
+    params: {
+      cursor,
+      limit,
+    },
+  });
+}
+
+export const getPostsByUserId = (userId: string, cursor?: string, limit: number = 12) => {
+  return axiosInstance.get<ApiResponse<PostMeResponse>>(`/posts/user/${userId}`, {
+    params: {
+      cursor,
+      limit,
+    },
+  });
+}
 

@@ -14,16 +14,12 @@ import { FriendListModal } from "@/components/profile/FriendListModal"
 import { CreateReelModal } from "@/components/profile/CreateReelModal"
 import { getFriendsService, getMutualFriendsService, getCountFriendsService } from "@/services/friend.service"
 import { getMyReelsService, getUserReelsService } from "@/services/reel.service"
+import { getPostsByMe, getPostsByUserId } from "@/services/post.service"
 import { useReelContext } from "@/contexts/ReelContext"
 import { Reel } from "@/apis/reel.api"
-
-interface Post {
-    id: number
-    image: string
-    likes: number
-    comments: number
-    views: number
-}
+import { Post as ApiPost } from "@/apis/post.api"
+import { FriendActionButton } from "./FriendActionButton"
+import { setCachedPost } from "@/lib/post-cache"
 
 interface ProfileContentProps {
     userProfile: User | null;
@@ -39,6 +35,9 @@ interface ProfileContentProps {
     };
     handleAcceptRequest?: () => void;
     handleRejectRequest?: () => void;
+    handleCancelRequest?: () => void;
+    handleAddFriend?: () => void;
+    handleDeleteFriend?: () => void;
     handleStartChat?: () => void;
     onProfileUpdate: (user: User) => void;
 }
@@ -52,6 +51,9 @@ export function ProfileContent({
     buttonConfig,
     handleAcceptRequest,
     handleRejectRequest,
+    handleCancelRequest,
+    handleAddFriend,
+    handleDeleteFriend,
     handleStartChat,
     onProfileUpdate
 }: ProfileContentProps) {
@@ -66,14 +68,23 @@ export function ProfileContent({
     const [activeContentTab, setActiveContentTab] = useState<"posts" | "reels">("posts")
     const [isCreateReelModalOpen, setIsCreateReelModalOpen] = useState(false)
 
+    // Posts state
+    const [posts, setPosts] = useState<ApiPost[]>([])
+    const [postsLoading, setPostsLoading] = useState(false)
+    const [postsCursor, setPostsCursor] = useState<string | undefined>(undefined)
+    const [postsHasMore, setPostsHasMore] = useState(true)
+    const [postsInitialLoaded, setPostsInitialLoaded] = useState(false)
+
     // Reels state
     const [reels, setReels] = useState<Reel[]>([])
     const [reelsLoading, setReelsLoading] = useState(false)
     const [reelsCursor, setReelsCursor] = useState<string | undefined>(undefined)
     const [reelsHasMore, setReelsHasMore] = useState(true)
     const [reelsInitialLoaded, setReelsInitialLoaded] = useState(false)
-    const observerRef = useRef<IntersectionObserver | null>(null)
-    const loadMoreRef = useRef<HTMLDivElement | null>(null)
+    const postsObserverRef = useRef<IntersectionObserver | null>(null)
+    const reelsObserverRef = useRef<IntersectionObserver | null>(null)
+    const loadMorePostsRef = useRef<HTMLDivElement | null>(null)
+    const loadMoreReelsRef = useRef<HTMLDivElement | null>(null)
 
     useEffect(() => {
         const fetchCounts = async () => {
@@ -90,6 +101,29 @@ export function ProfileContent({
         }
         fetchCounts()
     }, [userProfile?.id])
+
+    // Fetch posts
+    const fetchPosts = useCallback(async (cursor?: string) => {
+        if (!userProfile?.id || postsLoading) return
+        setPostsLoading(true)
+        try {
+            const res = isOwnProfile
+                ? await getPostsByMe(cursor)
+                : await getPostsByUserId(userProfile.id, cursor)
+
+            if (res.success) {
+                const { items, nextCursor } = res.data
+                setPosts(prev => cursor ? [...prev, ...items] : items)
+                setPostsCursor(nextCursor || undefined)
+                setPostsHasMore(!!nextCursor)
+            }
+        } catch (error) {
+            console.error("Error fetching posts:", error)
+        } finally {
+            setPostsLoading(false)
+            setPostsInitialLoaded(true)
+        }
+    }, [userProfile?.id, isOwnProfile, postsLoading])
 
     // Fetch reels
     const fetchReels = useCallback(async (cursor?: string) => {
@@ -114,6 +148,17 @@ export function ProfileContent({
         }
     }, [userProfile?.id, isOwnProfile, reelsLoading])
 
+    // Fetch posts when component mounts or user changes
+    useEffect(() => {
+        if (userProfile?.id) {
+            setPosts([])
+            setPostsCursor(undefined)
+            setPostsHasMore(true)
+            setPostsInitialLoaded(false)
+            fetchPosts()
+        }
+    }, [userProfile?.id])
+
     // Fetch reels when switching to reels tab
     useEffect(() => {
         if (activeContentTab === "reels" && !reelsInitialLoaded && userProfile?.id) {
@@ -121,33 +166,63 @@ export function ProfileContent({
         }
     }, [activeContentTab, reelsInitialLoaded, userProfile?.id])
 
-    // Infinite scroll observer
+    // Infinite scroll observer for posts
     useEffect(() => {
-        if (observerRef.current) observerRef.current.disconnect()
+        if (postsObserverRef.current) postsObserverRef.current.disconnect()
 
-        observerRef.current = new IntersectionObserver((entries) => {
+        postsObserverRef.current = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && postsHasMore && !postsLoading) {
+                fetchPosts(postsCursor)
+            }
+        }, { threshold: 0.1 })
+
+        if (loadMorePostsRef.current) {
+            postsObserverRef.current.observe(loadMorePostsRef.current)
+        }
+
+        return () => postsObserverRef.current?.disconnect()
+    }, [postsCursor, postsHasMore, postsLoading, fetchPosts])
+
+    useEffect(() => {
+        const handlePostUpdate = (e: any) => {
+            const { id, has_liked, like_count, comment_count, share_count } = e.detail;
+            setPosts(prev => prev.map(p => {
+                if (p.id === id) {
+                    return {
+                        ...p,
+                        has_liked: has_liked !== undefined ? has_liked : p.has_liked,
+                        like_count: like_count !== undefined ? like_count : p.like_count,
+                        comment_count: comment_count !== undefined ? comment_count : p.comment_count,
+                        share_count: share_count !== undefined ? share_count : p.share_count
+                    };
+                }
+                return p;
+            }));
+        };
+
+        window.addEventListener('postUpdate', handlePostUpdate);
+        return () => window.removeEventListener('postUpdate', handlePostUpdate);
+    }, []);
+
+    // Infinite scroll observer for reels
+    useEffect(() => {
+        if (reelsObserverRef.current) reelsObserverRef.current.disconnect()
+
+        reelsObserverRef.current = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && reelsHasMore && !reelsLoading) {
                 fetchReels(reelsCursor)
             }
         }, { threshold: 0.1 })
 
-        if (loadMoreRef.current) {
-            observerRef.current.observe(loadMoreRef.current)
+        if (loadMoreReelsRef.current) {
+            reelsObserverRef.current.observe(loadMoreReelsRef.current)
         }
 
-        return () => observerRef.current?.disconnect()
-    }, [reelsCursor, reelsHasMore, reelsLoading])
+        return () => reelsObserverRef.current?.disconnect()
+    }, [reelsCursor, reelsHasMore, reelsLoading, fetchReels])
 
     // Mock stats
-    const userStats = { followers: 1250, following: 450, posts: 42 }
-    const userPosts: Post[] = [
-        { id: 1, image: "/bg3.jpg", likes: 298, comments: 38, views: 4000000 },
-        { id: 2, image: "/bg3.jpg", likes: 412, comments: 56, views: 7100000 },
-        { id: 3, image: "/bg3.jpg", likes: 567, comments: 89, views: 2600000 },
-        { id: 4, image: "/bg2.jpg", likes: 234, comments: 29, views: 1500000 },
-        { id: 5, image: "/bg3.jpg", likes: 489, comments: 72, views: 1400000 },
-        { id: 6, image: "/bg1.jpg", likes: 345, comments: 48, views: 1800000 },
-    ]
+    const userStats = { followers: 1250, following: 450, posts: userProfile?.post_count || 0 }
 
     if (isInitialLoading) return <ProfileSkeleton />
 
@@ -165,8 +240,8 @@ export function ProfileContent({
                     <Image src="/bg12.jpg" alt="Profile cover" fill className="object-cover h-[50%]" />
                 </GlassCard>
 
-                <GlassCardVariant className="relative -mt-37 md:-mt-57 mb-8 p-4 md:p-8 !rounded-b-3xl">
-                    <div className="flex flex-row items-end gap-4 md:gap-6">
+                <GlassCardVariant className="relative -mt-37 md:-mt-57 mb-8 p-4 md:p-8 !rounded-b-3xl !overflow-visible">
+                    <div className="flex flex-row items-end gap-4 md:gap-6 !overflow-visible">
                         <div className="shrink-0">
                             <Avatar className="h-20 w-20 md:h-40 md:w-40 ring-4 ring-white/20 shadow-2xl">
                                 <AvatarImage src={userProfile?.avatar_url || "/avatar-default.jpg"} alt={userProfile?.name || ""} />
@@ -188,20 +263,16 @@ export function ProfileContent({
                                     </GlassButton>
                                 ) : (
                                     <>
-                                        {userProfile?.friend_status === 'received_pending' ? (
-                                            <>
-                                                <GlassButton onClick={handleAcceptRequest} disabled={isLoading} className="bg-linear-to-r from-brand-primary to-brand-primary-dark text-xs md:text-base">
-                                                    {isLoading ? 'Processing...' : 'Accept'}
-                                                </GlassButton>
-                                                <GlassButton onClick={handleRejectRequest} disabled={isLoading} className="bg-white/10 hover:bg-white/20 text-xs md:text-base">
-                                                    {isLoading ? 'Processing...' : 'Reject'}
-                                                </GlassButton>
-                                            </>
-                                        ) : (
-                                            <GlassButton onClick={buttonConfig?.onClick} disabled={buttonConfig?.disabled} className={cn(buttonConfig?.className, "text-xs md:text-base")}>
-                                                {buttonConfig?.text}
-                                            </GlassButton>
-                                        )}
+                                        <FriendActionButton
+                                            status={userProfile?.friend_status}
+                                            name={userProfile?.name || ""}
+                                            onAddFriend={handleAddFriend || (() => { })}
+                                            onUnfriend={handleDeleteFriend || (() => { })}
+                                            onCancelRequest={handleCancelRequest || (() => { })}
+                                            onAcceptRequest={handleAcceptRequest || (() => { })}
+                                            isLoading={isLoading || false}
+                                            className="text-xs md:text-base"
+                                        />
                                         <GlassButton className="bg-white/10 hover:bg-white/20" title="Send message" onClick={handleStartChat} disabled={isStartingChat}>
                                             <Send className="w-4 h-4 md:w-6 md:h-6" />
                                         </GlassButton>
@@ -255,18 +326,20 @@ export function ProfileContent({
                     </div>
                 </GlassCard>
 
-                <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className={cn("grid gap-4 mb-8", isOwnProfile ? "grid-cols-2" : "grid-cols-3")}>
                     <GlassStatCard label="Posts" value={userStats.posts.toString()} />
                     <GlassStatCard
                         label="Friends"
                         value={friendsCount.toString()}
                         onClick={() => { setFriendModalType("friends"); setIsFriendModalOpen(true); }}
                     />
-                    <GlassStatCard
-                        label="Mutual Friends"
-                        value={mutualCount.toString()}
-                        onClick={() => { setFriendModalType("mutual"); setIsFriendModalOpen(true); }}
-                    />
+                    {!isOwnProfile && (
+                        <GlassStatCard
+                            label="Mutual Friends"
+                            value={mutualCount.toString()}
+                            onClick={() => { setFriendModalType("mutual"); setIsFriendModalOpen(true); }}
+                        />
+                    )}
                 </div>
 
                 <div className="mb-12">
@@ -315,19 +388,76 @@ export function ProfileContent({
                     </div>
 
                     {activeContentTab === "posts" ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {userPosts.map((post) => (
-                                <div key={post.id} className="group overflow-hidden cursor-pointer relative rounded-2xl h-64">
-                                    <Image src={post.image} alt="Post" fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                        <div className="flex gap-4">
-                                            <div className="flex items-center gap-1 text-white bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-md"><Heart className="w-4 h-4 fill-current" />{post.likes}</div>
-                                            <div className="flex items-center gap-1 text-white bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-md"><MessageSquare className="w-4 h-4" />{post.comments}</div>
-                                        </div>
-                                    </div>
+                        <>
+                            {postsLoading && !postsInitialLoaded ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {[...Array(6)].map((_, i) => (
+                                        <div key={i} className="rounded-2xl h-64 bg-white/5 animate-pulse" />
+                                    ))}
                                 </div>
-                            ))}
-                        </div>
+                            ) : posts.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-20 text-white/40">
+                                    <LayoutGrid className="w-12 h-12 mb-4 opacity-30" />
+                                    <p className="text-lg font-semibold">No posts yet</p>
+                                    <p className="text-sm mt-1">Posts will appear here.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="grid grid-cols-3 gap-0.5 md:gap-4">
+                                        {posts.map((post) => (
+                                            <div
+                                                key={post.id}
+                                                className="group overflow-hidden cursor-pointer relative aspect-[3/4] rounded-sm md:rounded-2xl bg-white/5"
+                                                onClick={() => {
+                                                    setCachedPost(post.id, post);
+                                                    router.push(`/p/${post.id}`, { scroll: false });
+                                                }}
+                                            >
+                                                {post.post_media?.[0]?.media_url ? (
+                                                    <>
+                                                        <Image
+                                                            src={post.post_media[0].media_type === 'video' ? post.post_media[0].media_url.replace('.mp4', '.jpg') : post.post_media[0].media_url}
+                                                            alt="Post"
+                                                            fill
+                                                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                                        />
+                                                        {/* {post.post_media[0].media_type === 'video' && (
+                                                            <div className="absolute top-2 right-2 z-10">
+                                                                <Play className="w-4 h-4 text-white drop-shadow-lg" />
+                                                            </div>
+                                                        )} */}
+                                                    </>
+                                                ) : (
+                                                    <div className="w-full h-full bg-white/5 flex items-center justify-center text-white/20 p-4 text-center">
+                                                        <span className="text-xs md:text-sm italic line-clamp-4">{post.content.slice(0, 80)}...</span>
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 hidden md:flex">
+                                                    <div className="flex gap-4">
+                                                        <div className="flex items-center gap-1 text-white bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-md">
+                                                            <Heart className="w-4 h-4 fill-current" />
+                                                            {post.like_count}
+                                                        </div>
+                                                        <div className="flex items-center gap-1 text-white bg-black/50 px-3 py-1.5 rounded-lg backdrop-blur-md">
+                                                            <MessageSquare className="w-4 h-4" />
+                                                            {post.comment_count}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {/* Infinite scroll trigger for posts */}
+                                    {postsHasMore && (
+                                        <div ref={loadMorePostsRef} className="flex justify-center py-8">
+                                            {postsLoading && (
+                                                <Loader2 className="w-6 h-6 text-brand-primary animate-spin" />
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </>
                     ) : (
                         <>
                             {reelsLoading && !reelsInitialLoaded ? (
@@ -354,12 +484,9 @@ export function ProfileContent({
                                                         reels,
                                                         cursor: reelsCursor,
                                                         hasMore: reelsHasMore,
-                                                        userId: isOwnProfile ? undefined : userProfile?.id,
+                                                        userId: userProfile?.id,
                                                     })
-                                                    router.push(isOwnProfile
-                                                        ? `/reels?startIndex=${index}`
-                                                        : `/reels?userId=${userProfile?.id}&startIndex=${index}`
-                                                    )
+                                                    router.push(`/reels?userId=${userProfile?.id}&startIndex=${index}&reel_id=${reel.id}`)
                                                 }}
                                             >
                                                 <Image src={reel.thumbnail_url} alt={reel.caption || "Reel"} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -380,9 +507,9 @@ export function ProfileContent({
                                         ))}
                                     </div>
 
-                                    {/* Infinite scroll trigger */}
+                                    {/* Infinite scroll trigger for reels */}
                                     {reelsHasMore && (
-                                        <div ref={loadMoreRef} className="flex justify-center py-8">
+                                        <div ref={loadMoreReelsRef} className="flex justify-center py-8">
                                             {reelsLoading && (
                                                 <Loader2 className="w-6 h-6 text-brand-primary animate-spin" />
                                             )}

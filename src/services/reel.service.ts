@@ -6,7 +6,9 @@ import {
     getReelCommentsApi,
     getReelCommentRepliesApi,
     createReelCommentApi,
-    deleteReelCommentApi
+    deleteReelCommentApi,
+    markReelsAsSeenApi,
+    getReelRecommendationsApi
 } from "../apis/reel.api";
 
 export const getMyReelsService = async (cursor?: string, limit: number = 12) => {
@@ -85,6 +87,30 @@ export const deleteReelCommentService = async (reelId: string, commentId: string
         return response.data;
     } catch (error) {
         console.error('Error deleting reel comment:', error);
+        throw error;
+    }
+};
+
+export const markReelsAsSeenService = async (reelIds: string[]) => {
+    try {
+        const response = await markReelsAsSeenApi(reelIds);
+        return response.data;
+    } catch (error) {
+        console.error('Error marking reels as seen:', error);
+        throw error;
+    }
+};
+
+export const viewReelService = async (reelId: string) => {
+    return markReelsAsSeenService([reelId]);
+};
+
+export const getReelRecommendationsService = async (limit: number = 5) => {
+    try {
+        const response = await getReelRecommendationsApi(limit);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching reel recommendations:', error);
         throw error;
     }
 };

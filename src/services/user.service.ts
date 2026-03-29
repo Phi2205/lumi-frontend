@@ -28,3 +28,12 @@ export const editProfile = async (data: userApi.EditProfilePayload) => {
         throw error;
     }
 }
+
+export const userHoverCard = async (userId: string) => {
+    try {
+        const response = await userApi.userHoverCardApi(userId);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
