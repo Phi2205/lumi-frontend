@@ -238,7 +238,7 @@ export function MiniChat({
           //     </div>
           //   )}
           // </div>
-          <MessageItem key={msg.id} message={msg} isDarkMode={false} participants={participants} currentUserId={user?.id} />
+          <MessageItem key={msg.id} message={msg} isDarkMode={false} participants={participants} currentUserId={user?.id} showAuto={msg.isOwn && idx === 0} />
         ))}
 
         {/* Intro Section - Đưa xuống cuối DOM để hiển thị ở đầu danh sách khi dùng flex-col-reverse */}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import { Header } from "@/components/header"
@@ -17,7 +17,7 @@ interface HomeLayoutProps {
   children?: React.ReactNode
 }
 
-export function HomeLayout({ children }: HomeLayoutProps) {
+function HomeContent({ children }: HomeLayoutProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "home")
@@ -125,6 +125,14 @@ export function HomeLayout({ children }: HomeLayoutProps) {
 
       <RightSidebar />
     </div>
+  )
+}
+
+export function HomeLayout(props: HomeLayoutProps) {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent {...props} />
+    </Suspense>
   )
 }
 

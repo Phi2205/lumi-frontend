@@ -1,8 +1,6 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { verifyOtp, resendOtp } from "@/services/auth.service"
@@ -10,11 +8,11 @@ import { useDarkMode } from "@/hooks/useDarkMode"
 import { useBackgroundImage } from "@/hooks/useBackgroundImage"
 import { BackgroundRenderer } from "@/components/BackgroundRenderer"
 
-export default function VerifyOtpPage() {
+function VerifyOtpContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get("email") || ""
-  
+
   const [otp, setOtp] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
@@ -82,7 +80,7 @@ export default function VerifyOtpPage() {
 
     try {
       const response = await verifyOtp({ email, otp })
-      
+
       if (response.success) {
         setSuccessMessage("Email verified successfully! Redirecting to login...")
         setTimeout(() => {
@@ -92,8 +90,8 @@ export default function VerifyOtpPage() {
     } catch (error: any) {
       console.error("OTP verification error:", error)
       setErrorMessage(
-        error?.response?.data?.message || 
-        error?.message || 
+        error?.response?.data?.message ||
+        error?.message ||
         "Invalid OTP. Please try again."
       )
     } finally {
@@ -109,8 +107,8 @@ export default function VerifyOtpPage() {
     setSuccessMessage("")
 
     try {
-      const response = await resendOtp({email})
-      
+      const response = await resendOtp({ email })
+
       if (response.success) {
         setSuccessMessage("OTP has been resent to your email")
         setCountdown(60) // 60 seconds countdown
@@ -118,8 +116,8 @@ export default function VerifyOtpPage() {
     } catch (error: any) {
       console.error("Resend OTP error:", error)
       setErrorMessage(
-        error?.response?.data?.message || 
-        error?.message || 
+        error?.response?.data?.message ||
+        error?.message ||
         "Failed to resend OTP. Please try again."
       )
     } finally {
@@ -128,23 +126,23 @@ export default function VerifyOtpPage() {
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative min-h-screen"
     >
-      <BackgroundRenderer 
-        isDarkMode={isDarkMode} 
-        imageLoaded={imageLoaded} 
+      <BackgroundRenderer
+        isDarkMode={isDarkMode}
+        imageLoaded={imageLoaded}
         imageError={imageError}
       />
-      
+
       <section className="py-28">
         <div className="container mx-auto px-4">
           {/* Lumi Logo */}
           <div className="flex justify-center mb-12">
-            <span 
+            <span
               className="text-7xl md:text-8xl font-normal text-white block"
-              style={{ 
+              style={{
                 fontFamily: 'var(--font-dancing-script), "Brush Script MT", cursive',
                 letterSpacing: '4px',
                 fontWeight: 500,
@@ -166,7 +164,7 @@ export default function VerifyOtpPage() {
                   We've sent a 6-digit code to<br />
                   <span className="font-medium" style={{ color: 'var(--brand-primary)' }}>{email}</span>
                 </p>
-                
+
                 <form onSubmit={handleSubmit} className="verify-otp-form">
                   {/* OTP Input Field */}
                   <div className="relative mb-4">
@@ -185,10 +183,10 @@ export default function VerifyOtpPage() {
                         autoFocus
                       />
                       {/* Dynamic Placeholder Overlay */}
-                      <div 
+                      <div
                         className="absolute inset-0 flex items-center justify-center pointer-events-none text-center text-2xl font-semibold text-white/80"
-                        style={{ 
-                          paddingLeft: '1.25rem', 
+                        style={{
+                          paddingLeft: '1.25rem',
                           paddingRight: '1.25rem',
                           letterSpacing: '0.5em'
                         }}
@@ -202,8 +200,8 @@ export default function VerifyOtpPage() {
 
                   {/* Verify Button */}
                   <div className="mb-4">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       disabled={isLoading || isResending || otp.length !== 6}
                       className="w-full h-[50px] rounded-full text-sm uppercase font-normal cursor-pointer transition-all duration-300 focus:outline-none shadow-none disabled:opacity-50 disabled:cursor-not-allowed border"
                       style={{
@@ -242,11 +240,11 @@ export default function VerifyOtpPage() {
                       className="text-sm font-medium transition-all duration-300 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{ color: 'var(--brand-primary)' }}
                     >
-                      {countdown > 0 
-                        ? `Resend OTP in ${countdown}s` 
-                        : isResending 
-                        ? 'Sending...' 
-                        : 'Resend OTP'}
+                      {countdown > 0
+                        ? `Resend OTP in ${countdown}s`
+                        : isResending
+                          ? 'Sending...'
+                          : 'Resend OTP'}
                     </button>
                   </div>
                 </form>
@@ -254,8 +252,8 @@ export default function VerifyOtpPage() {
                 {/* Back to Register Link */}
                 <p className="mt-8 text-center text-sm text-white/90">
                   Wrong email?{" "}
-                  <Link 
-                    href="/register" 
+                  <Link
+                    href="/register"
                     className="font-medium transition-all duration-300 hover:opacity-80"
                     style={{ color: 'var(--brand-primary)' }}
                   >
@@ -268,5 +266,13 @@ export default function VerifyOtpPage() {
         </div>
       </section>
     </div>
+  )
+}
+
+export default function VerifyOtpPage() {
+  return (
+    <Suspense fallback={null}>
+      <VerifyOtpContent />
+    </Suspense>
   )
 }

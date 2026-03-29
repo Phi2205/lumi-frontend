@@ -11,8 +11,11 @@ function mapPost(post: ApiPost): Post {
   return {
     id: post.id,
     user: {
+      id: post.user?.id || "",
+      username: post.user?.username || "",
       name: post.user?.name || "User",
       avatar_url: post.user?.avatar_url || "/avatar-default.jpg",
+      has_story: post.user?.has_story || false,
     },
     timestamp: post.created_at,
     content: post.content,
