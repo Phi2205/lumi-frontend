@@ -10,6 +10,8 @@ import { editProfile } from "@/services/user.service"
 import { Loader2, User as UserIcon, Calendar, AlignLeft, Save, MapPin, ChevronRight, Pencil } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SkeletonSettingsList, SkeletonButton } from "@/components/skeleton"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface EditProfileModalProps {
     user: User
@@ -20,6 +22,7 @@ interface EditProfileModalProps {
 }
 
 export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialField = null }: EditProfileModalProps) {
+    const { t } = useTranslation()
     const [bio, setBio] = useState(user.bio || "")
     const [birthday, setBirthday] = useState(user.birthday?.split('T')[0] || "")
     const [location, setLocation] = useState<Location | null>(null)
@@ -106,13 +109,13 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialFiel
             setEditingField(null)
         } catch (err: any) {
             console.error(`Save ${field} failed:`, err)
-            setError(err.response?.data?.message || `Failed to update ${field}. Please try again.`)
+            setError(err.response?.data?.message || t('edit_profile.save_failed', { field: t(`edit_profile.${field}`) }))
         } finally {
             setSaving(false)
         }
     }
 
-    const renderFieldRow = (label: string, value: string, icon: React.ReactNode, field: 'bio' | 'birthday' | 'location') => (
+    const renderFieldRow = (labelKey: string, value: string, icon: React.ReactNode, field: 'bio' | 'birthday' | 'location') => (
         <div
             onClick={() => setEditingField(field)}
             className="group flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-brand-primary/20 rounded-2xl transition-all cursor-pointer"
@@ -122,8 +125,8 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialFiel
                     {icon}
                 </div>
                 <div className="min-w-0">
-                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">{label}</p>
-                    <p className="text-sm font-medium text-white truncate max-w-[200px]">{value || `Add ${label}`}</p>
+                    <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">{t(`edit_profile.${labelKey}`)}</p>
+                    <p className="text-sm font-medium text-white truncate max-w-[200px]">{value || t(`edit_profile.add_${labelKey}`)}</p>
                 </div>
             </div>
             <div className="flex items-center gap-2">
@@ -145,18 +148,18 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialFiel
                         <div className="p-2 bg-brand-primary/20 rounded-lg">
                             <UserIcon className="w-5 h-5 text-brand-primary" />
                         </div>
-                        <span>Profile Settings</span>
+                        <span>{t('edit_profile.title')}</span>
                     </div>
                 }
                 maxWidthClassName="max-w-md"
             >
                 <div className="relative">
                     <div className="space-y-4">
-                        <div className="text-xs font-bold text-white/30 uppercase tracking-widest px-1 pb-1">General Information</div>
+                        <div className="text-xs font-bold text-white/30 uppercase tracking-widest px-1 pb-1">{t('edit_profile.general_info')}</div>
 
-                        {renderFieldRow("Bio", bio, <AlignLeft size={18} />, 'bio')}
-                        {renderFieldRow("Birthday", birthday, <Calendar size={18} />, 'birthday')}
-                        {renderFieldRow("Location", location?.address || "", <MapPin size={18} />, 'location')}
+                        {renderFieldRow("bio", bio, <AlignLeft size={18} />, 'bio')}
+                        {renderFieldRow("birthday", birthday, <Calendar size={18} />, 'birthday')}
+                        {renderFieldRow("location", location?.address || "", <MapPin size={18} />, 'location')}
 
                         <div className="pt-6">
                             <GlassButton
@@ -164,7 +167,7 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialFiel
                                 onClick={onClose}
                                 className="w-full bg-white/5 hover:bg-white/10 text-white font-semibold flex items-center justify-center gap-2"
                             >
-                                Done
+                                {t('edit_profile.done')}
                             </GlassButton>
                         </div>
                     </div>
@@ -175,16 +178,16 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialFiel
             <Modal
                 isOpen={editingField === 'bio'}
                 onClose={() => setEditingField(null)}
-                title="Edit Bio"
+                title={t('edit_profile.edit_bio')}
                 maxWidthClassName="max-w-sm"
             >
                 <div className="space-y-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-white/70 ml-1">Your Bio</label>
+                        <label className="text-sm font-medium text-white/70 ml-1">{t('edit_profile.your_bio')}</label>
                         <textarea
                             value={bio}
                             onChange={(e) => setBio(e.target.value)}
-                            placeholder="Tell us about yourself..."
+                            placeholder={t('edit_profile.tell_us')}
                             rows={5}
                             className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary/50 transition-all resize-none"
                         />
@@ -195,7 +198,7 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialFiel
                         disabled={isSavingBio || bio === (initialData?.bio || "")}
                         className="w-full bg-linear-to-r from-brand-primary to-brand-primary-dark text-white font-bold h-12"
                     >
-                        {isSavingBio ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Save Bio"}
+                        {isSavingBio ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : t('edit_profile.save_bio')}
                     </GlassButton>
                 </div>
             </Modal>
@@ -203,12 +206,12 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialFiel
             <Modal
                 isOpen={editingField === 'birthday'}
                 onClose={() => setEditingField(null)}
-                title="Edit Birthday"
+                title={t('edit_profile.edit_birthday')}
                 maxWidthClassName="max-w-sm"
             >
                 <div className="space-y-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-white/70 ml-1">Date of Birth</label>
+                        <label className="text-sm font-medium text-white/70 ml-1">{t('edit_profile.date_of_birth')}</label>
                         <input
                             type="date"
                             value={birthday}
@@ -222,7 +225,7 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialFiel
                         disabled={isSavingBirthday || birthday === (initialData?.birthday || "")}
                         className="w-full bg-linear-to-r from-brand-primary to-brand-primary-dark text-white font-bold h-12"
                     >
-                        {isSavingBirthday ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Save Birthday"}
+                        {isSavingBirthday ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : t('edit_profile.save_birthday')}
                     </GlassButton>
                 </div>
             </Modal>
@@ -230,7 +233,7 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialFiel
             <Modal
                 isOpen={editingField === 'location'}
                 onClose={() => setEditingField(null)}
-                title="Edit Location"
+                title={t('edit_profile.edit_location')}
                 maxWidthClassName="max-w-md"
             >
                 <div className="space-y-6">
@@ -246,7 +249,7 @@ export function EditProfileModal({ user, isOpen, onClose, onSuccess, initialFiel
                         disabled={isSavingLocation || JSON.stringify(location) === JSON.stringify(initialData?.location || null)}
                         className="w-full bg-linear-to-r from-brand-primary to-brand-primary-dark text-white font-bold h-12"
                     >
-                        {isSavingLocation ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Save Location"}
+                        {isSavingLocation ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : t('edit_profile.save_location')}
                     </GlassButton>
                 </div>
             </Modal>

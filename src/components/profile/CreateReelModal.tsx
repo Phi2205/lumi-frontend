@@ -5,6 +5,8 @@ import { Modal } from "@/lib/components/modal"
 import { GlassButton, GlassInput } from "@/lib/components"
 import { Plus, Video, Music, Type, X, UploadCloud, CheckCircle2 } from "lucide-react"
 import { useUpload } from "@/contexts/UploadContext"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface CreateReelModalProps {
     isOpen: boolean
@@ -13,6 +15,7 @@ interface CreateReelModalProps {
 }
 
 export const CreateReelModal: React.FC<CreateReelModalProps> = ({ isOpen, onClose, onSuccess }) => {
+    const { t } = useTranslation()
     const { addUpload } = useUpload()
     const [file, setFile] = useState<File | null>(null)
     const [videoPreview, setVideoPreview] = useState<string | null>(null)
@@ -69,7 +72,7 @@ export const CreateReelModal: React.FC<CreateReelModalProps> = ({ isOpen, onClos
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Create New Reel"
+            title={t('reels.create_title')}
             maxWidthClassName="max-w-[700px]"
         >
             <div className="flex flex-col md:flex-row gap-6">
@@ -83,8 +86,8 @@ export const CreateReelModal: React.FC<CreateReelModalProps> = ({ isOpen, onClos
                             <div className="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                 <Video className="w-8 h-8 text-brand-primary" />
                             </div>
-                            <span className="text-white font-semibold">Select Video</span>
-                            <span className="text-white/40 text-xs mt-2">MP4 or WebM (Large files supported)</span>
+                            <span className="text-white font-semibold">{t('reels.select_video')}</span>
+                            <span className="text-white/40 text-xs mt-2">{t('reels.video_formats')}</span>
                         </div>
                     ) : (
                         <div className="w-full h-full relative rounded-2xl overflow-hidden bg-black shadow-2xl">
@@ -117,11 +120,11 @@ export const CreateReelModal: React.FC<CreateReelModalProps> = ({ isOpen, onClos
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-white/60 flex items-center gap-2">
-                                <Type className="w-4 h-4" /> Caption
+                                <Type className="w-4 h-4" /> {t('reels.caption')}
                             </label>
                             <textarea
                                 className="w-full h-32 bg-white/5 border border-white/10 rounded-2xl p-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-brand-primary/50 outline-none transition-all resize-none"
-                                placeholder="What's your reel about?"
+                                placeholder={t('reels.caption_placeholder')}
                                 value={caption}
                                 onChange={(e) => setCaption(e.target.value)}
                             />
@@ -129,10 +132,10 @@ export const CreateReelModal: React.FC<CreateReelModalProps> = ({ isOpen, onClos
 
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-white/60 flex items-center gap-2">
-                                <Music className="w-4 h-4" /> Music Name
+                                <Music className="w-4 h-4" /> {t('reels.music_name')}
                             </label>
                             <GlassInput
-                                placeholder="e.g. Blinding Lights - The Weeknd"
+                                placeholder={t('reels.music_placeholder')}
                                 value={musicName}
                                 onChange={(e) => setMusicName(e.target.value)}
                                 className="bg-white/5"
@@ -146,7 +149,7 @@ export const CreateReelModal: React.FC<CreateReelModalProps> = ({ isOpen, onClos
                                 onClick={onClose}
                                 className="flex-1 bg-white/5 hover:bg-white/10"
                             >
-                                Cancel
+                                {t('common.cancel')}
                             </GlassButton>
                             <GlassButton
                                 onClick={handleUpload}
@@ -155,7 +158,7 @@ export const CreateReelModal: React.FC<CreateReelModalProps> = ({ isOpen, onClos
                             >
                                 <span className="flex items-center gap-2">
                                     <UploadCloud className="w-4 h-4" />
-                                    Share Now
+                                    {t('reels.share_now')}
                                 </span>
                             </GlassButton>
                         </div>

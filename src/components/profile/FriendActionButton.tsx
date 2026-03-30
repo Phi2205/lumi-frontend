@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from "react"
 import { GlassButton } from "@/lib/components"
 import { UserMinus, UserCheck, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface FriendActionButtonProps {
     status: string | undefined
@@ -26,6 +28,7 @@ export function FriendActionButton({
     isLoading,
     className
 }: FriendActionButtonProps) {
+    const { t } = useTranslation()
     const [isOpen, setIsOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -46,7 +49,7 @@ export function FriendActionButton({
                 disabled={isLoading}
                 className={cn("bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap", className)}
             >
-                {isLoading ? 'Processing...' : 'Add Friend'}
+                {isLoading ? t('profile.processing') : t('profile.add_friend')}
             </GlassButton>
         )
     }
@@ -58,7 +61,7 @@ export function FriendActionButton({
                 disabled={isLoading}
                 className={cn("bg-white/10 hover:bg-white/20 whitespace-nowrap", className)}
             >
-                {isLoading ? 'Processing...' : 'Request Sent'}
+                {isLoading ? t('profile.processing') : t('profile.request_sent')}
             </GlassButton>
         )
     }
@@ -71,7 +74,7 @@ export function FriendActionButton({
                     disabled={isLoading}
                     className={cn("bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap", className)}
                 >
-                    {isLoading ? 'Processing...' : 'Accept'}
+                    {isLoading ? t('profile.processing') : t('profile.accept')}
                 </GlassButton>
             </div>
         )
@@ -90,7 +93,7 @@ export function FriendActionButton({
                 )}
             >
                 <UserCheck className="w-4 h-4" />
-                <span>Friends</span>
+                <span>{t('profile.friends')}</span>
                 <ChevronDown className={cn("w-3 h-3 transition-transform", isOpen && "rotate-180")} />
             </GlassButton>
 
@@ -105,7 +108,7 @@ export function FriendActionButton({
                             className="w-full flex items-center justify-start gap-3 px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/15 rounded-xl border-none transition-all group"
                         >
                             <UserMinus className="w-4 h-4 transition-transform group-hover:scale-110" />
-                            <span className="font-medium text-red-500">Unfriend {name}</span>
+                            <span className="font-medium text-red-500">{t('profile.unfriend')} {name}</span>
                         </GlassButton>
                     </div>
                 </div>

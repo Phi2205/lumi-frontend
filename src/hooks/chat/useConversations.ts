@@ -82,7 +82,7 @@ export const useConversations = () => {
         lastMessage: data.lastMessage.content,
         lastMessageId: data.message_id,
         lastMessageAt: data.lastMessage.createdAt || new Date().toISOString(),
-        timestamp: "vừa xong",
+        timestamp: "just now",
         unread: isMe ? prev[convIndex].unread : true,
         unreadCount: isMe ? prev[convIndex].unreadCount : (prev[convIndex].unreadCount || 0) + 1
       };

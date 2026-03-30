@@ -199,7 +199,7 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
                                 className="text-white text-[13px] font-semibold border border-white/40 rounded-lg px-3 py-1 hover:bg-white/20 transition-colors backdrop-blur-sm cursor-pointer"
                                 onClick={(e) => e.stopPropagation()}
                             >
-                                Theo dõi
+                                Follow
                             </button>
                         </div>
 
@@ -215,7 +215,7 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
                                             className="text-white/70 font-bold hover:text-white transition-colors cursor-pointer"
                                             onClick={(e) => { e.stopPropagation(); setShowFullCaption(true) }}
                                         >
-                                            Xem thêm
+                                            See more
                                         </button>
                                     )}
                                 </p>

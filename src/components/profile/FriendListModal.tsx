@@ -8,6 +8,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/skeleton"
 import { Loader2, Users } from "lucide-react"
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface FriendListModalProps {
     isOpen: boolean
@@ -19,6 +21,7 @@ interface FriendListModalProps {
 }
 
 export function FriendListModal({ isOpen, onClose, userId, isOwnProfile, type, title }: FriendListModalProps) {
+    const { t } = useTranslation()
     const [friends, setFriends] = useState<User[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -46,7 +49,7 @@ export function FriendListModal({ isOpen, onClose, userId, isOwnProfile, type, t
             setFriends(data || [])
         } catch (err) {
             console.error(`Failed to fetch ${type}:`, err)
-            setError(`Failed to load ${type}. Please try again.`)
+            setError(t('profile.load_failed', { type: t(`profile.${type}`) }))
         } finally {
             setIsLoading(false)
         }
@@ -89,7 +92,7 @@ export function FriendListModal({ isOpen, onClose, userId, isOwnProfile, type, t
                             onClick={fetchFriends}
                             className="text-brand-primary hover:underline text-sm font-medium"
                         >
-                            Try again
+                            {t('profile.try_again')}
                         </button>
                     </div>
                 ) : friends.length === 0 ? (
@@ -97,7 +100,7 @@ export function FriendListModal({ isOpen, onClose, userId, isOwnProfile, type, t
                         <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white/20 mb-4">
                             <Users className="w-6 h-6" />
                         </div>
-                        <p className="text-white/40">No friends found.</p>
+                        <p className="text-white/40">{t('profile.no_friends')}</p>
                     </div>
                 ) : (
                     <div className="space-y-2">

@@ -14,6 +14,8 @@ import { playHlsPreview, playHlsVideo } from "@/lib/hls"
 import { StoryAvatar } from "@/components/ui/avatar"
 import { formatTime, formatPresence } from "@/utils/format"
 import { ConversationInfo } from "./ConversationInfo"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 import { urlImage } from "@/utils/imageUrl"
 
 const VideoMessage = memo(({ publicId }: { publicId: string }) => {
@@ -290,6 +292,7 @@ export const ChatWindow = memo(({
   onCloseJumpMode,
   onJumpToMessage
 }: ChatWindowProps) => {
+  const { t } = useTranslation()
   const [inputValue, setInputValue] = useState("")
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
@@ -468,7 +471,7 @@ export const ChatWindow = memo(({
             <div>
               <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{conversationName}</p>
               <p className={`text-xs ${isDarkMode ? 'text-white/70' : 'text-gray-600'} font-semibold`}>
-                {isOnline ? "Đang hoạt động" : (lastOnline ? `${formatPresence(lastOnline)}` : "Ngoại tuyến")}
+                {isOnline ? t('messages.active_now') : (lastOnline ? `${formatPresence(lastOnline)}` : t('messages.offline'))}
               </p>
             </div>
           </div>
@@ -549,7 +552,7 @@ export const ChatWindow = memo(({
           {isLoadingMoreBelow && (
             <div className="flex justify-center p-4 absolute bottom-[100px] left-1/2 -translate-x-1/2 bg-black/20 backdrop-blur-md rounded-full px-4 py-2 z-50">
               <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mr-2" />
-              <span className="text-[10px]">Đang tải mới hơn...</span>
+              <span className="text-[10px]">{t('messages.loading_newer')}</span>
             </div>
           )}
         </div>
@@ -618,7 +621,7 @@ export const ChatWindow = memo(({
               } : undefined}
             >
               <input
-                placeholder={isUploading ? "Đang tải tệp..." : "Aa..."}
+                placeholder={isUploading ? t('messages.uploading_files') : t('messages.message_placeholder')}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && !isUploading && handleSend()}

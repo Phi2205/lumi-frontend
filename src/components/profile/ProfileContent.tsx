@@ -20,6 +20,8 @@ import { Reel } from "@/apis/reel.api"
 import { Post as ApiPost } from "@/apis/post.api"
 import { FriendActionButton } from "./FriendActionButton"
 import { setCachedPost } from "@/lib/post-cache"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface ProfileContentProps {
     userProfile: User | null;
@@ -57,6 +59,7 @@ export function ProfileContent({
     handleStartChat,
     onProfileUpdate
 }: ProfileContentProps) {
+    const { t } = useTranslation()
     const router = useRouter()
     const { setReelData } = useReelContext()
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -232,7 +235,7 @@ export function ProfileContent({
                 <div className="mb-4">
                     <GlassButton variant="ghost" size="sm" className="text-white/70 hover:text-white flex items-center gap-2" onClick={() => typeof window !== 'undefined' && window.history.back()}>
                         <ArrowLeft className="w-4 h-4" />
-                        <span>Back</span>
+                        <span>{t('profile.back')}</span>
                     </GlassButton>
                 </div>
 
@@ -259,7 +262,7 @@ export function ProfileContent({
                                 {isOwnProfile ? (
                                     <GlassButton onClick={() => setIsEditModalOpen(true)} className="bg-white/10 hover:bg-white/20 text-xs md:text-base flex items-center gap-2">
                                         <Edit className="w-4 h-4" />
-                                        <span>Edit Profile</span>
+                                        <span>{t('profile.edit_profile')}</span>
                                     </GlassButton>
                                 ) : (
                                     <>
@@ -273,12 +276,12 @@ export function ProfileContent({
                                             isLoading={isLoading || false}
                                             className="text-xs md:text-base"
                                         />
-                                        <GlassButton className="bg-white/10 hover:bg-white/20" title="Send message" onClick={handleStartChat} disabled={isStartingChat}>
+                                        <GlassButton className="bg-white/10 hover:bg-white/20" title={t('profile.send_message')} onClick={handleStartChat} disabled={isStartingChat}>
                                             <Send className="w-4 h-4 md:w-6 md:h-6" />
                                         </GlassButton>
                                     </>
                                 )}
-                                <GlassButton className="bg-white/10 hover:bg-white/20" title="Share profile">
+                                <GlassButton className="bg-white/10 hover:bg-white/20" title={t('profile.share_profile')}>
                                     <Share2 className="w-4 h-4 md:w-6 md:h-6" />
                                 </GlassButton>
                             </div>
@@ -290,11 +293,11 @@ export function ProfileContent({
                     <div className="space-y-6">
                         <div>
                             <div className="flex items-center justify-between mb-3">
-                                <h2 className="text-xl font-semibold text-white">Information</h2>
+                                <h2 className="text-xl font-semibold text-white">{t('profile.information')}</h2>
                                 {isOwnProfile && (
                                     <button onClick={() => { setInitialEditField('bio'); setIsEditModalOpen(true); }} className="p-2 hover:bg-white/10 rounded-full text-brand-primary transition-colors flex items-center gap-2 text-xs font-semibold">
                                         <Pencil className="w-4 h-4" />
-                                        <span>Edit Bio</span>
+                                        <span>{t('profile.edit_bio')}</span>
                                     </button>
                                 )}
                             </div>
@@ -320,22 +323,22 @@ export function ProfileContent({
 
                             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
                                 <Calendar className="w-4 h-4 text-brand-primary" />
-                                Joined {userProfile?.created_at?.slice(0, 4) || "recently"}
+                                {t('profile.joined', { year: userProfile?.created_at?.slice(0, 4) || "recently" })}
                             </div>
                         </div>
                     </div>
                 </GlassCard>
 
                 <div className={cn("grid gap-4 mb-8", isOwnProfile ? "grid-cols-2" : "grid-cols-3")}>
-                    <GlassStatCard label="Posts" value={userStats.posts.toString()} />
+                    <GlassStatCard label={t('profile.posts')} value={userStats.posts.toString()} />
                     <GlassStatCard
-                        label="Friends"
+                        label={t('profile.friends')}
                         value={friendsCount.toString()}
                         onClick={() => { setFriendModalType("friends"); setIsFriendModalOpen(true); }}
                     />
                     {!isOwnProfile && (
                         <GlassStatCard
-                            label="Mutual Friends"
+                            label={t('profile.mutual_friends')}
                             value={mutualCount.toString()}
                             onClick={() => { setFriendModalType("mutual"); setIsFriendModalOpen(true); }}
                         />
@@ -353,7 +356,7 @@ export function ProfileContent({
                                 )}
                             >
                                 <LayoutGrid className="w-4 h-4" />
-                                <span>POSTS</span>
+                                <span>{t('profile.posts').toUpperCase()}</span>
                                 {activeContentTab === "posts" && (
                                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary shadow-[0_-2px_8px_rgba(var(--brand-primary-rgb),0.5)]" />
                                 )}
@@ -366,7 +369,7 @@ export function ProfileContent({
                                 )}
                             >
                                 <Play className="w-4 h-4" />
-                                <span>REELS</span>
+                                <span>{t('common.reels').toUpperCase()}</span>
                                 {activeContentTab === "reels" && (
                                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary shadow-[0_-2px_8px_rgba(var(--brand-primary-rgb),0.5)]" />
                                 )}
@@ -381,7 +384,7 @@ export function ProfileContent({
                                     onClick={() => setIsCreateReelModalOpen(true)}
                                 >
                                     <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-                                    <span className="text-xs font-bold">Create Reel</span>
+                                    <span className="text-xs font-bold">{t('profile.create_reel')}</span>
                                 </GlassButton>
                             </div>
                         )}
@@ -398,8 +401,8 @@ export function ProfileContent({
                             ) : posts.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-20 text-white/40">
                                     <LayoutGrid className="w-12 h-12 mb-4 opacity-30" />
-                                    <p className="text-lg font-semibold">No posts yet</p>
-                                    <p className="text-sm mt-1">Posts will appear here.</p>
+                                    <p className="text-lg font-semibold">{t('profile.no_posts')}</p>
+                                    <p className="text-sm mt-1">{t('profile.posts_appear_here')}</p>
                                 </div>
                             ) : (
                                 <>
@@ -469,8 +472,8 @@ export function ProfileContent({
                             ) : reels.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-20 text-white/40">
                                     <Play className="w-12 h-12 mb-4 opacity-30" />
-                                    <p className="text-lg font-semibold">No reels yet</p>
-                                    <p className="text-sm mt-1">Reels you create will appear here.</p>
+                                    <p className="text-lg font-semibold">{t('profile.no_reels')}</p>
+                                    <p className="text-sm mt-1">{t('profile.reels_appear_here')}</p>
                                 </div>
                             ) : (
                                 <>
@@ -497,7 +500,7 @@ export function ProfileContent({
                                                     )}
                                                     <div className="flex items-center gap-2 text-white/70 text-xs">
                                                         <Play className="w-3.5 h-3.5 fill-current" />
-                                                        <span>{reel.music_name || "Original Audio"}</span>
+                                                        <span>{reel.music_name || t('profile.original_audio')}</span>
                                                     </div>
                                                 </div>
                                                 <div className="absolute top-3 right-3 bg-black/30 backdrop-blur-md px-2 py-1 rounded-lg text-[10px] text-white/80 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
@@ -542,7 +545,7 @@ export function ProfileContent({
                     userId={userProfile.id}
                     isOwnProfile={isOwnProfile}
                     type={friendModalType}
-                    title={friendModalType === "friends" ? "Friends" : "Mutual Friends"}
+                    title={friendModalType === "friends" ? t('profile.friends') : t('profile.mutual_friends')}
                 />
             )}
 

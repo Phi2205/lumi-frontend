@@ -27,6 +27,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { StoryAvatar } from "@/components/ui/avatar"
 import { GlassButton } from "@/lib/components/glass-button"
 import { MessageUI, AttachmentUI } from "./ChatWindow"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 import { useRouter } from "next/navigation"
 
@@ -127,6 +129,7 @@ export const ConversationInfo = ({
     onJumpToMessage,
     targetMessageId
 }: ConversationInfoProps) => {
+    const { t } = useTranslation()
     const router = useRouter()
     const [sections, setSections] = useState({
         chatInfo: true,
@@ -269,7 +272,7 @@ export const ConversationInfo = ({
                             <input
                                 autoFocus
                                 type="text"
-                                placeholder="Tìm kiếm tin nhắn..."
+                                placeholder={t('messages.search_messages')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className={`w-full bg-white/5 border border-white/10 rounded-full py-1.5 pl-10 pr-4 text-sm focus:outline-none focus:border-brand-primary/50 transition-all ${!isDarkMode && "bg-black/5 text-gray-900 border-black/10"}`}
@@ -284,12 +287,12 @@ export const ConversationInfo = ({
                         {isSearchingLoading ? (
                             <div className="flex flex-col items-center justify-center h-40 opacity-50">
                                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary mb-2"></div>
-                                <span className="text-sm">Đang tìm kiếm...</span>
+                                <span className="text-sm">{t('messages.searching')}</span>
                             </div>
                         ) : searchQuery && searchResults.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-40 opacity-50">
                                 <Search className="w-10 h-10 mb-2" />
-                                <span className="text-sm text-center">Không tìm thấy kết quả nào cho<br /><span className="font-semibold">"{searchQuery}"</span></span>
+                                <span className="text-sm text-center">{t('messages.no_results_for')}<br /><span className="font-semibold">"{searchQuery}"</span></span>
                             </div>
                         ) : searchResults.length > 0 ? (
                             <div className="space-y-3">
@@ -344,7 +347,7 @@ export const ConversationInfo = ({
                         ) : (
                             <div className="flex flex-col items-center justify-center h-40 opacity-30 text-center px-8">
                                 <Search className="w-12 h-12 mb-4" />
-                                <p className="text-sm">Nhập nội dung tin nhắn bạn muốn tìm kiếm trong cuộc trò chuyện này</p>
+                                <p className="text-sm">{t('messages.enter_search_desc')}</p>
                             </div>
                         )}
                     </div>
@@ -359,7 +362,7 @@ export const ConversationInfo = ({
                 >
                     <ArrowLeft className="w-5 h-5" />
                 </button>
-                <span className="ml-2 font-semibold text-sm">Thông tin</span>
+                <span className="ml-2 font-semibold text-sm">{t('messages.information')}</span>
             </div>
             {/* Header Profile */}
             <div className="flex flex-col items-center pt-8 pb-6 px-4">
@@ -370,12 +373,12 @@ export const ConversationInfo = ({
                     className="h-20 w-20 mb-3"
                 />
                 <h2 className="text-lg font-bold text-center">{conversationName}</h2>
-                <p className="text-xs opacity-60 mb-4">{isOnline ? "Đang hoạt động" : "Ngoại tuyến"}</p>
+                <p className="text-xs opacity-60 mb-4">{isOnline ? t('messages.active_now') : t('messages.offline')}</p>
 
                 <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-medium mb-6 backdrop-blur-md border ${isDarkMode ? "bg-white/10 border-white/5" : "bg-black/5 border-black/5"
                     }`}>
                     <Lock className="w-3 h-3" />
-                    <span>Được mã hóa đầu cuối</span>
+                    <span>{t('messages.end_to_end_encrypted')}</span>
                 </div>
 
                 <div className="flex justify-center gap-8 w-full mb-4">
@@ -388,7 +391,7 @@ export const ConversationInfo = ({
                                 }`}>
                                 <User className="w-5 h-5" />
                             </div>
-                            <span className="text-[11px] font-medium">Trang cá nhân</span>
+                            <span className="text-[11px] font-medium">{t('messages.profile')}</span>
                         </div>
                     )}
                     <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
@@ -396,7 +399,7 @@ export const ConversationInfo = ({
                             }`}>
                             <BellOff className="w-5 h-5" />
                         </div>
-                        <span className="text-[11px] font-medium">Tắt thông báo</span>
+                        <span className="text-[11px] font-medium">{t('messages.mute_notifications')}</span>
                     </div>
                     <div
                         onClick={() => setIsSearching(true)}
@@ -406,7 +409,7 @@ export const ConversationInfo = ({
                             }`}>
                             <Search className="w-5 h-5" />
                         </div>
-                        <span className="text-[11px] font-medium">Tìm kiếm</span>
+                        <span className="text-[11px] font-medium">{t('messages.search')}</span>
                     </div>
                 </div>
             </div>
@@ -414,17 +417,17 @@ export const ConversationInfo = ({
             {/* Sections */}
             <div className="flex-1">
                 <InfoSection
-                    title="Thông tin về đoạn chat"
+                    title={t('messages.about_chat')}
                     isOpen={sections.chatInfo}
                     onToggle={() => toggleSection('chatInfo')}
                     isDarkMode={isDarkMode}
                 >
-                    <InfoItem icon={Pin} label="Xem tin nhắn đã ghim" isDarkMode={isDarkMode} />
+                    <InfoItem icon={Pin} label={t('messages.view_pinned')} isDarkMode={isDarkMode} />
                 </InfoSection>
 
                 {conversation?.type === 'group' && (
                     <InfoSection
-                        title="Thành viên nhóm"
+                        title={t('messages.group_members')}
                         isOpen={sections.members}
                         onToggle={() => toggleSection('members')}
                         isDarkMode={isDarkMode}
@@ -449,7 +452,7 @@ export const ConversationInfo = ({
                                         <div className="flex items-center justify-between">
                                             <p className={`text-sm font-medium truncate ${isDarkMode ? "text-white" : "text-gray-900"}`}>{p.name}</p>
                                             {p.id === currentUserId && (
-                                                <span className="text-[10px] font-medium bg-brand-primary/20 text-brand-primary px-1.5 py-0.5 rounded">Bạn</span>
+                                                <span className="text-[10px] font-medium bg-brand-primary/20 text-brand-primary px-1.5 py-0.5 rounded">{t('messages.you')}</span>
                                             )}
                                         </div>
                                         <p className="text-[11px] opacity-50 truncate">@{p.username || p.id.slice(0, 8)}</p>
@@ -464,50 +467,50 @@ export const ConversationInfo = ({
                 )}
 
                 <InfoSection
-                    title="Tùy chỉnh đoạn chat"
+                    title={t('messages.customize_chat')}
                     isOpen={sections.customization}
                     onToggle={() => toggleSection('customization')}
                     isDarkMode={isDarkMode}
                 >
-                    <InfoItem icon={Palette} label="Đổi chủ đề" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Smile} label="Thay đổi biểu tượng cảm xúc" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Type} label="Chỉnh sửa biệt danh" isDarkMode={isDarkMode} />
+                    <InfoItem icon={Palette} label={t('messages.change_theme')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Smile} label={t('messages.change_emoji')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Type} label={t('messages.edit_nicknames')} isDarkMode={isDarkMode} />
                 </InfoSection>
 
                 <InfoSection
-                    title="File phương tiện & file"
+                    title={t('messages.media_files')}
                     isOpen={sections.media}
                     onToggle={() => toggleSection('media')}
                     isDarkMode={isDarkMode}
                 >
                     <InfoItem
                         icon={ImageIcon}
-                        label="File phương tiện"
+                        label={t('messages.media')}
                         isDarkMode={isDarkMode}
                         onClick={handleMediaClick}
                     />
                     <InfoItem
                         icon={FileText}
-                        label="File"
-                        subLabel={documentFiles.length > 0 ? `${documentFiles.length} tệp` : "Không có tệp nào"}
+                        label={t('messages.files')}
+                        subLabel={documentFiles.length > 0 ? t('messages.files_count', { count: documentFiles.length }) : t('messages.no_files')}
                         isDarkMode={isDarkMode}
                     />
                 </InfoSection>
 
                 <InfoSection
-                    title="Quyền riêng tư và hỗ trợ"
+                    title={t('messages.privacy_support')}
                     isOpen={sections.privacy}
                     onToggle={() => toggleSection('privacy')}
                     isDarkMode={isDarkMode}
                 >
-                    <InfoItem icon={BellOff} label="Tắt thông báo" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Shield} label="Quyền nhắn tin" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Clock} label="Tin nhắn tự hủy" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Eye} label="Thông báo đã đọc" subLabel="Bật" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Lock} label="Xác minh mã hóa đầu cuối" isDarkMode={isDarkMode} />
-                    <InfoItem icon={UserMinus} label="Hạn chế" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Slash} label="Chặn" isDarkMode={isDarkMode} />
-                    <InfoItem icon={AlertCircle} label="Báo cáo" subLabel="Đóng góp ý kiến và báo cáo cuộc trò chuyện" danger isDarkMode={isDarkMode} />
+                    <InfoItem icon={BellOff} label={t('messages.mute_notifications')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Shield} label={t('messages.messaging_permissions')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Clock} label={t('messages.disappearing_messages')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Eye} label={t('messages.read_receipts')} subLabel={t('messages.on')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Lock} label={t('messages.verify_encryption')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={UserMinus} label={t('messages.restrict')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Slash} label={t('messages.block')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={AlertCircle} label={t('messages.report')} subLabel={t('messages.report_desc')} danger isDarkMode={isDarkMode} />
                 </InfoSection>
             </div>
 

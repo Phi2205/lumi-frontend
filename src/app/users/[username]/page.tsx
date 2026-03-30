@@ -22,8 +22,11 @@ import { ProfileContent } from "@/components/profile/ProfileContent"
 import { useDarkMode } from "@/hooks/useDarkMode"
 import { useBackgroundImage } from "@/hooks/useBackgroundImage"
 import { BackgroundRenderer } from "@/components/BackgroundRenderer"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 export default function UserProfilePage() {
+  const { t } = useTranslation()
   const params = useParams()
   const username = params.username as string
   const { user } = useAuth()
@@ -184,7 +187,7 @@ export default function UserProfilePage() {
           title={
             <div className="flex items-center gap-3 text-red-500">
               <AlertCircle className="w-6 h-6" />
-              <span>Unfriend?</span>
+              <span>{t('profile.unfriend_title')}</span>
             </div>
           }
           maxWidthClassName="max-w-md"
@@ -192,8 +195,9 @@ export default function UserProfilePage() {
           <div className="space-y-6">
             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
               <p className="text-white/80 text-center leading-relaxed">
-                Are you sure you want to unfriend <span className="text-white font-bold">{userProfile?.name}</span>?
-                This will remove them from your friend list.
+                {t('profile.unfriend_confirm', { name: userProfile?.name })}
+                <br />
+                {t('profile.unfriend_desc')}
               </p>
             </div>
 
@@ -202,14 +206,14 @@ export default function UserProfilePage() {
                 className="flex-1 bg-white/5 hover:bg-white/10"
                 onClick={() => setShowUnfriendModal(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </GlassButton>
               <GlassButton
                 className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/30 font-bold h-11 rounded-xl"
                 onClick={confirmDeleteFriend}
                 disabled={isLoading}
               >
-                {isLoading ? "Processing..." : "Unfriend"}
+                {isLoading ? t('profile.processing') : t('profile.unfriend')}
               </GlassButton>
             </div>
           </div>

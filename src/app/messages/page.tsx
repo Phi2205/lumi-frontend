@@ -17,12 +17,15 @@ import { useJumpMessages } from "@/hooks/chat/useJumpMessages"
 import { useChatRealtime } from "@/socket/chat/useChatRealtime"
 import { usePresenceRealtime } from "@/socket/presence/usePresenceRealtime"
 import { CreateGroupModal } from "@/components/messages/CreateGroupModal"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 // export default function Page() {
 //   return <div>Test messages</div>
 // }
 
 export default function MessagesPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [jumpMessageId, setJumpMessageId] = useState<string | null>(null)
@@ -216,7 +219,7 @@ export default function MessagesPage() {
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="text-white/50 text-sm">Select a conversation to start messaging</div>
+                <div className="text-white/50 text-sm">{t('messages.select_to_start')}</div>
               </div>
             </div>
           )}

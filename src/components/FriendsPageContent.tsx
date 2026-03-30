@@ -12,8 +12,11 @@ import { useRouter } from "next/navigation"
 import { StoryAvatar } from "@/components/ui/avatar"
 import { GlassButton } from "@/lib/components/glass-button"
 import { useMiniChat } from "@/components/messages/MiniChatContext"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 export function FriendsPageContent() {
+    const { t } = useTranslation()
     const router = useRouter()
     const { openChat } = useMiniChat()
     const [requestFriendList, setRequestFriendList] = useState<FriendRequestItem[]>([])
@@ -135,7 +138,7 @@ export function FriendsPageContent() {
                         <div className="p-2 rounded-xl bg-brand-primary/20 text-brand-primary">
                             <UserCheck className="w-5 h-5" />
                         </div>
-                        <h2 className="text-xl font-bold text-white">Friend Requests</h2>
+                        <h2 className="text-xl font-bold text-white">{t('friends.requests')}</h2>
                         <span className="ml-2 px-2 py-0.5 rounded-full bg-white/10 text-white/60 text-xs font-medium">
                             {requestFriendList.length}
                         </span>
@@ -184,7 +187,7 @@ export function FriendsPageContent() {
                                                         <X className="w-4 h-4 text-red-400" />
                                                     )}
                                                     <span className={((req as any).actionStatus === 'accepted') ? "text-green-400 text-xs font-bold" : "text-red-400 text-xs font-bold"}>
-                                                        {(req as any).actionStatus === 'accepted' ? 'Đã chấp nhận lời mời' : 'Đã từ chối lời mời'}
+                                                        {(req as any).actionStatus === 'accepted' ? t('friends.accepted') : t('friends.rejected')}
                                                     </span>
                                                 </div>
                                             </div>
@@ -198,7 +201,7 @@ export function FriendsPageContent() {
                                                     disabled={isProcessing}
                                                 >
                                                     <Check className="w-3 h-3" />
-                                                    {isProcessing ? 'Processing...' : 'Accept'}
+                                                    {isProcessing ? t('friends.processing') : t('friends.accept')}
                                                 </GlassButton>
                                                 <GlassButton
                                                     size="sm"
@@ -208,7 +211,7 @@ export function FriendsPageContent() {
                                                     disabled={isProcessing}
                                                 >
                                                     <X className="w-3 h-3" />
-                                                    {isProcessing ? 'Processing...' : 'Reject'}
+                                                    {isProcessing ? t('friends.processing') : t('friends.reject')}
                                                 </GlassButton>
                                             </div>
                                         )}
@@ -227,10 +230,10 @@ export function FriendsPageContent() {
                                 disabled={isLoadingMoreRequests}
                             >
                                 {isLoadingMoreRequests ? (
-                                    'Loading...'
+                                    t('friends.loading')
                                 ) : (
                                     <>
-                                        <span>View More Requests</span>
+                                        <span>{t('friends.view_more')}</span>
                                         <ChevronDown className="w-4 h-4" />
                                     </>
                                 )}
@@ -246,7 +249,7 @@ export function FriendsPageContent() {
                     <div className="p-2 rounded-xl bg-brand-primary/20 text-brand-primary">
                         <UserPlus className="w-5 h-5" />
                     </div>
-                    <h2 className="text-xl font-bold text-white">Suggested for you</h2>
+                    <h2 className="text-xl font-bold text-white">{t('friends.suggested')}</h2>
                 </div>
 
                 {isRecommendLoading ? (
@@ -284,7 +287,7 @@ export function FriendsPageContent() {
                                         >
                                             {item.user.name}
                                         </p>
-                                        <p className="text-[10px] text-white/30 mt-1">Suggested for you</p>
+                                        <p className="text-[10px] text-white/30 mt-1">{t('friends.suggested')}</p>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
@@ -296,7 +299,7 @@ export function FriendsPageContent() {
                                         disabled={processingIds.has(item.user.id)}
                                     >
                                         <UserPlus className="w-3.5 h-3.5" />
-                                        {processingIds.has(item.user.id) ? 'Sending...' : 'Add Friend'}
+                                        {processingIds.has(item.user.id) ? t('friends.sending') : t('friends.add_friend')}
                                     </GlassButton>
                                     <GlassButton
                                         size="sm"
@@ -309,7 +312,7 @@ export function FriendsPageContent() {
                                         })}
                                     >
                                         <MessageSquare className="w-3.5 h-3.5" />
-                                        Message
+                                        {t('friends.message')}
                                     </GlassButton>
                                 </div>
                             </div>
@@ -317,7 +320,7 @@ export function FriendsPageContent() {
                     </div>
                 ) : (
                     <div className="backdrop-blur-xl bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
-                        <p className="text-white/40">No suggestions available at the moment</p>
+                        <p className="text-white/40">{t('friends.no_suggestions')}</p>
                     </div>
                 )}
             </section>

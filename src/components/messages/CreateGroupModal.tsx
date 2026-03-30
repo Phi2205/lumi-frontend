@@ -8,6 +8,8 @@ import { StoryAvatar } from "@/components/ui/avatar"
 import { createGroupConversationService } from "@/services/conversation.service"
 import { getFriendsService } from "@/services/friend.service"
 import { User } from "@/types/user.type"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface CreateGroupModalProps {
     isOpen: boolean
@@ -17,6 +19,7 @@ interface CreateGroupModalProps {
 }
 
 export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true }: CreateGroupModalProps) => {
+    const { t } = useTranslation()
     const [groupName, setGroupName] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
     const [friends, setFriends] = useState<User[]>([])
@@ -159,7 +162,7 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
                         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 flex items-center justify-center border border-brand-primary/20">
                             <Users className="w-5 h-5 text-cyan-300" />
                         </div>
-                        <h3 className="font-bold text-xl tracking-tight text-white">Tạo nhóm mới</h3>
+                        <h3 className="font-bold text-xl tracking-tight text-white">{t('messages.new_group')}</h3>
                     </div>
                     <button
                         onClick={onClose}
@@ -175,9 +178,9 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
                 >
                     {/* Group Name Input */}
                     <div className="space-y-3">
-                        <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/80 ml-1">Tên nhóm</label>
+                        <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/80 ml-1">{t('messages.group_name')}</label>
                         <GlassInput
-                            placeholder="Nhập tên nhóm hội thoại..."
+                            placeholder={t('messages.enter_group_name')}
                             value={groupName}
                             onChange={(e) => setGroupName(e.target.value)}
                             className="bg-white/5 border-white/15 focus:border-brand-primary/40 h-13 rounded-2xl text-[15px] text-white placeholder:text-white/30"
@@ -186,7 +189,7 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
 
                     {/* Member Selection */}
                     <div className="space-y-3 flex flex-col">
-                        <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/80 ml-1">Thành viên ({selectedUsers.length})</label>
+                        <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/80 ml-1">{t('messages.members')} ({selectedUsers.length})</label>
 
                         {/* Selected Members Chips */}
                         {selectedUsers.length > 0 && (
@@ -209,7 +212,7 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
                         <div className="relative group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-white/50 group-focus-within:text-brand-primary transition-colors" />
                             <input
-                                placeholder="Tìm kiếm bạn bè..."
+                                placeholder={t('messages.search_friends')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className={`w-full pl-12 pr-4 py-3.5 border rounded-2xl text-[14px] focus:outline-none transition-all duration-300 bg-white/5 border-white/15 focus:border-cyan-500/50 text-white placeholder:text-white/30`}
@@ -221,7 +224,7 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
                             {isLoading ? (
                                 <div className="flex flex-col items-center justify-center py-16">
                                     <Loader2 className="w-8 h-8 animate-spin mb-3 text-cyan-400" />
-                                    <p className="text-sm font-medium text-white/70">Đang tải bạn bè...</p>
+                                    <p className="text-sm font-medium text-white/70">{t('messages.loading_friends')}</p>
                                 </div>
                             ) : filteredFriends.length > 0 ? (
                                 filteredFriends.map(u => (
@@ -257,7 +260,7 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
                                 <div className="flex flex-col items-center justify-center py-12">
                                     <Users className="w-12 h-12 mb-3 text-white/20" />
                                     <p className="text-sm font-medium text-white/50">
-                                        {searchQuery ? "Không tìm thấy bạn bè nào" : "Danh sách bạn bè trống"}
+                                        {searchQuery ? t('messages.no_friends_found') : t('messages.empty_friends')}
                                     </p>
                                 </div>
                             )}
@@ -280,13 +283,13 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
                         {isCreating ? (
                             <div className="flex items-center gap-3">
                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                <span>ĐANG TẠO NHÓM...</span>
+                                <span>{t('messages.creating_group')}</span>
                             </div>
                         ) : (
                             <div className="flex items-center gap-3">
-                                <span>TẠO NHÓM</span>
+                                <span>{t('messages.create_group_btn')}</span>
                                 <div className="px-2 py-0.5 rounded-md bg-white/20 text-[11px]">
-                                    {selectedUsers.length} BẠN BÈ
+                                    {t('messages.friends_count', { count: selectedUsers.length })}
                                 </div>
                             </div>
                         )}

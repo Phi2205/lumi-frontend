@@ -11,6 +11,8 @@ import { userHoverCard as getUserHoverCard } from "@/services/user.service"
 import { UserHoverCard as UserHoverCardType } from "@/types/user.type"
 import { Skeleton, SkeletonAvatar } from "@/components/skeleton"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface UserHoverCardProps {
     userId: string
@@ -43,6 +45,7 @@ export function UserHoverCard({
     children,
     className,
 }: UserHoverCardProps) {
+    const { t } = useTranslation()
     const router = useRouter()
     const [isOpen, setIsOpen] = useState(false)
     const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -173,7 +176,7 @@ export function UserHoverCard({
                                 <h3 className="text-white font-bold text-lg leading-tight">{userData?.name || name}</h3>
                                 {(userData?.friend_count ?? mutualFriends) > 0 && (
                                     <p className="text-white/60 text-xs mt-1">
-                                        {userData?.friend_count ?? mutualFriends} bạn bè
+                                        {t('friends.friends_count', { count: userData?.friend_count ?? mutualFriends })}
                                     </p>
                                 )}
                             </div>
@@ -181,7 +184,7 @@ export function UserHoverCard({
                     )}
 
                     {!isLoading && !userData && !name && (
-                        <p className="text-white/40 text-sm text-center py-4">Có lỗi xảy ra khi tải thông tin</p>
+                        <p className="text-white/40 text-sm text-center py-4">{t('common.error_loading')}</p>
                     )}
 
                     {/* Education */}
@@ -233,7 +236,7 @@ export function UserHoverCard({
                                 className="flex-1 backdrop-blur-lg bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 h-10"
                             >
                                 <MessageCircle className="w-4 h-4" />
-                                Nhắn tin
+                                {t('common.message')}
                             </Button>
 
                             {/* Follow Button */}
@@ -247,7 +250,7 @@ export function UserHoverCard({
                                 )}
                             >
                                 <UserPlus className="w-4 h-4" />
-                                {isFollowing ? "Đã theo dõi" : "Theo dõi"}
+                                {isFollowing ? t('common.following') : t('common.follow')}
                             </Button>
 
                             {/* Profile Button */}

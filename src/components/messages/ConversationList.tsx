@@ -6,6 +6,8 @@ import { useState, memo, useDeferredValue, useMemo, useEffect } from "react"
 import { SkeletonConversationList } from "@/components/skeleton"
 import { GlassButton } from "@/lib/components/glass-button"
 import { CreateGroupModal } from "./CreateGroupModal"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 export interface ParticipantUI {
   id: string
@@ -63,7 +65,7 @@ const ConversationItem = memo(({
         }`}
     >
       <div className="relative flex-shrink-0">
-        <StoryAvatar className="w-12 h-12" src={conversation.avatar || (conversation.type === 'group' ? "/avatar-group-default.jpg" : "/avatar-default.jpg" )} alt={conversation.name} hasStory={false} />
+        <StoryAvatar className="w-12 h-12" src={conversation.avatar || (conversation.type === 'group' ? "/avatar-group-default.jpg" : "/avatar-default.jpg")} alt={conversation.name} hasStory={false} />
         {conversation.isOnline && (
           <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-400 ring-2 ring-zinc-900" />
         )}
@@ -98,6 +100,7 @@ const ConversationItem = memo(({
 ConversationItem.displayName = "ConversationItem";
 
 export function ConversationList({ conversations, selectedId, onSelect, loading, onOpenCreateGroup }: ConversationListProps) {
+  const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState("")
   const deferredQuery = useDeferredValue(searchQuery)
 
@@ -122,7 +125,7 @@ export function ConversationList({ conversations, selectedId, onSelect, loading,
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-300" />
             <input
-              placeholder="Tìm kiếm..."
+              placeholder={t('messages.search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-white placeholder-white/50 focus:outline-none transition-all bg-white/10 border border-white/10"
@@ -133,7 +136,7 @@ export function ConversationList({ conversations, selectedId, onSelect, loading,
             size="sm"
             onClick={onOpenCreateGroup}
             className="h-10 w-10 p-0 rounded-full flex-shrink-0 border-white/10 hover:bg-brand-primary/20"
-            title="Tạo nhóm"
+            title={t('messages.create_group')}
           >
             <PlusCircle className="h-5 w-5 text-cyan-300" />
           </GlassButton>
@@ -159,10 +162,10 @@ export function ConversationList({ conversations, selectedId, onSelect, loading,
           ))
         ) : (
           <div className="p-4 text-center text-white/40 text-sm">
-            No conversations found
+            {t('messages.no_conversations')}
           </div>
         )}
       </div>
-    </div>
+    </div >
   )
 }

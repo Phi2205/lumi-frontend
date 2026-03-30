@@ -23,9 +23,9 @@ export const mapConversationToUI = (conv: ApiConversation, currentUserId: string
     console.log("conv", conv.unread_count);
     return {
         id: conv.id,
-        name: name || "Người dùng Lumi",
+        name: name || "Lumi User",
         avatar: avatar,
-        lastMessage: conv.last_message || "Chưa có tin nhắn",
+        lastMessage: conv.last_message || "No messages yet",
         type: conv.type,
         timestamp: conv.last_message_at ? formatTime(conv.last_message_at) : "",
         unread: (conv.unread_count || 0) > 0,

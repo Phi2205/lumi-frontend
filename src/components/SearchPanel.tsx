@@ -7,6 +7,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { filterUser } from "@/services/user.service"
 import { User } from "@/types/user.type"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface SearchPanelProps {
   isOpen: boolean
@@ -14,6 +16,7 @@ interface SearchPanelProps {
 }
 
 export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
+  const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState("")
   const [searchResults, setSearchResults] = useState<User[]>([])
   const [isSearching, setIsSearching] = useState(false)
@@ -27,7 +30,7 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
     }
 
     setIsSearching(true)
-    
+
     // Tạo timeout mới
     const timeoutId = setTimeout(async () => {
       try {
@@ -69,10 +72,10 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
         {/* Header */}
         <div className="p-6 border-b border-white/20">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-white">Tìm kiếm</h2>
+            <h2 className="text-2xl font-bold text-white">{t('search.title')}</h2>
             <button
               type="button"
-              aria-label="Đóng tìm kiếm"
+              aria-label={t('search.close')}
               onClick={onClose}
               className="md:hidden text-white/60 hover:text-white transition-colors"
             >
@@ -84,7 +87,7 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
             <Input
-              placeholder="Tìm kiếm..."
+              placeholder={t('search.placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-10 rounded-xl border-white/20 backdrop-blur-2xl bg-white/10 text-white placeholder:text-white/50"
@@ -93,7 +96,7 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
             {searchQuery && (
               <button
                 type="button"
-                aria-label="Xóa nội dung tìm kiếm"
+                aria-label={t('search.clear')}
                 onClick={clearSearch}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors"
               >
@@ -107,14 +110,14 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
         <div className="flex-1 overflow-y-auto">
           {!searchQuery ? (
             <div className="p-6">
-              <h3 className="text-sm font-semibold text-white/60 mb-4">Mới đây</h3>
+              <h3 className="text-sm font-semibold text-white/60 mb-4">{t('search.recent')}</h3>
               <p className="text-white/40 text-sm text-center py-8">
-                Không có nội dung tìm kiếm mới đây.
+                {t('search.no_recent')}
               </p>
             </div>
           ) : isSearching ? (
             <div className="p-6 text-center text-white/60">
-              Đang tìm kiếm...
+              {t('search.searching')}
             </div>
           ) : searchResults.length > 0 ? (
             <div className="py-1">
@@ -126,7 +129,7 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
                 >
                   <Avatar className="h-10 w-10 ring-1 ring-white/20">
                     <AvatarImage src={user.avatar_url || "/avatar-default.jpg"} alt={user.username} />
-                  <AvatarFallback className="bg-linear-to-br from-blue-400 to-cyan-400 text-sm">
+                    <AvatarFallback className="bg-linear-to-br from-blue-400 to-cyan-400 text-sm">
                       {user.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -141,7 +144,7 @@ export function SearchPanel({ isOpen, onClose }: SearchPanelProps) {
             </div>
           ) : (
             <div className="p-6 text-center">
-              <p className="text-white/60 text-sm">Không tìm thấy kết quả</p>
+              <p className="text-white/60 text-sm">{t('search.no_results')}</p>
             </div>
           )}
         </div>
