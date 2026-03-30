@@ -54,14 +54,21 @@ export function ReelViewer({
             let targetIndex = -1
 
             if (reelId) {
-                targetIndex = reels.findIndex(r => r.id === reelId)
-            } else if (startIndex > 0 && startIndex < reels.length) {
+                targetIndex = reels.findIndex(r => String(r.id) === String(reelId))
+            }
+
+            if (targetIndex === -1 && startIndex >= 0 && startIndex < reels.length) {
                 targetIndex = startIndex
             }
 
-            // Nếu tìm thấy reel mục tiêu, cuộn tới nó
+            // Nếu vẫn không tìm thấy, mặc định lấy cái đầu tiên để trang có thể hiển thị (tránh kẹt isReady = false)
+            if (targetIndex === -1 && reels.length > 0) {
+                targetIndex = 0
+            }
+
+            // Nếu tìm thấy reel mục tiêu (hoặc fallback), cuộn tới nó
             if (targetIndex !== -1) {
-                // Nếu là reel đầu tiên, không cần cuộn dài và không cần ẩn
+                // Nếu là reel đầu tiên, hiển thị ngay
                 if (targetIndex === 0) {
                     setIsReady(true)
                 }
@@ -72,22 +79,18 @@ export function ReelViewer({
                         setActiveIndex(targetIndex)
                         // Một chút delay cho việc scroll hoàn tất trước khi hiện
                         setTimeout(() => setIsReady(true), 150)
+                    } else {
+                        // Trường hợp khẩn cấp nếu ref chưa sẵn sàng
+                        setIsReady(true)
                     }
                 }, 100)
 
-                // Cập nhật URL nếu thiếu reel_id
-                if (!reelId) {
+                // Cập nhật URL nếu reel_id trong URL khác với reel đang hiển thị thực tế
+                if (reelId !== reels[targetIndex].id) {
                     const url = new URL(window.location.href)
                     url.searchParams.set("reel_id", reels[targetIndex].id)
                     window.history.replaceState({}, "", url.toString())
                 }
-                hasInitialScrolled.current = true
-            } else if (!reelId && reels[0]) {
-                // Mặc định là reel đầu tiên
-                const url = new URL(window.location.href)
-                url.searchParams.set("reel_id", reels[0].id)
-                window.history.replaceState({}, "", url.toString())
-                setIsReady(true)
                 hasInitialScrolled.current = true
             }
         }

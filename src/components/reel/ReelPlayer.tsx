@@ -127,7 +127,7 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
             <div className="flex w-full h-full max-w-full justify-center relative z-10 transition-all duration-300 ease-in-out">
                 {/* ─── Main Player Container ─── */}
                 {/* Giới hạn max-width cho máy tính, điện thoại thì full màn */}
-                <div className={`relative w-full h-full sm:max-w-[420px] md:max-w-[480px] lg:max-w-[600px] sm:rounded-[2rem] overflow-hidden bg-black flex items-center justify-center z-10 sm:ring-1 sm:ring-white/10 shadow-2xl flex-shrink-0 transition-all duration-300`}>
+                <div className={`relative w-full h-full sm:max-w-[420px] md:max-w-[480px] lg:max-w-[600px] sm:rounded-[2rem] overflow-hidden bg-black/80 backdrop-blur-sm flex items-center justify-center z-10 sm:ring-1 sm:ring-white/10 shadow-2xl flex-shrink-0 transition-all duration-300`}>
 
                     {/* ─── Video ─── */}
                     <video
