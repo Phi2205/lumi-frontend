@@ -20,6 +20,8 @@ interface ReelViewerProps {
     startIndex?: number
     /** Chế độ xem: discovery (sidebar) hoặc user (từ profile) */
     viewMode?: 'discovery' | 'user'
+    /** Gọi khi component đã sẵn sàng hiển thị nội dung đầu tiên */
+    onReady?: () => void
 }
 
 export function ReelViewer({
@@ -29,6 +31,7 @@ export function ReelViewer({
     loading = false,
     startIndex = 0,
     viewMode = 'discovery',
+    onReady
 }: ReelViewerProps) {
     console.log("reels", reels)
     const [activeIndex, setActiveIndex] = useState(startIndex)
@@ -42,6 +45,12 @@ export function ReelViewer({
         setIsGlobalMuted(prev => !prev)
     }, [])
 
+    useEffect(() => {
+        if (isReady && onReady) {
+            onReady()
+        }
+    }, [isReady, onReady])
+
     const hasInitialScrolled = useRef(false)
 
     // Lần đầu load: Cuộn tới reel được chọn (theo ID hoặc Index)
@@ -54,12 +63,14 @@ export function ReelViewer({
             let targetIndex = -1
 
             if (reelId) {
+                console.log("reels", reelId)
                 targetIndex = reels.findIndex(r => String(r.id) === String(reelId))
             }
 
             if (targetIndex === -1 && startIndex >= 0 && startIndex < reels.length) {
                 targetIndex = startIndex
             }
+            console.log("targetIndex", targetIndex)
 
             // Nếu vẫn không tìm thấy, mặc định lấy cái đầu tiên để trang có thể hiển thị (tránh kẹt isReady = false)
             if (targetIndex === -1 && reels.length > 0) {
@@ -110,10 +121,10 @@ export function ReelViewer({
 
                     const index = Number(indexStr);
                     setActiveIndex(index);
-
                     // Update URL
                     const currentReel = reels[index];
-                    if (currentReel && typeof window !== 'undefined') {
+                    console.log("currentReel", currentReel)
+                    if (currentReel) {
                         const url = new URL(window.location.href);
                         url.searchParams.set("reel_id", currentReel.id);
                         window.history.replaceState({}, "", url.toString());

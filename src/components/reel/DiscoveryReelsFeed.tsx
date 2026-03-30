@@ -11,6 +11,7 @@ export function DiscoveryReelsFeed({ startIndex = 0 }: { startIndex?: number }) 
     const [loading, setLoading] = useState(false)
     const [hasMore, setHasMore] = useState(true)
     const [initialLoaded, setInitialLoaded] = useState(false)
+    const [isViewerReady, setIsViewerReady] = useState(false)
     const loadingRef = useRef(false)
 
     const fetchReels = useCallback(async (isAppend: boolean = false) => {
@@ -38,6 +39,11 @@ export function DiscoveryReelsFeed({ startIndex = 0 }: { startIndex?: number }) 
                     return [...prev, ...uniqueNewItems]
                 })
                 setHasMore(items.length > 0)
+
+                // If the first load is empty, we must tell the feed we are "ready" to show empty state
+                if (!isAppend && items.length === 0) {
+                    setIsViewerReady(true)
+                }
             }
         } catch (error) {
             console.error("Error fetching discovery reels:", error)
@@ -57,18 +63,25 @@ export function DiscoveryReelsFeed({ startIndex = 0 }: { startIndex?: number }) 
         fetchReels(true)
     }, [hasMore, fetchReels])
 
-    if (!initialLoaded) {
-        return <ReelSkeleton />
-    }
-
     return (
-        <ReelViewer
-            reels={reels}
-            onLoadMore={handleLoadMore}
-            hasMore={hasMore}
-            loading={loading}
-            startIndex={startIndex}
-            viewMode="discovery"
-        />
+        <>
+            {(!initialLoaded || !isViewerReady) && (
+                <div className={`fixed inset-0 z-[100] transition-opacity duration-500 ease-in-out ${initialLoaded && isViewerReady ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+                    <ReelSkeleton />
+                </div>
+            )}
+
+            {initialLoaded && (
+                <ReelViewer
+                    reels={reels}
+                    onLoadMore={handleLoadMore}
+                    hasMore={hasMore}
+                    loading={loading}
+                    startIndex={startIndex}
+                    viewMode="discovery"
+                    onReady={() => setIsViewerReady(true)}
+                />
+            )}
+        </>
     )
 }

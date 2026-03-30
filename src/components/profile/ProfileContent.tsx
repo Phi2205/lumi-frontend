@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { MapPin, Calendar, Heart, MessageSquare, Send, ArrowLeft, Pencil, Edit, Share2, Play, LayoutGrid, Plus, Loader2 } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -61,6 +61,7 @@ export function ProfileContent({
 }: ProfileContentProps) {
     const { t } = useTranslation()
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { setReelData } = useReelContext()
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const [initialEditField, setInitialEditField] = useState<'bio' | 'birthday' | 'location' | null>(null)
@@ -68,7 +69,25 @@ export function ProfileContent({
     const [friendModalType, setFriendModalType] = useState<"friends" | "mutual">("friends")
     const [friendsCount, setFriendsCount] = useState(0)
     const [mutualCount, setMutualCount] = useState(0)
-    const [activeContentTab, setActiveContentTab] = useState<"posts" | "reels">("posts")
+
+    // Initialize tab from URL
+    const [activeContentTab, setActiveContentTab] = useState<"posts" | "reels">(() => {
+        const tab = searchParams.get("tab")
+        return tab === "reels" ? "reels" : "posts"
+    })
+
+    // Handle tab change and update URL
+    const handleTabChange = (tab: "posts" | "reels") => {
+        setActiveContentTab(tab)
+        const url = new URL(window.location.href)
+        if (tab === "reels") {
+            url.searchParams.set("tab", "reels")
+        } else {
+            url.searchParams.delete("tab")
+        }
+        router.replace(url.pathname + url.search, { scroll: false })
+    }
+
     const [isCreateReelModalOpen, setIsCreateReelModalOpen] = useState(false)
 
     // Posts state
@@ -349,7 +368,7 @@ export function ProfileContent({
                     <div className="flex items-center justify-between mb-8 border-b border-white/10">
                         <div className="flex items-center gap-8">
                             <button
-                                onClick={() => setActiveContentTab("posts")}
+                                onClick={() => handleTabChange("posts")}
                                 className={cn(
                                     "flex items-center gap-2 pb-4 text-sm font-semibold transition-all relative",
                                     activeContentTab === "posts" ? "text-white" : "text-white/40 hover:text-white/60"
@@ -362,7 +381,7 @@ export function ProfileContent({
                                 )}
                             </button>
                             <button
-                                onClick={() => setActiveContentTab("reels")}
+                                onClick={() => handleTabChange("reels")}
                                 className={cn(
                                     "flex items-center gap-2 pb-4 text-sm font-semibold transition-all relative",
                                     activeContentTab === "reels" ? "text-white" : "text-white/40 hover:text-white/60"
@@ -489,7 +508,8 @@ export function ProfileContent({
                                                         hasMore: reelsHasMore,
                                                         userId: userProfile?.id,
                                                     })
-                                                    router.push(`/reels?userId=${userProfile?.id}&startIndex=${index}&reel_id=${reel.id}`)
+                                                    // Sử dụng Dynamic Route mới: /reels/[userId]
+                                                    router.push(`/reels/${userProfile?.id}?startIndex=${index}&reel_id=${reel.id}`)
                                                 }}
                                             >
                                                 <Image src={reel.thumbnail_url} alt={reel.caption || "Reel"} fill className="object-cover group-hover:scale-105 transition-transform duration-300" />

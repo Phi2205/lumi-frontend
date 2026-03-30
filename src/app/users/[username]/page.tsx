@@ -20,8 +20,6 @@ import { useAuth } from "@/contexts/AuthContext"
 import { mapConversationToUI } from "@/services/conversation.service"
 import { ProfileContent } from "@/components/profile/ProfileContent"
 import { useDarkMode } from "@/hooks/useDarkMode"
-import { useBackgroundImage } from "@/hooks/useBackgroundImage"
-import { BackgroundRenderer } from "@/components/BackgroundRenderer"
 import { useTranslation } from "react-i18next"
 import "@/lib/i18n"
 
@@ -37,7 +35,6 @@ export default function UserProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
-  const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
   const { openChat } = useMiniChat()
   const [isStartingChat, setIsStartingChat] = useState(false)
   const [showUnfriendModal, setShowUnfriendModal] = useState(false)
@@ -156,12 +153,6 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <BackgroundRenderer
-        isDarkMode={isDarkMode}
-        imageLoaded={imageLoaded}
-        imageError={imageError}
-      />
-
       <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 

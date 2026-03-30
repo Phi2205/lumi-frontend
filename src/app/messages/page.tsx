@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { ConversationList, type ConversationUI } from "@/components/messages/ConversationList"
 import { ChatWindow, type MessageUI } from "@/components/messages/ChatWindow"
 import { useDarkMode } from "@/hooks/useDarkMode"
-import { BackgroundRenderer } from "@/components/BackgroundRenderer"
-import { useBackgroundImage } from "@/hooks/useBackgroundImage"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { ChevronLeft } from "lucide-react"
@@ -86,11 +84,8 @@ export default function MessagesPage() {
     }
   });
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
-  const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
   const [showChatMobile, setShowChatMobile] = useState(false)
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
-
-
 
   // Set default selected conversation when list loads
   useEffect(() => {
@@ -141,12 +136,6 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <BackgroundRenderer
-        isDarkMode={isDarkMode}
-        imageLoaded={imageLoaded}
-        imageError={imageError}
-      />
-
       <div className={`${showChatMobile ? 'hidden lg:block' : 'block'}`}>
         <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
       </div>

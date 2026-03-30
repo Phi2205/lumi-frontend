@@ -10,6 +10,7 @@ import { UploadStack } from "@/components/common/UploadStack"
 import { ReelProvider } from "@/contexts/ReelContext"
 import { StoryProvider } from "@/contexts/StoryContext"
 import { DarkModeProvider } from "@/contexts/DarkModeContext"
+import { PersistentBackground } from "@/components/layout/PersistentBackground"
 import "./globals.css"
 
 const _geist = Geist({ subsets: ["latin"] })
@@ -60,6 +61,7 @@ export default function RootLayout({
                 <ReelProvider>
                   <StoryProvider>
                     <DarkModeProvider>
+                      <PersistentBackground />
                       {children}
                       {modal}
                       <UploadStack />

@@ -22,7 +22,7 @@ interface SidebarProps {
 const menuItems = [
   { id: "home", icon: Home },
   { id: "search", icon: Search },
-  { id: "blog", icon: BookOpen },
+  // { id: "blog", icon: BookOpen },
   { id: "reels", icon: Play },
   // { id: "stories", icon: Zap },
   { id: "friends", icon: Users },
