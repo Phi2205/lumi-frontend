@@ -20,7 +20,7 @@ export const mapConversationToUI = (conv: ApiConversation, currentUserId: string
     }
 
     const myParticipant = conv.participants.find(p => p.id === currentUserId);
-    console.log("conv", conv.unread_count);
+    console.log("conv time", typeof conv.last_message_at, conv.last_message_at, formatTime(conv.last_message_at ? new Date(conv.last_message_at) : new Date()));
     return {
         id: conv.id,
         name: name || "Lumi User",

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { ConversationList, type ConversationUI } from "@/components/messages/ConversationList"
 import { ChatWindow, type MessageUI } from "@/components/messages/ChatWindow"
 import { useDarkMode } from "@/hooks/useDarkMode"
@@ -25,6 +26,8 @@ import "@/lib/i18n"
 export default function MessagesPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const searchParams = useSearchParams()
+  const targetConversationId = searchParams.get('conversationId')
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [jumpMessageId, setJumpMessageId] = useState<string | null>(null)
   const { conversations, loading, error, reload, setConversations, markAsRead } = useConversations()
@@ -87,12 +90,20 @@ export default function MessagesPage() {
   const [showChatMobile, setShowChatMobile] = useState(false)
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
 
+  // Auto-select from URL query param (navigated from profile on mobile)
+  useEffect(() => {
+    if (targetConversationId && conversations.length > 0) {
+      setSelectedConversationId(targetConversationId)
+      setShowChatMobile(true)
+    }
+  }, [targetConversationId, conversations])
+
   // Set default selected conversation when list loads
   useEffect(() => {
-    if (conversations.length > 0 && !selectedConversationId) {
+    if (conversations.length > 0 && !selectedConversationId && !targetConversationId) {
       setSelectedConversationId(conversations[0].id);
     }
-  }, [conversations, selectedConversationId]);
+  }, [conversations, selectedConversationId, targetConversationId]);
 
   // Auto-show chat on mobile when selection changed if not already shown
   useEffect(() => {

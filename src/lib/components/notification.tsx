@@ -91,9 +91,11 @@ export const Notification: React.FC<NotificationProps> = ({
 
   return (
     <div
-      className="fixed top-20 right-5 z-[101] p-0 pointer-events-none"
+      className="fixed top-20 left-1/2 -translate-x-1/2 sm:right-5 sm:left-auto sm:translate-x-0 z-[9999] w-[92%] sm:w-full sm:max-w-[400px] p-0 pointer-events-none transition-all duration-500 ease-in-out"
       style={{
-        animation: 'slideInRight 0.3s ease'
+        animation: typeof window !== 'undefined' && window.innerWidth < 640
+          ? 'slideInDown 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+          : 'slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
       }}
     >
       <style>{`
@@ -107,10 +109,20 @@ export const Notification: React.FC<NotificationProps> = ({
             transform: translateX(0);
           }
         }
+        @keyframes slideInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-100%) translateX(-50%);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) translateX(-50%);
+          }
+        }
       `}</style>
 
       <div
-        className="relative w-full max-w-[400px] backdrop-blur-[20px] rounded-2xl pointer-events-auto shadow-2xl"
+        className="relative w-full backdrop-blur-[20px] rounded-2xl pointer-events-auto shadow-2xl overflow-hidden"
         style={{
           WebkitBackdropFilter: 'blur(20px)',
           border: `1px solid ${config.borderColor}`

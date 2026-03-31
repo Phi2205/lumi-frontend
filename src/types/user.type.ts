@@ -8,6 +8,7 @@ export interface User {
   name: string;
   email: string;
   avatar_url?: string;
+  cover_image?: string;
   bio?: string;
   friend_status?: FriendshipStatus;
   location?: string;

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { RightSidebar } from "@/components/RightSidebar"
@@ -38,6 +38,7 @@ export default function UserProfilePage() {
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const { openChat } = useMiniChat()
+  const router = useRouter()
   const [isStartingChat, setIsStartingChat] = useState(false)
   const [showUnfriendModal, setShowUnfriendModal] = useState(false)
 
@@ -137,15 +138,21 @@ export default function UserProfilePage() {
       const res = await getOrCreatePrivateConversationApi(userProfile.id)
       if (res.data.success) {
         const conversation = res.data.data
-        const mapped = mapConversationToUI(conversation, user?.id || "")
-        openChat({
-          recipientId: userProfile.id,
-          recipientName: userProfile.name || "User",
-          recipientAvatar: userProfile.avatar_url || "/avatar-default.jpg",
-          conversationId: conversation.id,
-          participants: mapped.participants,
-          lastSeenMessageId: mapped.lastSeenMessageId,
-        })
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024
+        if (isMobile) {
+          // Navigate to messages page directly on mobile
+          router.push(`/messages?conversationId=${conversation.id}`)
+        } else {
+          const mapped = mapConversationToUI(conversation, user?.id || "")
+          openChat({
+            recipientId: userProfile.id,
+            recipientName: userProfile.name || "User",
+            recipientAvatar: userProfile.avatar_url || "/avatar-default.jpg",
+            conversationId: conversation.id,
+            participants: mapped.participants,
+            lastSeenMessageId: mapped.lastSeenMessageId,
+          })
+        }
       }
     } catch (error) {
       console.error("Failed to start chat:", error)

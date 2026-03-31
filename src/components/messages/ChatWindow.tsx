@@ -483,7 +483,7 @@ export const ChatWindow = memo(({
               blur={18}
               refraction={0.1}
               depth={2}
-              className="h-9 w-9 p-0"
+              className="h-10 w-10 p-0"
             >
               <Phone className="h-4 w-4 text-cyan-300" />
             </GlassButton>
@@ -493,7 +493,7 @@ export const ChatWindow = memo(({
               blur={18}
               refraction={0.1}
               depth={2}
-              className="h-9 w-9 p-0"
+              className="h-10 w-10 p-0"
             >
               <Video className="h-4 w-4 text-cyan-300" />
             </GlassButton>
@@ -503,7 +503,7 @@ export const ChatWindow = memo(({
               blur={18}
               refraction={0.1}
               depth={2}
-              className={`h-9 w-9 p-0 transition-all ${showInfo ? 'bg-white/20' : ''}`}
+              className={`h-10 w-10 p-0 transition-all ${showInfo ? 'bg-white/20' : ''}`}
               onClick={() => setShowInfo(!showInfo)}
             >
               <MoreHorizontal className="h-4 w-4 text-cyan-300" />
@@ -608,7 +608,7 @@ export const ChatWindow = memo(({
               variant="ghost"
               size="sm"
               blur={18}
-              className="h-11 w-11 p-0 flex-shrink-0"
+              className="h-12 w-12 p-0 flex-shrink-0"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >

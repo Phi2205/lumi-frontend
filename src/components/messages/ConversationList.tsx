@@ -9,6 +9,7 @@ import { CreateGroupModal } from "./CreateGroupModal"
 import { useTranslation } from "react-i18next"
 import "@/lib/i18n"
 
+
 export interface ParticipantUI {
   id: string
   name: string
@@ -78,7 +79,7 @@ const ConversationItem = memo(({
           </p>
           <span className={`text-xs ml-2 flex-shrink-0 transition-colors ${conversation.unread ? 'text-cyan-300 font-bold' : 'text-white/80'
             }`}>
-            {conversation.timestamp}
+            {conversation.timestamp}  
           </span>
         </div>
         <p className={`text-xs truncate transition-colors ${conversation.unread ? 'font-semibold text-white' : 'text-white/70 group-hover:text-white/90'

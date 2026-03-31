@@ -117,11 +117,11 @@ export function Header({ isDarkMode, onDarkModeToggle, onSearchToggle }: HeaderP
           >
             <Search className="h-5 w-5" />
           </Button>
-
+{/* 
           <Button variant="ghost" size="icon" className="relative text-white/60 hover:text-white hover:bg-white/10 rounded-lg">
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
-          </Button>
+          </Button> */}
 
           {/* Avatar with Dropdown Menu */}
           <div className="hidden sm:block relative group">

@@ -24,7 +24,7 @@ import { FriendActionButton } from "./FriendActionButton"
 import { setCachedPost } from "@/lib/post-cache"
 import { useTranslation } from "react-i18next"
 import "@/lib/i18n"
-import { changeAvatar } from "@/services/user.service"
+import { changeAvatar, changeCoverImage } from "@/services/user.service"
 import { Notification, NotificationType } from "@/lib/components/notification"
 
 interface ProfileContentProps {
@@ -78,6 +78,7 @@ export function ProfileContent({
     const [mutualPreview, setMutualPreview] = useState<User[]>([])
     const [friendsLoading, setFriendsLoading] = useState(false)
     const [isAvatarUploading, setIsAvatarUploading] = useState(false)
+    const [isCoverUploading, setIsCoverUploading] = useState(false)
     const [notification, setNotification] = useState<{
         isOpen: boolean;
         type: NotificationType;
@@ -92,6 +93,7 @@ export function ProfileContent({
         duration: 3000
     })
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const coverInputRef = useRef<HTMLInputElement>(null)
 
     // Initialize tab from URL
     const [activeContentTab, setActiveContentTab] = useState<"posts" | "friends" | "reels">(() => {
@@ -144,7 +146,9 @@ export function ProfileContent({
         setIsAvatarUploading(true)
         try {
             const updatedUser = await changeAvatar(file)
-            onProfileUpdate(updatedUser)
+            if (userProfile) {
+                onProfileUpdate({ ...userProfile, avatar_url: updatedUser.avatar_url })
+            }
             updateUser(updatedUser)
 
             setNotification({
@@ -165,6 +169,40 @@ export function ProfileContent({
             })
         } finally {
             setIsAvatarUploading(false)
+            if (e.target) e.target.value = ''
+        }
+    }
+
+    const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsCoverUploading(true)
+        try {
+            const updatedUser = await changeCoverImage(file)
+            if (userProfile) {
+                onProfileUpdate({ ...userProfile, cover_image: updatedUser.cover_image })
+            }
+            updateUser(updatedUser)
+
+            setNotification({
+                isOpen: true,
+                type: 'success',
+                title: t('profile.cover_updated', { defaultValue: 'Cover Updated' }),
+                message: t('profile.cover_description', { defaultValue: 'Your cover photo has been updated successfully.' }),
+                duration: 4000
+            })
+        } catch (error: any) {
+            console.error("Error updating cover:", error)
+            setNotification({
+                isOpen: true,
+                type: 'error',
+                title: t('common.error', { defaultValue: 'Error' }),
+                message: error.response?.data?.message || t('profile.cover_update_failed', { defaultValue: 'Failed to update cover. Please try again.' }),
+                duration: 5000
+            })
+        } finally {
+            setIsCoverUploading(false)
             if (e.target) e.target.value = ''
         }
     }
@@ -378,8 +416,48 @@ export function ProfileContent({
                     </GlassButton>
                 </div>
 
-                <GlassCard variant="lg" className="h-72 md:h-96 rounded-3xl overflow-hidden mb-0 p-0">
-                    <Image src="/bg12.jpg" alt="Profile cover" fill className="object-cover h-[50%]" />
+                <input
+                    type="file"
+                    ref={coverInputRef}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleCoverChange}
+                />
+
+                <GlassCard variant="lg" className="h-72 md:h-96 rounded-3xl overflow-hidden mb-0 p-0 relative group/cover">
+                    <Image
+                        src={userProfile?.cover_image || "/bg12.jpg"}
+                        alt="Profile cover"
+                        fill
+                        className={cn("object-cover h-[50%] transition-all duration-500", isCoverUploading && "opacity-50 blur-sm")}
+                    />
+
+                    {/* Gradient overlay for readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
+
+                    {isOwnProfile && (
+                        <div
+                            className={cn(
+                                "absolute top-4 right-4 z-10 opacity-100 sm:opacity-0 sm:group-hover/cover:opacity-100 transition-all duration-300",
+                                isCoverUploading && "opacity-100"
+                            )}
+                        >
+                            <GlassButton
+                                size="sm"
+                                onClick={() => !isCoverUploading && coverInputRef.current?.click()}
+                                className="bg-black/30 hover:bg-black/40 text-white border-white/20 backdrop-blur-md flex items-center gap-2 py-2 px-4 shadow-xl pointer-events-auto"
+                            >
+                                {isCoverUploading ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <>
+                                        <Camera className="w-4 h-4 border-none" />
+                                        <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wider">{t('profile.change_cover', { defaultValue: 'Change Cover' })}</span>
+                                    </>
+                                )}
+                            </GlassButton>
+                        </div>
+                    )}
                 </GlassCard>
 
                 <GlassCardVariant className="relative -mt-37 md:-mt-57 mb-8 p-4 md:p-8 !rounded-b-3xl !overflow-visible">
@@ -400,7 +478,7 @@ export function ProfileContent({
 
                                 {isOwnProfile && (
                                     <div className={cn(
-                                        "absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 border-2 border-dashed border-white/40 m-1",
+                                        "absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-100 sm:opacity-0 sm:group-hover/avatar:opacity-100 transition-all duration-300 border-2 border-dashed border-white/40 m-1",
                                         isAvatarUploading && "opacity-100 bg-black/60"
                                     )}>
                                         {isAvatarUploading ? (
@@ -440,9 +518,9 @@ export function ProfileContent({
 
                             <div className="flex gap-2 items-center flex-wrap">
                                 {isOwnProfile ? (
-                                    <GlassButton onClick={() => setIsEditModalOpen(true)} className="bg-white/10 hover:bg-white/20 text-xs md:text-base flex items-center gap-2">
-                                        <Edit className="w-4 h-4" />
-                                        <span>{t('profile.edit_profile')}</span>
+                                    <GlassButton onClick={() => setIsEditModalOpen(true)} className="bg-white/10 hover:bg-white/20 text-xs md:text-base flex items-center gap-2 min-w-0">
+                                        <Edit className="w-4 h-4 shrink-0" />
+                                        <span className="truncate max-w-[80px] xs:max-w-[140px] md:max-w-none">{t('profile.edit_profile')}</span>
                                     </GlassButton>
                                 ) : (
                                     <>
@@ -461,13 +539,13 @@ export function ProfileContent({
                                         </GlassButton>
                                     </>
                                 )}
-                                <GlassButton
+                                {/* <GlassButton
                                     className="bg-white/10 hover:bg-white/20"
                                     title={t('profile.share_profile')}
                                     onClick={handleShareProfile}
                                 >
                                     <Share2 className="w-4 h-4 md:w-6 md:h-6" />
-                                </GlassButton>
+                                </GlassButton> */}
                             </div>
                         </div>
                     </div>
@@ -561,18 +639,6 @@ export function ProfileContent({
                             </button>
                         </div>
 
-                        {isOwnProfile && activeContentTab === "reels" && (
-                            <div className="pb-4">
-                                <GlassButton
-                                    size="sm"
-                                    className="bg-linear-to-r from-brand-primary to-brand-primary-dark hover:shadow-[0_0_20px_rgba(var(--brand-primary-rgb),0.3)] transition-all duration-300 flex items-center gap-2 group py-1.5"
-                                    onClick={() => setIsCreateReelModalOpen(true)}
-                                >
-                                    <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-                                    <span className="text-xs font-bold">{t('profile.create_reel')}</span>
-                                </GlassButton>
-                            </div>
-                        )}
                     </div>
 
                     {activeContentTab === "friends" ? (
@@ -677,6 +743,18 @@ export function ProfileContent({
                         </>
                     ) : (
                         <>
+                            {isOwnProfile && (
+                                <div className="flex justify-end mb-3">
+                                    <GlassButton
+                                        size="sm"
+                                        onClick={() => setIsCreateReelModalOpen(true)}
+                                        className="flex items-center gap-1.5 py-1.5 px-3 text-xs font-semibold"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        <span>{t('profile.create_reel')}</span>
+                                    </GlassButton>
+                                </div>
+                            )}
                             {reelsLoading && !reelsInitialLoaded ? (
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                     {[...Array(8)].map((_, i) => (
@@ -741,6 +819,7 @@ export function ProfileContent({
             </div>
 
             {userProfile && isOwnProfile && (
+
                 <EditProfileModal
                     isOpen={isEditModalOpen}
                     user={userProfile}
@@ -751,18 +830,21 @@ export function ProfileContent({
                     }}
                     onSuccess={onProfileUpdate}
                 />
-            )}
+            )
+            }
 
-            {userProfile && (
-                <FriendListModal
-                    isOpen={isFriendModalOpen}
-                    onClose={() => setIsFriendModalOpen(false)}
-                    userId={userProfile.id}
-                    isOwnProfile={isOwnProfile}
-                    type={friendModalType}
-                    title={friendModalType === "friends" ? t('profile.friends') : t('profile.mutual_friends')}
-                />
-            )}
+            {
+                userProfile && (
+                    <FriendListModal
+                        isOpen={isFriendModalOpen}
+                        onClose={() => setIsFriendModalOpen(false)}
+                        userId={userProfile.id}
+                        isOwnProfile={isOwnProfile}
+                        type={friendModalType}
+                        title={friendModalType === "friends" ? t('profile.friends') : t('profile.mutual_friends')}
+                    />
+                )
+            }
 
             <CreateReelModal
                 isOpen={isCreateReelModalOpen}

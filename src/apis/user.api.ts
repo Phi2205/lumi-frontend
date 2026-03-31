@@ -41,3 +41,13 @@ export const changeAvatarApi = (file: File) => {
     },
   });
 };
+
+export const changeCoverImageApi = (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return axiosInstance.patch<ApiResponse<User>>(`/users/cover-image`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};

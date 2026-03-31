@@ -46,3 +46,12 @@ export const changeAvatar = async (file: File) => {
         throw error;
     }
 }
+
+export const changeCoverImage = async (file: File) => {
+    try {
+        const response = await userApi.changeCoverImageApi(file);
+        return response.data.data;
+    } catch (error) {
+        throw error;
+    }
+}
