@@ -37,3 +37,12 @@ export const userHoverCard = async (userId: string) => {
         throw error;
     }
 }
+
+export const changeAvatar = async (file: File) => {
+    try {
+        const response = await userApi.changeAvatarApi(file);
+        return response.data.data;
+    } catch (error) {
+        throw error;
+    }
+}

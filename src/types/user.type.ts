@@ -17,6 +17,8 @@ export interface User {
   user_location?: Location;
   post_count?: number;
   has_story?: boolean;
+  mutual_friends_count?: number;
+  friend_count?: number;
 }
 
 export interface UserHoverCard {

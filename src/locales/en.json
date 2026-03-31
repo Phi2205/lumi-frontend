@@ -17,7 +17,11 @@
         "loading": "Loading...",
         "error_loading": "Error loading information",
         "online_friends": "Online Friends",
-        "no_friends_online": "No friends online"
+        "no_friends_online": "No friends online",
+        "success": "Success",
+        "error": "Error",
+        "warning": "Warning",
+        "information": "Information"
     },
     "profile": {
         "back": "Back",
@@ -46,7 +50,12 @@
         "accept": "Accept",
         "try_again": "Try again",
         "no_friends": "No friends found.",
-        "load_failed": "Failed to load {{type}}. Please try again."
+        "load_failed": "Failed to load {{type}}. Please try again.",
+        "change": "Change",
+        "avatar_updated": "Avatar updated successfully",
+        "avatar_updated_desc": "Your profile picture has been updated.",
+        "avatar_update_failed": "Failed to update avatar. Please try again.",
+        "link_copied": "Profile link copied to clipboard!"
     },
     "edit_profile": {
         "title": "Profile Settings",

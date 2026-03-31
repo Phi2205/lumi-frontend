@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
-import { MapPin, Calendar, Heart, MessageSquare, Send, ArrowLeft, Pencil, Edit, Share2, Play, LayoutGrid, Plus, Loader2 } from "lucide-react"
+import { MapPin, Calendar, Heart, MessageSquare, Send, ArrowLeft, Pencil, Edit, Share2, Play, LayoutGrid, Plus, Loader2, Camera, Bell, Users } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { GlassCard, GlassButton, GlassStatCard, GlassCardVariant } from "@/lib/components"
 import { cn } from "@/lib/utils"
@@ -12,16 +12,20 @@ import { ProfileSkeleton } from "@/components/skeleton"
 import { EditProfileModal } from "@/components/profile/EditProfileModal"
 import { FriendListModal } from "@/components/profile/FriendListModal"
 import { CreateReelModal } from "@/components/profile/CreateReelModal"
-import { getFriendsService, getMutualFriendsService, getCountFriendsService } from "@/services/friend.service"
+import { FriendsPreview } from "@/components/profile/FriendsPreview"
+import { getFriendsService, getMutualFriendsService, getCountFriendsService, getFriendsUserIdService } from "@/services/friend.service"
 import { getMyReelsService, getUserReelsService } from "@/services/reel.service"
 import { getPostsByMe, getPostsByUserId } from "@/services/post.service"
 import { useReelContext } from "@/contexts/ReelContext"
+import { useAuth } from "@/contexts/AuthContext"
 import { Reel } from "@/apis/reel.api"
 import { Post as ApiPost } from "@/apis/post.api"
 import { FriendActionButton } from "./FriendActionButton"
 import { setCachedPost } from "@/lib/post-cache"
 import { useTranslation } from "react-i18next"
 import "@/lib/i18n"
+import { changeAvatar } from "@/services/user.service"
+import { Notification, NotificationType } from "@/lib/components/notification"
 
 interface ProfileContentProps {
     userProfile: User | null;
@@ -67,21 +71,42 @@ export function ProfileContent({
     const [initialEditField, setInitialEditField] = useState<'bio' | 'birthday' | 'location' | null>(null)
     const [isFriendModalOpen, setIsFriendModalOpen] = useState(false)
     const [friendModalType, setFriendModalType] = useState<"friends" | "mutual">("friends")
+    const { updateUser } = useAuth()
     const [friendsCount, setFriendsCount] = useState(0)
     const [mutualCount, setMutualCount] = useState(0)
+    const [friendsPreview, setFriendsPreview] = useState<User[]>([])
+    const [mutualPreview, setMutualPreview] = useState<User[]>([])
+    const [friendsLoading, setFriendsLoading] = useState(false)
+    const [isAvatarUploading, setIsAvatarUploading] = useState(false)
+    const [notification, setNotification] = useState<{
+        isOpen: boolean;
+        type: NotificationType;
+        title: string;
+        message: string;
+        duration?: number;
+    }>({
+        isOpen: false,
+        type: 'info',
+        title: '',
+        message: '',
+        duration: 3000
+    })
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Initialize tab from URL
-    const [activeContentTab, setActiveContentTab] = useState<"posts" | "reels">(() => {
+    const [activeContentTab, setActiveContentTab] = useState<"posts" | "friends" | "reels">(() => {
         const tab = searchParams.get("tab")
-        return tab === "reels" ? "reels" : "posts"
+        if (tab === "reels") return "reels"
+        if (tab === "friends") return "friends"
+        return "posts"
     })
 
     // Handle tab change and update URL
-    const handleTabChange = (tab: "posts" | "reels") => {
+    const handleTabChange = (tab: "posts" | "friends" | "reels") => {
         setActiveContentTab(tab)
         const url = new URL(window.location.href)
-        if (tab === "reels") {
-            url.searchParams.set("tab", "reels")
+        if (tab !== "posts") {
+            url.searchParams.set("tab", tab)
         } else {
             url.searchParams.delete("tab")
         }
@@ -108,21 +133,97 @@ export function ProfileContent({
     const loadMorePostsRef = useRef<HTMLDivElement | null>(null)
     const loadMoreReelsRef = useRef<HTMLDivElement | null>(null)
 
-    useEffect(() => {
-        const fetchCounts = async () => {
-            if (!userProfile?.id) return
-            try {
-                const res = await getCountFriendsService(userProfile.id)
-                if (res.success) {
-                    setFriendsCount(res.data.total_friends)
-                    setMutualCount(res.data.mutual_friends)
-                }
-            } catch (error) {
-                console.error("Error fetching friend counts:", error)
-            }
+    // Friends pagination state
+    const [friendsPage, setFriendsPage] = useState(1)
+    const [hasMoreFriends, setHasMoreFriends] = useState(true)
+    const [isFriendsFetchingMore, setIsFriendsFetchingMore] = useState(false)
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsAvatarUploading(true)
+        try {
+            const updatedUser = await changeAvatar(file)
+            onProfileUpdate(updatedUser)
+            updateUser(updatedUser)
+
+            setNotification({
+                isOpen: true,
+                type: 'success',
+                title: t('profile.avatar_updated'),
+                message: t('profile.avatar_updated_desc', { defaultValue: 'Your profile picture has been updated.' }),
+                duration: 4000
+            })
+        } catch (error: any) {
+            console.error("Error updating avatar:", error)
+            setNotification({
+                isOpen: true,
+                type: 'error',
+                title: t('common.error', { defaultValue: 'Error' }),
+                message: error.response?.data?.message || t('profile.avatar_update_failed', { defaultValue: 'Failed to update avatar. Please try again.' }),
+                duration: 5000
+            })
+        } finally {
+            setIsAvatarUploading(false)
+            if (e.target) e.target.value = ''
         }
-        fetchCounts()
-    }, [userProfile?.id])
+    }
+
+    const fetchFriendData = async (page: number = 1) => {
+        if (!userProfile?.id || activeContentTab !== "friends") return
+
+        const isInitial = page === 1
+        if (isInitial) {
+            setFriendsLoading(true)
+            setFriendsPreview([])
+            setFriendsPage(1)
+            setHasMoreFriends(true)
+        } else {
+            setIsFriendsFetchingMore(true)
+        }
+
+        try {
+            if (isInitial) {
+                // Fetch counts
+                const countRes = await getCountFriendsService(userProfile.id)
+                if (countRes.success) {
+                    setFriendsCount(countRes.data.total_friends)
+                    setMutualCount(countRes.data.mutual_friends)
+                }
+            }
+
+            // Fetch list
+            const limit = "10"
+            const friendsRes = isOwnProfile
+                ? await getFriendsService(limit, page.toString())
+                : await getFriendsUserIdService(userProfile.id, limit, page.toString())
+
+            if (friendsRes.success) {
+                const newFriends = friendsRes.data || []
+                setFriendsPreview(prev => isInitial ? newFriends : [...prev, ...newFriends])
+                setHasMoreFriends(newFriends.length === parseInt(limit))
+                setFriendsPage(page)
+            }
+
+            if (isInitial && !isOwnProfile) {
+                const mutualRes = await getMutualFriendsService(userProfile.id)
+                if (mutualRes.success) {
+                    setMutualPreview((mutualRes.data || []).slice(0, 10))
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching friend data:", error)
+        } finally {
+            if (isInitial) setFriendsLoading(false)
+            else setIsFriendsFetchingMore(false)
+        }
+    }
+
+    useEffect(() => {
+        if (activeContentTab === "friends" && friendsPreview.length === 0) {
+            fetchFriendData(1)
+        }
+    }, [userProfile?.id, activeContentTab])
 
     // Fetch posts
     const fetchPosts = useCallback(async (cursor?: string) => {
@@ -248,6 +349,25 @@ export function ProfileContent({
 
     if (isInitialLoading) return <ProfileSkeleton />
 
+    const handleShareProfile = () => {
+        if (!userProfile?.username) return
+
+        const baseUrl = window.location.origin
+        const shareUrl = `${baseUrl}/users/${userProfile.username}`
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            setNotification({
+                isOpen: true,
+                type: 'success',
+                title: t('common.success'),
+                message: t('profile.link_copied', { defaultValue: 'Profile link copied to clipboard!' }),
+                duration: 3000
+            })
+        }).catch(err => {
+            console.error('Failed to copy: ', err)
+        })
+    }
+
     return (
         <>
             <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
@@ -264,17 +384,58 @@ export function ProfileContent({
 
                 <GlassCardVariant className="relative -mt-37 md:-mt-57 mb-8 p-4 md:p-8 !rounded-b-3xl !overflow-visible">
                     <div className="flex flex-row items-end gap-4 md:gap-6 !overflow-visible">
-                        <div className="shrink-0">
-                            <Avatar className="h-20 w-20 md:h-40 md:w-40 ring-4 ring-white/20 shadow-2xl">
-                                <AvatarImage src={userProfile?.avatar_url || "/avatar-default.jpg"} alt={userProfile?.name || ""} />
-                                <AvatarFallback className="text-xl md:text-4xl bg-linear-to-br from-brand-primary to-brand-primary-dark">{userProfile?.name?.[0] || ""}</AvatarFallback>
-                            </Avatar>
+                        <div className="shrink-0 relative group/avatar">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleAvatarChange}
+                            />
+                            <div className={cn("relative", isOwnProfile && "cursor-pointer")} onClick={() => isOwnProfile && !isAvatarUploading && fileInputRef.current?.click()}>
+                                <Avatar className="h-20 w-20 md:h-40 md:w-40 ring-4 ring-white/20 shadow-2xl transition-all duration-300 group-hover/avatar:ring-brand-primary/40">
+                                    <AvatarImage src={userProfile?.avatar_url || "/avatar-default.jpg"} alt={userProfile?.name || ""} className={cn("transition-all duration-500", isAvatarUploading && "opacity-50 blur-sm")} />
+                                    <AvatarFallback className="text-xl md:text-4xl bg-linear-to-br from-brand-primary to-brand-primary-dark">{userProfile?.name?.[0] || ""}</AvatarFallback>
+                                </Avatar>
+
+                                {isOwnProfile && (
+                                    <div className={cn(
+                                        "absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 group-hover/avatar:opacity-100 transition-all duration-300 border-2 border-dashed border-white/40 m-1",
+                                        isAvatarUploading && "opacity-100 bg-black/60"
+                                    )}>
+                                        {isAvatarUploading ? (
+                                            <Loader2 className="w-8 h-8 text-white animate-spin" />
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-1 text-white">
+                                                <Camera className="w-6 h-6 md:w-8 md:h-8" />
+                                                <span className="text-[10px] md:text-xs font-bold uppercase tracking-wider">{t('profile.change')}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         <div className="flex-1 text-left">
-                            <div className="mb-3 md:mb-4">
-                                <h1 className="text-xl md:text-3xl font-bold text-white">{userProfile?.name || ""}</h1>
-                                <p className="text-brand-primary text-sm md:text-lg">{userProfile?.username || ""}</p>
+                            <div className="mb-3 md:mb-4 flex items-center justify-between">
+                                <div>
+                                    <h1 className="text-xl md:text-3xl font-bold text-white">{userProfile?.name || ""}</h1>
+                                    <p className="text-brand-primary text-sm md:text-lg">{userProfile?.username || ""}</p>
+                                </div>
+                                {/* <GlassButton
+                                    size="sm"
+                                    className="bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary border-brand-primary/20"
+                                    onClick={() => setNotification({
+                                        isOpen: true,
+                                        type: 'success',
+                                        title: 'Test Notification',
+                                        message: 'Thông báo hoạt động hoàn hảo!',
+                                        duration: 5000
+                                    })}
+                                >
+                                    <Bell className="w-4 h-4" />
+                                    <span className="ml-2 hidden sm:inline">Test Notice</span>
+                                </GlassButton> */}
                             </div>
 
                             <div className="flex gap-2 items-center flex-wrap">
@@ -300,7 +461,11 @@ export function ProfileContent({
                                         </GlassButton>
                                     </>
                                 )}
-                                <GlassButton className="bg-white/10 hover:bg-white/20" title={t('profile.share_profile')}>
+                                <GlassButton
+                                    className="bg-white/10 hover:bg-white/20"
+                                    title={t('profile.share_profile')}
+                                    onClick={handleShareProfile}
+                                >
                                     <Share2 className="w-4 h-4 md:w-6 md:h-6" />
                                 </GlassButton>
                             </div>
@@ -348,21 +513,7 @@ export function ProfileContent({
                     </div>
                 </GlassCard>
 
-                <div className={cn("grid gap-4 mb-8", isOwnProfile ? "grid-cols-2" : "grid-cols-3")}>
-                    <GlassStatCard label={t('profile.posts')} value={userStats.posts.toString()} />
-                    <GlassStatCard
-                        label={t('profile.friends')}
-                        value={friendsCount.toString()}
-                        onClick={() => { setFriendModalType("friends"); setIsFriendModalOpen(true); }}
-                    />
-                    {!isOwnProfile && (
-                        <GlassStatCard
-                            label={t('profile.mutual_friends')}
-                            value={mutualCount.toString()}
-                            onClick={() => { setFriendModalType("mutual"); setIsFriendModalOpen(true); }}
-                        />
-                    )}
-                </div>
+
 
                 <div className="mb-12">
                     <div className="flex items-center justify-between mb-8 border-b border-white/10">
@@ -377,6 +528,21 @@ export function ProfileContent({
                                 <LayoutGrid className="w-4 h-4" />
                                 <span>{t('profile.posts').toUpperCase()}</span>
                                 {activeContentTab === "posts" && (
+                                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary shadow-[0_-2px_8px_rgba(var(--brand-primary-rgb),0.5)]" />
+                                )}
+                            </button>
+                            <button
+                                onClick={() => handleTabChange("friends")}
+                                className={cn(
+                                    "flex items-center gap-2 pb-4 text-sm font-semibold transition-all relative",
+                                    activeContentTab === "friends" ? "text-white" : "text-white/40 hover:text-white/60"
+                                )}
+                            >
+                                <Users className="w-4 h-4" />
+                                <div className="flex items-center gap-1">
+                                    <span>{t('profile.friends').toUpperCase()}</span>
+                                </div>
+                                {activeContentTab === "friends" && (
                                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary shadow-[0_-2px_8px_rgba(var(--brand-primary-rgb),0.5)]" />
                                 )}
                             </button>
@@ -409,7 +575,36 @@ export function ProfileContent({
                         )}
                     </div>
 
-                    {activeContentTab === "posts" ? (
+                    {activeContentTab === "friends" ? (
+                        <GlassCard className="p-8">
+                            {friendsLoading ? (
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                    {[...Array(6)].map((_, i) => (
+                                        <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 animate-pulse">
+                                            <div className="w-16 h-16 rounded-lg bg-white/5" />
+                                            <div className="flex flex-col gap-2">
+                                                <div className="w-32 h-4 rounded bg-white/5" />
+                                                <div className="w-20 h-3 rounded bg-white/5" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <FriendsPreview
+                                    userId={userProfile?.id}
+                                    friends={friendsPreview}
+                                    mutualFriends={mutualPreview}
+                                    totalCount={friendsCount}
+                                    hasMore={hasMoreFriends}
+                                    onLoadMore={() => fetchFriendData(friendsPage + 1)}
+                                    isLoadingMore={isFriendsFetchingMore}
+                                    onShowAll={() => { setFriendModalType("friends"); setIsFriendModalOpen(true); }}
+                                    className="w-full"
+                                    isOwnProfile={isOwnProfile}
+                                />
+                            )}
+                        </GlassCard>
+                    ) : activeContentTab === "posts" ? (
                         <>
                             {postsLoading && !postsInitialLoaded ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -582,6 +777,15 @@ export function ProfileContent({
                         fetchReels()
                     }
                 }}
+            />
+
+            <Notification
+                isOpen={notification.isOpen}
+                onClose={() => setNotification(prev => ({ ...prev, isOpen: false }))}
+                type={notification.type}
+                title={notification.title}
+                message={notification.message}
+                duration={notification.duration}
             />
         </>
     )

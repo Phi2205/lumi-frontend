@@ -17,7 +17,11 @@
         "loading": "Đang tải...",
         "error_loading": "Lỗi khi tải thông tin",
         "online_friends": "Bạn bè trực tuyến",
-        "no_friends_online": "Không có bạn bè trực tuyến"
+        "no_friends_online": "Không có bạn bè trực tuyến",
+        "success": "Thành công",
+        "error": "Lỗi",
+        "warning": "Cảnh báo",
+        "information": "Thông tin"
     },
     "profile": {
         "back": "Quay lại",
@@ -46,7 +50,12 @@
         "accept": "Chấp nhận",
         "try_again": "Thử lại",
         "no_friends": "Không tìm thấy bạn bè nào.",
-        "load_failed": "Lỗi khi tải {{type}}. Vui lòng thử lại."
+        "load_failed": "Lỗi khi tải {{type}}. Vui lòng thử lại.",
+        "change": "Thay đổi",
+        "avatar_updated": "Cập nhật ảnh đại diện thành công",
+        "avatar_updated_desc": "Ảnh đại diện của bạn đã được cập nhật thành công.",
+        "avatar_update_failed": "Cập nhật ảnh đại diện thất bại. Vui lòng thử lại sau.",
+        "link_copied": "Đã sao chép liên kết trang cá nhân vào khay nhớ tạm!"
     },
     "edit_profile": {
         "title": "Thiết lập trang cá nhân",

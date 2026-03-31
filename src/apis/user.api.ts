@@ -15,7 +15,7 @@ export interface FilterUserResponse {
   limit: number;
 };
 
-export interface EditProfilePayload extends Location{
+export interface EditProfilePayload extends Location {
   bio?: string;
   birthday?: string;
 }
@@ -31,3 +31,13 @@ export const editProfileApi = (data: EditProfilePayload) =>
 
 export const userHoverCardApi = (userId: string) =>
   axiosInstance.get<ApiResponse<UserHoverCard>>(`/users/${userId}/hover-card`);
+
+export const changeAvatarApi = (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return axiosInstance.patch<ApiResponse<User>>(`/users/avatar`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};

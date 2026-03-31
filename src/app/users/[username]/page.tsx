@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { mapConversationToUI } from "@/services/conversation.service"
 import { ProfileContent } from "@/components/profile/ProfileContent"
 import { useDarkMode } from "@/hooks/useDarkMode"
+import { SearchPanel } from "@/components/SearchPanel"
 import { useTranslation } from "react-i18next"
 import "@/lib/i18n"
 
@@ -35,9 +36,12 @@ export default function UserProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const { openChat } = useMiniChat()
   const [isStartingChat, setIsStartingChat] = useState(false)
   const [showUnfriendModal, setShowUnfriendModal] = useState(false)
+
+  const toggleSearch = () => setIsSearchOpen(!isSearchOpen)
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -153,10 +157,24 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Header
+        isDarkMode={isDarkMode}
+        onDarkModeToggle={handleDarkModeToggle}
+        onSearchToggle={toggleSearch}
+      />
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isSearchOpen={isSearchOpen}
+        onSearchToggle={toggleSearch}
+      />
 
-      <main className="md:ml-64 lg:mr-80 pt-20 pb-20 md:pb-4 relative z-10">
+      <SearchPanel isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+
+      <main className={cn(
+        "pt-20 pb-20 md:pb-4 relative z-10 lg:mr-80 transition-all duration-300",
+        isSearchOpen ? "md:ml-20" : "md:ml-64"
+      )}>
         <ProfileContent
           userProfile={userProfile}
           isInitialLoading={isInitialLoading}

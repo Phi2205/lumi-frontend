@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
@@ -21,6 +22,8 @@ export const Notification: React.FC<NotificationProps> = ({
   message,
   duration = 3000
 }) => {
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (isOpen && duration > 0) {
       const timer = setTimeout(() => {
@@ -80,15 +83,15 @@ export const Notification: React.FC<NotificationProps> = ({
 
   const config = getTypeConfig();
   const defaultTitle = {
-    success: 'Success',
-    error: 'Error',
-    warning: 'Warning',
-    info: 'Information'
+    success: t('common.success'),
+    error: t('common.error'),
+    warning: t('common.warning'),
+    info: t('common.information')
   }[type];
 
   return (
     <div
-      className="fixed top-5 right-5 z-[101] p-0 pointer-events-none"
+      className="fixed top-20 right-5 z-[101] p-0 pointer-events-none"
       style={{
         animation: 'slideInRight 0.3s ease'
       }}
