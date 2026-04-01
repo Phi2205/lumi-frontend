@@ -8,7 +8,8 @@ import {
     createReelCommentApi,
     deleteReelCommentApi,
     markReelsAsSeenApi,
-    getReelRecommendationsApi
+    getReelRecommendationsApi,
+    getReelByIdApi
 } from "../apis/reel.api";
 
 export const getMyReelsService = async (cursor?: string, limit: number = 12) => {
@@ -111,6 +112,16 @@ export const getReelRecommendationsService = async (limit: number = 5) => {
         return response.data;
     } catch (error) {
         console.error('Error fetching reel recommendations:', error);
+        throw error;
+    }
+};
+
+export const getReelByIdService = async (reelId: string) => {
+    try {
+        const response = await getReelByIdApi(reelId);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching reel:', error);
         throw error;
     }
 };

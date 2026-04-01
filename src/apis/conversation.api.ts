@@ -74,6 +74,11 @@ export interface MessageAround {
   hasMoreAbove: boolean;
 }
 
+export interface ConversationSearchResponse {
+  items: Conversation[];
+  pagination: Pagination;
+}
+
 
 export const getConversationsApi = (page: number, limit: number, signal?: AbortSignal) =>
   axiosInstance.get('/conversations', { params: { page, limit }, signal });
@@ -110,3 +115,6 @@ export const getMessageOlder = (conversationId: string, cursor: string, limit: n
 
 export const getMessageNewer = (conversationId: string, cursor: string, limit: number) =>
   axiosInstance.get<ApiResponse<MessageResponse>>(`/conversations/${conversationId}/messages/newer`, { params: { cursor, limit } });
+
+export const searchConversationApi = (query: string, page: string, limit: string) =>
+  axiosInstance.get<ApiResponse<ConversationSearchResponse>>(`/conversations/search`, { params: { query, page, limit } });

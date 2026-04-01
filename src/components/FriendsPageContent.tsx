@@ -1,8 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { getFriendRequests, acceptFriendRequest, rejectFriendRequest, sendFriendRequest } from "@/services/friendRequest.service"
+import { getFriendRequests, acceptFriendRequest, rejectFriendRequest, sendFriendRequest, cancelFriendRequest } from "@/services/friendRequest.service"
 import { getRecommendedUsers } from "@/services/recommend.service"
+import { deleteFriendService } from "@/services/friend.service"
+import { FriendActionButton } from "@/components/profile/FriendActionButton"
+import { FriendshipStatus } from "@/types/user.type"
 import { SkeletonFriendRequests } from "@/components/skeleton"
 import { Check, X, UserPlus, UserCheck, ChevronDown, MessageSquare } from "lucide-react"
 import type { FriendRequestItem } from "@/apis/friendRequest.api"
@@ -112,14 +115,74 @@ export function FriendsPageContent() {
         }
     }
 
-    const handleSendRequest = async (userId: string) => {
+    const handleAddFriendAction = async (userId: string) => {
         if (processingIds.has(userId)) return
         try {
             setProcessingIds((prev) => new Set(prev).add(userId))
             await sendFriendRequest(userId)
-            setRecommendedUsers((prev) => prev.filter((item) => item.user.id !== userId))
+            setRecommendedUsers(prev => prev.map(item =>
+                item.user.id === userId ? { ...item, user: { ...item.user, friend_status: 'pending' as FriendshipStatus } } : item
+            ))
         } catch (error) {
             console.error("Send friend request failed:", error)
+        } finally {
+            setProcessingIds((prev) => {
+                const newSet = new Set(prev)
+                newSet.delete(userId)
+                return newSet
+            })
+        }
+    }
+
+    const handleCancelRequestAction = async (userId: string) => {
+        if (processingIds.has(userId)) return
+        try {
+            setProcessingIds((prev) => new Set(prev).add(userId))
+            await cancelFriendRequest(userId)
+            setRecommendedUsers(prev => prev.map(item =>
+                item.user.id === userId ? { ...item, user: { ...item.user, friend_status: 'none' as FriendshipStatus } } : item
+            ))
+        } catch (error) {
+            console.error("Cancel friend request failed:", error)
+        } finally {
+            setProcessingIds((prev) => {
+                const newSet = new Set(prev)
+                newSet.delete(userId)
+                return newSet
+            })
+        }
+    }
+
+    const handleAcceptFriendRequestAction = async (userId: string) => {
+        if (processingIds.has(userId)) return
+        try {
+            setProcessingIds((prev) => new Set(prev).add(userId))
+            await acceptFriendRequest(userId)
+            setRecommendedUsers(prev => prev.map(item =>
+                item.user.id === userId ? { ...item, user: { ...item.user, friend_status: 'friend' as FriendshipStatus } } : item
+            ))
+        } catch (error) {
+            console.error("Accept friend request failed:", error)
+        } finally {
+            setProcessingIds((prev) => {
+                const newSet = new Set(prev)
+                newSet.delete(userId)
+                return newSet
+            })
+        }
+    }
+
+    const handleUnfriendAction = async (userId: string) => {
+        if (!window.confirm(t('friends.confirm_unfriend', 'Are you sure you want to unfriend this user?'))) return;
+        if (processingIds.has(userId)) return
+        try {
+            setProcessingIds((prev) => new Set(prev).add(userId))
+            await deleteFriendService(userId)
+            setRecommendedUsers(prev => prev.map(item =>
+                item.user.id === userId ? { ...item, user: { ...item.user, friend_status: 'none' as FriendshipStatus } } : item
+            ))
+        } catch (error) {
+            console.error("Unfriend failed:", error)
         } finally {
             setProcessingIds((prev) => {
                 const newSet = new Set(prev)
@@ -291,16 +354,16 @@ export function FriendsPageContent() {
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
-                                    <GlassButton
-                                        size="sm"
-                                        variant="ghost"
-                                        className="flex-1 text-xs bg-brand-primary/20 border-brand-primary/30 text-brand-primary hover:bg-brand-primary/30 rounded-xl h-9"
-                                        onClick={() => handleSendRequest(item.user.id)}
-                                        disabled={processingIds.has(item.user.id)}
-                                    >
-                                        <UserPlus className="w-3.5 h-3.5" />
-                                        {processingIds.has(item.user.id) ? t('friends.sending') : t('friends.add_friend')}
-                                    </GlassButton>
+                                    <FriendActionButton
+                                        status={item.user.friend_status}
+                                        name={item.user.name}
+                                        onAddFriend={() => handleAddFriendAction(item.user.id)}
+                                        onUnfriend={() => handleUnfriendAction(item.user.id)}
+                                        onCancelRequest={() => handleCancelRequestAction(item.user.id)}
+                                        onAcceptRequest={() => handleAcceptFriendRequestAction(item.user.id)}
+                                        isLoading={processingIds.has(item.user.id)}
+                                        className="flex-1 text-xs rounded-xl h-9"
+                                    />
                                     <GlassButton
                                         size="sm"
                                         variant="ghost"

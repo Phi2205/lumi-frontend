@@ -13,13 +13,14 @@ import { DiscoveryReelsFeed } from "@/components/reel/DiscoveryReelsFeed"
 function ReelsContent() {
     const searchParams = useSearchParams()
     const userId = searchParams.get("userId")
+    const reelId = searchParams.get("reel_id")
     const startIndex = parseInt(searchParams.get("startIndex") || "0", 10)
 
     return (
         userId ? (
             <UserReelsFeed userId={userId} startIndex={startIndex} />
         ) : (
-            <DiscoveryReelsFeed startIndex={startIndex} />
+            <DiscoveryReelsFeed startIndex={startIndex} initialReelId={reelId} />
         )
     )
 }

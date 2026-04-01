@@ -8,6 +8,7 @@ import { Reel } from "@/apis/reel.api"
 import { likeReelService, viewReelService } from "@/services/reel.service"
 import { ReelCommentSection } from "./ReelCommentSection"
 import { ReelSkeleton } from "@/components/skeleton"
+import { Notification } from "@/lib/components/notification"
 
 // Hàm format số lượng 
 const formatCount = (count: number) => {
@@ -45,6 +46,11 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
     const [isLoading, setIsLoading] = useState(true)
     const [hasInitialLoaded, setHasInitialLoaded] = useState(false)
     const playIconTimeout = useRef<NodeJS.Timeout | null>(null)
+    const [notif, setNotif] = useState<{ open: boolean; type: 'success' | 'error'; message: string }>({
+        open: false,
+        type: 'success',
+        message: ''
+    })
 
     // Đồng bộ state khi nhận được Reel mới
     useEffect(() => {
@@ -149,6 +155,18 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
     }
 
     const captionTruncated = reel.caption && reel.caption.length > 60
+
+    const handleShare = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        try {
+            const shareUrl = `${window.location.origin}/reels?reel_id=${reel.id}`
+            await navigator.clipboard.writeText(shareUrl)
+            setNotif({ open: true, type: 'success', message: 'Link copied to clipboard!' })
+        } catch (error) {
+            console.error('Failed to copy', error)
+            setNotif({ open: true, type: 'error', message: 'Failed to copy link' })
+        }
+    }
 
     return (
         <div className="h-screen w-full relative flex items-center justify-center bg-transparent select-none sm:py-6">
@@ -296,11 +314,11 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
                             <span className="text-white text-[12px] font-bold drop-shadow-md">{formatCount(reel.comment_count || 0)}</span>
                         </button>
 
-                        <button onClick={(e) => e.stopPropagation()} className="flex flex-col items-center gap-1 group cursor-pointer">
+                        <button onClick={handleShare} className="flex flex-col items-center gap-1 group cursor-pointer">
                             <div className="w-12 h-12 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center transition-all">
                                 <Send className="w-5 h-5 text-white group-hover:scale-110 transition-transform -rotate-12" />
                             </div>
-                            <span className="text-white text-[12px] font-bold drop-shadow-md">{formatCount(reel.share_count || 0)}</span>
+                            {/* <span className="text-white text-[12px] font-bold drop-shadow-md">{formatCount(reel.share_count || 0)}</span> */}
                         </button>
 
                         <button onClick={(e) => e.stopPropagation()} className="w-10 h-10 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm flex items-center justify-center">
@@ -328,6 +346,13 @@ export function ReelPlayer({ reel, isActive, isAdjacent = false, isMuted, toggle
                     {showComments && <ReelCommentSection reelId={reel.id} onClose={() => setShowComments(false)} />}
                 </div>
             </div >
+
+            <Notification
+                isOpen={notif.open}
+                type={notif.type}
+                message={notif.message}
+                onClose={() => setNotif(prev => ({ ...prev, open: false }))}
+            />
         </div >
     )
 }

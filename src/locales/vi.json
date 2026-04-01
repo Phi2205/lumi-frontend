@@ -21,7 +21,8 @@
         "success": "Thành công",
         "error": "Lỗi",
         "warning": "Cảnh báo",
-        "information": "Thông tin"
+        "information": "Thông tin",
+        "cancel": "Hủy"
     },
     "profile": {
         "back": "Quay lại",

@@ -21,7 +21,8 @@
         "success": "Success",
         "error": "Error",
         "warning": "Warning",
-        "information": "Information"
+        "information": "Information",
+        "cancel": "Cancel"
     },
     "profile": {
         "back": "Back",

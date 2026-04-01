@@ -1,4 +1,4 @@
-import { getConversationsApi, Conversation as ApiConversation, getMessageApi, getConversationDetailApi, getMediaApi, createGroupConversationApi, getMessageAround, getMessageOlder, getMessageNewer } from "../apis/conversation.api";
+import { getConversationsApi, Conversation as ApiConversation, getMessageApi, getConversationDetailApi, getMediaApi, createGroupConversationApi, getMessageAround, getMessageOlder, getMessageNewer, searchConversationApi } from "../apis/conversation.api";
 import { ConversationUI } from "../components/messages/ConversationList";
 import { formatTime } from "../utils/format";
 import { searchMessageApi } from "../apis/conversation.api";
@@ -134,6 +134,16 @@ export const getMessageNewerService = async (conversationId: string, cursor: str
         return response.data;
     } catch (error) {
         console.error('Error fetching message newer:', error);
+        throw error;
+    }
+};
+
+export const searchConversationService = async (query: string, page: string, limit: string) => {
+    try {
+        const response = await searchConversationApi(query, page, limit);
+        return response.data;
+    } catch (error) {
+        console.error('Error searching conversations:', error);
         throw error;
     }
 };

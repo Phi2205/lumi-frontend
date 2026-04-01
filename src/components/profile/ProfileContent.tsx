@@ -361,9 +361,24 @@ export function ProfileContent({
             }));
         };
 
+        const handleReelCreated = (e: any) => {
+            const newReel = e.detail;
+            if (isOwnProfile) {
+                setReels(prev => {
+                    // Prevent duplicates
+                    if (prev.find(r => r.id === newReel.id)) return prev;
+                    return [newReel, ...prev];
+                });
+            }
+        };
+
         window.addEventListener('postUpdate', handlePostUpdate);
-        return () => window.removeEventListener('postUpdate', handlePostUpdate);
-    }, []);
+        window.addEventListener('reelCreated', handleReelCreated);
+        return () => {
+            window.removeEventListener('postUpdate', handlePostUpdate);
+            window.removeEventListener('reelCreated', handleReelCreated);
+        };
+    }, [isOwnProfile]);
 
     // Infinite scroll observer for reels
     useEffect(() => {
@@ -850,13 +865,9 @@ export function ProfileContent({
                 isOpen={isCreateReelModalOpen}
                 onClose={() => setIsCreateReelModalOpen(false)}
                 onSuccess={() => {
-                    // Refresh reels list after creating a new reel
-                    setReels([])
-                    setReelsCursor(undefined)
-                    setReelsHasMore(true)
-                    setReelsInitialLoaded(false)
-                    if (activeContentTab === "reels") {
-                        fetchReels()
+                    // Switch to reels tab so the user is ready to see the newly uploaded reel
+                    if (activeContentTab !== "reels") {
+                        handleTabChange("reels")
                     }
                 }}
             />

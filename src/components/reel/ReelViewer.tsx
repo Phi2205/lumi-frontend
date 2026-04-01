@@ -191,97 +191,102 @@ export function ReelViewer({
     }
 
     return (
-        <div
-            ref={containerRef}
-            className={cn(
-                "fixed inset-0 bg-transparent z-50 overflow-y-scroll snap-y snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-all duration-300",
-                isReady ? "opacity-100 scale-100" : "opacity-0 scale-105"
-            )}
-        >
+        <div className={cn(
+            "fixed inset-0 z-50 transition-opacity duration-300",
+            isReady ? "opacity-100" : "opacity-0"
+        )}>
+            <div
+                ref={containerRef}
+                className={cn(
+                    "absolute inset-0 bg-transparent overflow-y-scroll snap-y snap-mandatory scroll-smooth [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] transition-transform duration-300",
+                    isReady ? "scale-100" : "scale-105"
+                )}
+            >
+                {/* Reels list */}
+                <div className="flex flex-col w-full relative">
+                    {reels.map((reel, index) => (
+                        <div
+                            key={reel.id}
+                            ref={el => {
+                                if (el) reelRefs.current[index] = el
+                            }}
+                            data-index={index}
+                            className="w-full h-screen snap-start snap-always shrink-0"
+                        >
+                            <ReelPlayer
+                                reel={reel}
+                                isActive={index === activeIndex}
+                                isAdjacent={Math.abs(index - activeIndex) <= 1}
+                                isMuted={isGlobalMuted}
+                                toggleMute={toggleGlobalMute}
+                            />
+                        </div>
+                    ))}
+
+                    {/* Loading khi đang tải thêm */}
+                    {loading && (
+                        <div className="h-[20vh] w-full flex items-center justify-center snap-start shrink-0 text-brand-primary">
+                            <Loader2 className="w-8 h-8 animate-spin" />
+                        </div>
+                    )}
+
+                    {/* Kết thúc danh sách - End of feed message */}
+                    {!hasMore && reels.length > 0 && !loading && (
+                        <div className="w-full h-screen snap-start snap-always shrink-0 flex flex-col items-center justify-center p-6 text-center">
+                            <div className="max-w-[400px] flex flex-col items-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                <div className="relative group">
+                                    <div className="absolute -inset-4 bg-brand-primary/20 rounded-full blur-2xl group-hover:bg-brand-primary/30 transition-all duration-500" />
+                                    <div className="w-24 h-24 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center relative shadow-2xl">
+                                        <CheckCircle2 className="w-10 h-10 text-brand-primary animate-pulse" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h3 className="text-2xl font-black text-white tracking-tight">
+                                        {viewMode === 'discovery' ? "You're All Caught Up!" : "That's All for Now!"}
+                                    </h3>
+                                    <p className="text-white/50 text-base font-medium leading-relaxed">
+                                        {viewMode === 'discovery'
+                                            ? "You've seen all the latest recommendations. Follow more friends or creators to keep your feed fresh!"
+                                            : "You've reached the end of this user's reels. Check out other profiles or go back to Discovery!"
+                                        }
+                                    </p>
+                                </div>
+
+                                <div className="pt-4 flex flex-col sm:flex-row gap-3 w-full">
+                                    <Link
+                                        href="/"
+                                        className="flex-1 flex items-center justify-center px-8 py-4 rounded-2xl bg-brand-primary text-white font-bold hover:bg-brand-primary/90 transition-all active:scale-95 shadow-xl shadow-brand-primary/20"
+                                    >
+                                        {viewMode === 'discovery' ? "Explore More" : "Back to Feed"}
+                                    </Link>
+                                    {viewMode === 'user' && reels[0]?.user && (
+                                        <Link
+                                            href={`/users/${reels[0].user.username}`}
+                                            className="flex-1 flex items-center justify-center px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-all active:scale-95 backdrop-blur-md"
+                                        >
+                                            View Profile
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* Nút quay lại */}
             <button
                 onClick={() => window.history.back()}
-                className="fixed top-5 left-5 z-[60] p-2.5 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 hover:bg-black/60 transition-all cursor-pointer"
+                className="absolute top-5 left-5 z-[60] p-2.5 rounded-full bg-black/40 backdrop-blur-sm border border-white/10 hover:bg-black/60 transition-all cursor-pointer"
             >
                 <ArrowLeft className="w-5 h-5 text-white/80" />
             </button>
 
-            {/* Reels list */}
-            <div className="flex flex-col w-full relative">
-                {reels.map((reel, index) => (
-                    <div
-                        key={reel.id}
-                        ref={el => {
-                            if (el) reelRefs.current[index] = el
-                        }}
-                        data-index={index}
-                        className="w-full h-screen snap-start snap-always shrink-0"
-                    >
-                        <ReelPlayer
-                            reel={reel}
-                            isActive={index === activeIndex}
-                            isAdjacent={Math.abs(index - activeIndex) <= 1}
-                            isMuted={isGlobalMuted}
-                            toggleMute={toggleGlobalMute}
-                        />
-                    </div>
-                ))}
-
-                {/* Loading khi đang tải thêm */}
-                {loading && (
-                    <div className="h-[20vh] w-full flex items-center justify-center snap-start shrink-0 text-brand-primary">
-                        <Loader2 className="w-8 h-8 animate-spin" />
-                    </div>
-                )}
-
-                {/* Kết thúc danh sách - End of feed message */}
-                {!hasMore && reels.length > 0 && !loading && (
-                    <div className="w-full h-screen snap-start snap-always shrink-0 flex flex-col items-center justify-center p-6 text-center">
-                        <div className="max-w-[400px] flex flex-col items-center space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                            <div className="relative group">
-                                <div className="absolute -inset-4 bg-brand-primary/20 rounded-full blur-2xl group-hover:bg-brand-primary/30 transition-all duration-500" />
-                                <div className="w-24 h-24 rounded-full bg-white/5 backdrop-blur-md border border-white/10 flex items-center justify-center relative shadow-2xl">
-                                    <CheckCircle2 className="w-10 h-10 text-brand-primary animate-pulse" />
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <h3 className="text-2xl font-black text-white tracking-tight">
-                                    {viewMode === 'discovery' ? "You're All Caught Up!" : "That's All for Now!"}
-                                </h3>
-                                <p className="text-white/50 text-base font-medium leading-relaxed">
-                                    {viewMode === 'discovery'
-                                        ? "You've seen all the latest recommendations. Follow more friends or creators to keep your feed fresh!"
-                                        : "You've reached the end of this user's reels. Check out other profiles or go back to Discovery!"
-                                    }
-                                </p>
-                            </div>
-
-                            <div className="pt-4 flex flex-col sm:flex-row gap-3 w-full">
-                                <Link
-                                    href="/"
-                                    className="flex-1 flex items-center justify-center px-8 py-4 rounded-2xl bg-brand-primary text-white font-bold hover:bg-brand-primary/90 transition-all active:scale-95 shadow-xl shadow-brand-primary/20"
-                                >
-                                    {viewMode === 'discovery' ? "Explore More" : "Back to Feed"}
-                                </Link>
-                                {viewMode === 'user' && reels[0]?.user && (
-                                    <Link
-                                        href={`/users/${reels[0].user.username}`}
-                                        className="flex-1 flex items-center justify-center px-8 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-all active:scale-95 backdrop-blur-md"
-                                    >
-                                        View Profile
-                                    </Link>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-
             {/* Mobile Swipe Notice (Invisible, functional through Touch Events) */}
 
             {/* Nút Navigation Lên/Xuống */}
-            <div className="hidden sm:flex fixed right-5 top-1/2 -translate-y-1/2 z-[60] flex-col gap-4">
+            <div className="hidden sm:flex absolute right-5 top-1/2 -translate-y-1/2 z-[60] flex-col gap-4">
                 <button
                     onClick={() => goToReel(activeIndex - 1)}
                     disabled={activeIndex <= 0}
@@ -301,7 +306,7 @@ export function ReelViewer({
             </div>
 
             {/* Số thứ tự */}
-            <div className="fixed left-1/2 -translate-x-1/2 bottom-3 z-[60] text-[10px] text-white/30 font-medium bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full pointer-events-none">
+            <div className="absolute left-1/2 -translate-x-1/2 bottom-3 z-[60] text-[10px] text-white/30 font-medium bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full pointer-events-none">
                 {activeIndex + 1} / {reels.length}
             </div>
         </div>

@@ -101,8 +101,9 @@ const InfoItem = ({
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors text-left ${danger ? "text-red-400" : isDarkMode ? "text-white" : "text-gray-900"
-                }`}
+            disabled={!onClick}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 transition-colors text-left ${danger ? "text-red-400" : isDarkMode ? "text-white" : "text-gray-900"
+                } ${!onClick ? "opacity-30 cursor-not-allowed" : "hover:bg-white/5 cursor-pointer"}`}
         >
             <div className={`p-2 rounded-full ${isDarkMode ? "bg-white/10" : "bg-gray-100"}`}>
                 <Icon className="w-4 h-4" />
@@ -394,8 +395,8 @@ export const ConversationInfo = ({
                             <span className="text-[11px] font-medium">{t('messages.profile')}</span>
                         </div>
                     )}
-                    <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
-                        <div className={`h-9 w-9 rounded-full flex items-center justify-center transition-all backdrop-blur-md border ${isDarkMode ? "bg-white/10 group-hover:bg-white/20 border-white/10 shadow-lg shadow-black/20" : "bg-white/50 group-hover:bg-white/80 border-black/5 shadow-sm"
+                    <div className="flex flex-col items-center gap-1.5 opacity-30 cursor-not-allowed">
+                        <div className={`h-9 w-9 rounded-full flex items-center justify-center backdrop-blur-md border ${isDarkMode ? "bg-white/10 border-white/10" : "bg-gray-200 border-black/5"
                             }`}>
                             <BellOff className="w-5 h-5" />
                         </div>
