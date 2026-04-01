@@ -118,3 +118,12 @@ export const getMessageNewer = (conversationId: string, cursor: string, limit: n
 
 export const searchConversationApi = (query: string, page: string, limit: string) =>
   axiosInstance.get<ApiResponse<ConversationSearchResponse>>(`/conversations/search`, { params: { query, page, limit } });
+
+export const addParticipantApi = (conversationId: string, userIds: string[]) =>
+  axiosInstance.post(`/conversations/${conversationId}/participants`, { userIds });
+
+export const checkOwnerApi = (conversationId: string) =>
+  axiosInstance.get<ApiResponse<{ isOwner: boolean }>>(`/conversations/${conversationId}/check-owner`);
+
+export const removeParticipantApi = (conversationId: string, userId: string) =>
+  axiosInstance.delete(`/conversations/${conversationId}/participants/${userId}`);

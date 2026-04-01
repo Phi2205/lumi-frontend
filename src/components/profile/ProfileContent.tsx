@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { MapPin, Calendar, Heart, MessageSquare, Send, ArrowLeft, Pencil, Edit, Share2, Play, LayoutGrid, Plus, Loader2, Camera, Bell, Users } from "lucide-react"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarImage, AvatarFallback, StoryAvatar } from "@/components/ui/avatar"
 import { GlassCard, GlassButton, GlassStatCard, GlassCardVariant } from "@/lib/components"
 import { cn } from "@/lib/utils"
 import { User, FriendshipStatus } from "@/types/user.type"
@@ -486,10 +486,14 @@ export function ProfileContent({
                                 onChange={handleAvatarChange}
                             />
                             <div className={cn("relative", isOwnProfile && "cursor-pointer")} onClick={() => isOwnProfile && !isAvatarUploading && fileInputRef.current?.click()}>
-                                <Avatar className="h-20 w-20 md:h-40 md:w-40 ring-4 ring-white/20 shadow-2xl transition-all duration-300 group-hover/avatar:ring-brand-primary/40">
-                                    <AvatarImage src={userProfile?.avatar_url || "/avatar-default.jpg"} alt={userProfile?.name || ""} className={cn("transition-all duration-500", isAvatarUploading && "opacity-50 blur-sm")} />
-                                    <AvatarFallback className="text-xl md:text-4xl bg-linear-to-br from-brand-primary to-brand-primary-dark">{userProfile?.name?.[0] || ""}</AvatarFallback>
-                                </Avatar>
+                                <StoryAvatar
+                                    src={userProfile?.avatar_url || "/avatar-default.jpg"}
+                                    alt={userProfile?.name || ""}
+                                    hasStory={userProfile?.has_story}
+                                    username={!isOwnProfile && userProfile?.has_story ? userProfile?.username : undefined}
+                                    storyRingSize="lg"
+                                    className={cn("h-20 w-20 md:h-40 md:w-40 rounded-full ring-4 ring-white/20 shadow-2xl transition-all duration-300 group-hover/avatar:ring-brand-primary/40", isAvatarUploading && "opacity-50 blur-sm")}
+                                />
 
                                 {isOwnProfile && (
                                     <div className={cn(

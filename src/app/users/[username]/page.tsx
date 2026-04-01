@@ -59,6 +59,10 @@ export default function UserProfilePage() {
     fetchUser()
   }, [username]);
 
+  useEffect(() => {
+    console.log(userProfile)
+  }, [userProfile]);
+
   const handleAddFriend = async () => {
     if (!userProfile?.id || isLoading) return;
     try {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
-import { ConversationList, type ConversationUI } from "@/components/messages/ConversationList"
+import { ConversationList, type ConversationUI, ParticipantUI } from "@/components/messages/ConversationList"
 import { ChatWindow, type MessageUI } from "@/components/messages/ChatWindow"
 import { useDarkMode } from "@/hooks/useDarkMode"
 import { Header } from "@/components/header"
@@ -145,6 +145,48 @@ export default function MessagesPage() {
     setJumpMessageId(null)
   }
 
+  const handleMembersAdded = (users: any[]) => {
+    if (selectedConversationId && users && users.length > 0) {
+      setConversations(prev => prev.map(conv => {
+        if (conv.id === selectedConversationId) {
+          const newParticipants: ParticipantUI[] = users.map(u => ({
+            id: u.id,
+            name: u.name,
+            avatar_url: u.avatar_url || "",
+            username: u.username,
+            isOnline: false,
+          }))
+
+          const existingIds = new Set(conv.participants.map(p => p.id))
+          const uniqueNewParticipants = newParticipants.filter(p => !existingIds.has(p.id))
+
+          return {
+            ...conv,
+            participants: [...conv.participants, ...uniqueNewParticipants]
+          }
+        }
+        return conv
+      }))
+    }
+    // Also reload from server to ensure data integrity
+    reload()
+  }
+
+  const handleMemberRemoved = (userId: string) => {
+    if (selectedConversationId) {
+      setConversations(prev => prev.map(conv => {
+        if (conv.id === selectedConversationId) {
+          return {
+            ...conv,
+            participants: conv.participants.filter(p => p.id !== userId)
+          }
+        }
+        return conv
+      }))
+    }
+    reload()
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       <div className={`${showChatMobile ? 'hidden lg:block' : 'block'}`}>
@@ -214,6 +256,8 @@ export default function MessagesPage() {
                 isLoadingMoreBelow={loadingBelow}
                 onCloseJumpMode={handleCloseJumpMode}
                 onJumpToMessage={handleJumpToMessage}
+                onRefresh={handleMembersAdded}
+                onRemoveParticipant={handleMemberRemoved}
               />
             </div>
           ) : (

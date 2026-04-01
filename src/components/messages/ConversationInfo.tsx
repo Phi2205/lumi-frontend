@@ -21,7 +21,8 @@ import {
     AlertCircle,
     Clock,
     Lock,
-    ArrowLeft
+    ArrowLeft,
+    UserPlus
 } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { StoryAvatar } from "@/components/ui/avatar"
@@ -32,11 +33,13 @@ import "@/lib/i18n"
 
 import { useRouter } from "next/navigation"
 
-import { getMediaService, searchMessageService } from "@/services/conversation.service"
+import { getMediaService, searchMessageService, checkOwnerService, removeParticipantService } from "@/services/conversation.service"
 import { messageSearch } from "@/apis/conversation.api"
 import { useDebounce } from "@/hooks/useDebounce"
 import { urlImage } from "@/utils/imageUrl"
 import { MediaDetailView } from "./MediaDetailView"
+import { AddMemberModal } from "./AddMemberModal"
+import { ConfirmModal } from "@/components/ui/ConfirmModal"
 
 import { ConversationUI, ParticipantUI } from "./ConversationList"
 
@@ -53,6 +56,8 @@ interface ConversationInfoProps {
     currentUserId?: string
     onJumpToMessage?: (messageId: string) => void
     targetMessageId?: string | null
+    onRefresh?: (users: any[]) => void
+    onRemoveParticipant?: (userId: string) => void
 }
 
 const InfoSection = ({
@@ -128,7 +133,9 @@ export const ConversationInfo = ({
     onClose,
     currentUserId,
     onJumpToMessage,
-    targetMessageId
+    targetMessageId,
+    onRefresh,
+    onRemoveParticipant
 }: ConversationInfoProps) => {
     const { t } = useTranslation()
     const router = useRouter()
@@ -150,7 +157,31 @@ export const ConversationInfo = ({
     const [searchPage, setSearchPage] = useState(1)
     const [hasMoreSearch, setHasMoreSearch] = useState(false)
     const [isSearchingMore, setIsSearchingMore] = useState(false)
+    const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false)
+    const [isOwner, setIsOwner] = useState(false)
+    const [removingUserId, setRemovingUserId] = useState<string | null>(null)
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+    const [userToRemove, setUserToRemove] = useState<ParticipantUI | null>(null)
     const debouncedSearchQuery = useDebounce(searchQuery, 500)
+
+    useEffect(() => {
+        const fetchOwnerStatus = async () => {
+            if (conversation?.type === 'group' && conversationId) {
+                try {
+                    const res = await checkOwnerService(conversationId)
+                    if (res && res.success && typeof res.data.isOwner === 'boolean') {
+                        setIsOwner(res.data.isOwner)
+                    }
+                } catch (error) {
+                    console.error("Failed to check owner:", error)
+                    setIsOwner(false)
+                }
+            } else {
+                setIsOwner(false)
+            }
+        }
+        fetchOwnerStatus()
+    }, [conversationId, conversation?.type])
 
     useEffect(() => {
         const handleInitialSearch = async () => {
@@ -205,6 +236,28 @@ export const ConversationInfo = ({
             loadMoreSearch();
         }
     };
+
+    const handleRemoveMember = (participant: ParticipantUI, e: React.MouseEvent) => {
+        e.stopPropagation()
+        setUserToRemove(participant)
+        setIsConfirmModalOpen(true)
+    }
+
+    const onConfirmRemove = async () => {
+        if (!conversationId || !userToRemove) return
+
+        setRemovingUserId(userToRemove.id)
+        setIsConfirmModalOpen(false) // Close modal immediately
+        try {
+            await removeParticipantService(conversationId, userToRemove.id)
+            onRemoveParticipant?.(userToRemove.id)
+        } catch (error) {
+            console.error("Failed to remove member:", error)
+        } finally {
+            setRemovingUserId(null)
+            setUserToRemove(null)
+        }
+    }
 
     const handleProfileClick = () => {
         const otherParticipant = participants.find(p => p.id !== currentUserId);
@@ -434,6 +487,20 @@ export const ConversationInfo = ({
                         isDarkMode={isDarkMode}
                     >
                         <div className="px-2 space-y-1">
+                            {isOwner && (
+                                <div
+                                    onClick={() => setIsAddMemberModalOpen(true)}
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all hover:bg-white/5 cursor-pointer group w-full text-left`}
+                                >
+                                    <div className="h-8 w-8 rounded-full border border-dashed border-white/30 flex items-center justify-center group-hover:border-white">
+                                        <UserPlus className="w-4 h-4 opacity-70 group-hover:opacity-100" />
+                                    </div>
+                                    <span className={`text-sm font-medium ${isDarkMode ? "text-white/80 group-hover:text-white" : "text-gray-700"}`}>
+                                        {t('messages.add_member', { defaultValue: 'Thêm thành viên' })}
+                                    </span>
+                                </div>
+                            )}
+
                             {participants.map((p) => (
                                 <div
                                     key={p.id}
@@ -460,6 +527,20 @@ export const ConversationInfo = ({
                                     </div>
                                     {p.isOnline && (
                                         <div className="h-2 w-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50" />
+                                    )}
+
+                                    {isOwner && p.id !== currentUserId && (
+                                        <button
+                                            onClick={(e) => handleRemoveMember(p, e)}
+                                            disabled={removingUserId === p.id}
+                                            className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg transition-all text-red-400 hover:text-red-500 disabled:opacity-50"
+                                        >
+                                            {removingUserId === p.id ? (
+                                                <div className="h-3.5 w-3.5 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                                            ) : (
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            )}
+                                        </button>
                                     )}
                                 </div>
                             ))}
@@ -523,6 +604,31 @@ export const ConversationInfo = ({
                     isDarkMode={isDarkMode}
                 />
             )}
+
+            {conversationId && (
+                <AddMemberModal
+                    isOpen={isAddMemberModalOpen}
+                    onClose={() => setIsAddMemberModalOpen(false)}
+                    conversationId={conversationId}
+                    existingParticipants={participants}
+                    onAdded={(newUsers) => {
+                        onRefresh?.(newUsers)
+                    }}
+                    isDarkMode={isDarkMode}
+                />
+            )}
+
+            <ConfirmModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={onConfirmRemove}
+                title={t('messages.remove_member_title', { defaultValue: "Xóa thành viên" })}
+                description={t('messages.remove_member_confirm', {
+                    defaultValue: `Bạn có chắc chắn muốn xóa ${userToRemove?.name} khỏi nhóm không?`
+                })}
+                danger
+                isLoading={removingUserId !== null}
+            />
         </div>
     )
 }
