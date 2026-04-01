@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect, useCallback } from "react"
 import { ConversationList, type ConversationUI } from "@/components/messages/ConversationList"
 import { ChatWindow, type MessageUI } from "@/components/messages/ChatWindow"
