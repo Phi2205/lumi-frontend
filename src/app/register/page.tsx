@@ -8,8 +8,6 @@ import { useRouter } from "next/navigation"
 import { Eye, EyeOff, CheckSquare, Square } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useDarkMode } from "@/hooks/useDarkMode"
-import { useBackgroundImage } from "@/hooks/useBackgroundImage"
-import { BackgroundRenderer } from "@/components/BackgroundRenderer"
 
 export default function SignupPage() {
   const { register, isLoading: authLoading } = useAuth()
@@ -26,7 +24,6 @@ export default function SignupPage() {
   const [errorMessage, setErrorMessage] = useState("")
   const containerRef = useRef<HTMLDivElement>(null)
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
-  const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
 
   // Set full height on mount and window resize
   useEffect(() => {
@@ -88,8 +85,8 @@ export default function SignupPage() {
     } catch (error: any) {
       console.error("Register error:", error)
       setErrorMessage(
-        error?.response?.data?.message || 
-        error?.message || 
+        error?.response?.data?.message ||
+        error?.message ||
         "Registration failed. Please try again."
       )
     } finally {
@@ -98,23 +95,17 @@ export default function SignupPage() {
   }
 
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative min-h-screen"
     >
-      <BackgroundRenderer 
-        isDarkMode={isDarkMode} 
-        imageLoaded={imageLoaded} 
-        imageError={imageError}
-      />
-      
       <section className="py-28">
         <div className="container mx-auto px-4">
           {/* Lumi Logo */}
           <div className="flex justify-center mb-12">
-            <span 
+            <span
               className="text-7xl md:text-8xl font-normal text-white block"
-              style={{ 
+              style={{
                 fontFamily: 'var(--font-dancing-script), "Brush Script MT", cursive',
                 letterSpacing: '4px',
                 fontWeight: 500,
@@ -132,7 +123,7 @@ export default function SignupPage() {
             <div className="w-full md:w-1/2 lg:w-1/3">
               <div className="relative text-white/90">
                 <h3 className="mb-6 text-center text-white font-light">Join Lumi</h3>
-                
+
                 <form onSubmit={handleSubmit} className="signin-form">
                   {/* Name Field */}
                   <div className="relative mb-4">
@@ -217,8 +208,8 @@ export default function SignupPage() {
 
                   {/* Create Account Button */}
                   <div className="mb-4">
-                    <button 
-                      type="submit" 
+                    <button
+                      type="submit"
                       disabled={isLoading || authLoading}
                       className="w-full h-[50px] rounded-full text-sm uppercase font-normal cursor-pointer transition-all duration-300 focus:outline-none shadow-none disabled:opacity-50 disabled:cursor-not-allowed border"
                       style={{
@@ -306,8 +297,8 @@ export default function SignupPage() {
                 {/* Sign In Link */}
                 <p className="mt-8 text-center text-sm text-white/90">
                   Already have an account?{" "}
-                  <Link 
-                    href="/login" 
+                  <Link
+                    href="/login"
                     className="font-medium transition-all duration-300 hover:opacity-80"
                     style={{ color: 'var(--brand-primary)' }}
                   >

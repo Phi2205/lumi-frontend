@@ -59,6 +59,14 @@ interface StoryAvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   isSeen?: boolean
   isOnline?: boolean
   username?: string
+  storyRingSize?: "sm" | "md" | "lg" | "xl"
+}
+
+const STORY_RING_SIZES = {
+  sm: { outer: "-inset-[3px]", inner: "-inset-[1px]" },   // 2px border, 1px gap
+  md: { outer: "-inset-[4.5px]", inner: "-inset-[1.5px]" }, // 3px border, 1.5px gap
+  lg: { outer: "-inset-[6px]", inner: "-inset-[2px]" },   // 4px border, 2px gap
+  xl: { outer: "-inset-[9px]", inner: "-inset-[3px]" }    // 6px border, 3px gap
 }
 
 function StoryAvatar({
@@ -68,24 +76,28 @@ function StoryAvatar({
   isSeen = false,
   isOnline = false,
   username,
+  storyRingSize = "sm",
   className,
   ...props
 }: StoryAvatarProps) {
+  const rings = STORY_RING_SIZES[storyRingSize] || STORY_RING_SIZES.sm
+
   const content = (
     <div className={cn("relative shrink-0", className)} {...props}>
       {hasStory && (
         <>
-          {/* Lớp gradient bọc ngoài cùng (từ -4px đến -2px) */}
+          {/* Lớp gradient bọc ngoài cùng */}
           <div
             className={cn(
-              "absolute -inset-[3px] rounded-full transition-all duration-300",
+              "absolute rounded-full transition-all duration-300",
+              rings.outer,
               isSeen
                 ? "bg-white/50"
                 : "bg-gradient-to-tr from-yellow-400 via-orange-500 to-purple-600"
             )}
           />
-          {/* Lớp nền đen để tạo khoảng trống giữa gradient và avatar (từ -1.5px đến 0px) */}
-          <div className="absolute -inset-[1px] rounded-full bg-background" />
+          {/* Lớp nền đen để tạo khoảng trống giữa gradient và avatar */}
+          <div className={cn("absolute rounded-full bg-background", rings.inner)} />
         </>
       )}
 

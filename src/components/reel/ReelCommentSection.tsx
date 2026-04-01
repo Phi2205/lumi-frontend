@@ -86,7 +86,11 @@ export function ReelCommentSection({ reelId, onClose }: ReelCommentSectionProps)
     const [commentToDelete, setCommentToDelete] = useState<string | null>(null)
 
     const handleReceive = useCallback((comment: ReelComment) => {
-        setComments((prev) => insertReelCommentToTree(prev, comment));
+        setComments((prev) => {
+            // Loại bỏ comment đang gửi (optimistic) nếu nội dung và user trùng khớp
+            const filtered = prev.filter(c => !(c.id.startsWith('temp-') && c.user_id === comment.user_id));
+            return insertReelCommentToTree(filtered, comment);
+        });
     }, []);
 
     const handleDelete = useCallback((data: { reel_id: string, comment_id: string }) => {
@@ -157,23 +161,46 @@ export function ReelCommentSection({ reelId, onClose }: ReelCommentSectionProps)
     }
 
     const handleAddComment = async () => {
-        if (newComment.trim()) {
-            try {
-                setIsSubmitting(true)
-                await createReelCommentService(reelId, newComment)
-                setNewComment("")
-            } catch (error) {
-                console.error("Failed to add reel comment", error)
-            } finally {
-                setIsSubmitting(false)
-            }
+        if (!newComment.trim() || !user || isSubmitting) return;
+
+        const content = newComment.trim();
+        const tempId = `temp-${Date.now()}`;
+
+        // Tạo comment ảo để hiển thị ngay lập tức
+        const optimisticComment: ReelComment = {
+            id: tempId,
+            content: content,
+            user_id: user.id,
+            user: user,
+            created_at: new Date().toISOString(),
+            reel_id: reelId,
+            parent_id: null,
+            depth: 0,
+            replies: [],
+            has_replies: false,
+        };
+
+        try {
+            setIsSubmitting(true);
+            setNewComment("");
+            // Thêm ngay vào UI
+            setComments(prev => [optimisticComment, ...prev]);
+
+            await createReelCommentService(reelId, content);
+        } catch (error) {
+            console.error("Failed to add reel comment", error);
+            // Nếu lỗi thì xóa comment ảo đi
+            setComments(prev => prev.filter(c => c.id !== tempId));
+            setNewComment(content); // Trả lại nội dung cũ để user sửa lại
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
-    const handleDeleteComment = (commentId: string) => {
+    const handleDeleteComment = useCallback((commentId: string) => {
         setCommentToDelete(commentId)
         setDeleteModalOpen(true)
-    }
+    }, [])
 
     const handleConfirmDelete = async () => {
         if (!commentToDelete) return
@@ -188,7 +215,7 @@ export function ReelCommentSection({ reelId, onClose }: ReelCommentSectionProps)
     }
 
     return (
-        <div className="flex flex-col h-full bg-[#121212] border-l border-white/10 w-full sm:w-[360px] md:w-[400px]">
+        <div className="flex flex-col h-full bg-black/80 backdrop-blur-sm border-l border-white/10 w-full sm:w-[360px] md:w-[400px]">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-4 border-b border-white/10 shrink-0">
                 <h3 className="text-white font-bold text-lg">Comments</h3>
@@ -218,7 +245,6 @@ export function ReelCommentSection({ reelId, onClose }: ReelCommentSectionProps)
                     </div>
                 ) : (
                     <div className="flex flex-col gap-5">
-                        {isSubmitting && <SkeletonComments count={1} />}
                         {comments.map((comment) => (
                             <ReelCommentItem key={comment.id} comment={comment} depth={0} onDelete={handleDeleteComment} />
                         ))}
@@ -234,7 +260,7 @@ export function ReelCommentSection({ reelId, onClose }: ReelCommentSectionProps)
             </div>
 
             {/* Add Comment */}
-            <div className="flex gap-3 px-4 py-4 border-t border-white/10 shrink-0 bg-[#121212]">
+            <div className="flex gap-3 px-4 py-4 border-t border-white/10 shrink-0">
                 <StoryAvatar className="w-10 h-10 shrink-0" src={user?.avatar_url || "/avatar-default.jpg"} alt={user?.name || "You"} />
                 <div className="flex-1 relative flex items-end">
                     <TextareaAutosize

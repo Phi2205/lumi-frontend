@@ -1,9 +1,10 @@
 "use client"
 
-import { SendIcon, Phone, Video, MoreHorizontal, Image as ImageIcon, X } from "lucide-react"
+import { SendIcon, Phone, Video, MoreHorizontal, Image as ImageIcon, X, AlertCircle } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useState, memo, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
+import { motion, AnimatePresence } from "framer-motion"
 import { uploadService } from "@/services/upload.service"
 import { GlassButton } from "@/lib/components/glass-button"
 import { GlassInput } from "@/lib/components/glass-input"
@@ -14,6 +15,8 @@ import { playHlsPreview, playHlsVideo } from "@/lib/hls"
 import { StoryAvatar } from "@/components/ui/avatar"
 import { formatTime, formatPresence } from "@/utils/format"
 import { ConversationInfo } from "./ConversationInfo"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 import { urlImage } from "@/utils/imageUrl"
 
 const VideoMessage = memo(({ publicId }: { publicId: string }) => {
@@ -135,6 +138,8 @@ interface ChatWindowProps {
   isLoadingMoreBelow?: boolean
   onCloseJumpMode?: () => void
   onJumpToMessage?: (messageId: string) => void
+  onRefresh?: (users: any[]) => void
+  onRemoveParticipant?: (userId: string) => void
 }
 
 const listUserSeenMessage = (participants: ParticipantUI[], messageId: string, currentUserId: string | undefined) => {
@@ -288,13 +293,17 @@ export const ChatWindow = memo(({
   hasMoreBelow,
   isLoadingMoreBelow,
   onCloseJumpMode,
-  onJumpToMessage
+  onJumpToMessage,
+  onRefresh,
+  onRemoveParticipant
 }: ChatWindowProps) => {
+  const { t } = useTranslation()
   const [inputValue, setInputValue] = useState("")
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [showInfo, setShowInfo] = useState(false)
   const [atBottom, setAtBottom] = useState(true)
+  const [sendError, setSendError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const initialJumpDone = useRef<string | null>(null)
@@ -333,28 +342,46 @@ export const ChatWindow = memo(({
           console.log("Attachments:", attachments)
         } catch (error) {
           console.error("Upload failed", error)
+          setSendError(t('messages.upload_failed', { defaultValue: 'Tải tệp lên thất bại. Vui lòng thử lại.' }))
+          setIsUploading(false)
+          return // Stop sending if upload fails
         } finally {
           setIsUploading(false)
         }
       }
 
+      try {
+        if (onSendMessage) {
+          onSendMessage(finalContent, attachments)
+        }
+        setInputValue("")
+        setSelectedFiles([])
 
-      onSendMessage?.(finalContent, attachments)
-      setInputValue("")
-      setSelectedFiles([])
+        // Tắt JumpMode khi gửi tin nhắn mới
+        if (targetMessageId && onCloseJumpMode) {
+          onCloseJumpMode();
+        }
 
-      // Tắt JumpMode khi gửi tin nhắn mới
-      if (targetMessageId && onCloseJumpMode) {
-        onCloseJumpMode();
-      }
-
-      // Cuộn xuống đáy ngay lập tức
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = 0;
-        setAtBottom(true);
+        // Cuộn xuống đáy ngay lập tức
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = 0;
+          setAtBottom(true);
+        }
+      } catch (error) {
+        console.error("Send failed", error)
+        setSendError(t('messages.send_failed', { defaultValue: 'Gửi tin nhắn thất bại. Vui lòng kiểm tra kết nối.' }))
       }
     }
   }
+
+  useEffect(() => {
+    if (sendError) {
+      const timer = setTimeout(() => {
+        setSendError(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [sendError])
 
   const handleScroll = () => {
     if (!scrollContainerRef.current) return
@@ -468,7 +495,7 @@ export const ChatWindow = memo(({
             <div>
               <p className={`font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{conversationName}</p>
               <p className={`text-xs ${isDarkMode ? 'text-white/70' : 'text-gray-600'} font-semibold`}>
-                {isOnline ? "Đang hoạt động" : (lastOnline ? `${formatPresence(lastOnline)}` : "Ngoại tuyến")}
+                {isOnline ? t('messages.active_now') : (lastOnline ? `${formatPresence(lastOnline)}` : t('messages.offline'))}
               </p>
             </div>
           </div>
@@ -480,7 +507,7 @@ export const ChatWindow = memo(({
               blur={18}
               refraction={0.1}
               depth={2}
-              className="h-9 w-9 p-0"
+              className="h-10 w-10 p-0"
             >
               <Phone className="h-4 w-4 text-cyan-300" />
             </GlassButton>
@@ -490,7 +517,7 @@ export const ChatWindow = memo(({
               blur={18}
               refraction={0.1}
               depth={2}
-              className="h-9 w-9 p-0"
+              className="h-10 w-10 p-0"
             >
               <Video className="h-4 w-4 text-cyan-300" />
             </GlassButton>
@@ -500,7 +527,7 @@ export const ChatWindow = memo(({
               blur={18}
               refraction={0.1}
               depth={2}
-              className={`h-9 w-9 p-0 transition-all ${showInfo ? 'bg-white/20' : ''}`}
+              className={`h-10 w-10 p-0 transition-all ${showInfo ? 'bg-white/20' : ''}`}
               onClick={() => setShowInfo(!showInfo)}
             >
               <MoreHorizontal className="h-4 w-4 text-cyan-300" />
@@ -549,7 +576,7 @@ export const ChatWindow = memo(({
           {isLoadingMoreBelow && (
             <div className="flex justify-center p-4 absolute bottom-[100px] left-1/2 -translate-x-1/2 bg-black/20 backdrop-blur-md rounded-full px-4 py-2 z-50">
               <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mr-2" />
-              <span className="text-[10px]">Đang tải mới hơn...</span>
+              <span className="text-[10px]">{t('messages.loading_newer')}</span>
             </div>
           )}
         </div>
@@ -592,6 +619,26 @@ export const ChatWindow = memo(({
             </div>
           )}
 
+          {/* Error Message */}
+          <AnimatePresence>
+            {sendError && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="mb-3"
+              >
+                <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 text-red-500 rounded-xl text-xs backdrop-blur-md">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="flex-1">{sendError}</span>
+                  <button onClick={() => setSendError(null)} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="flex gap-2 items-end">
             <input
               type="file"
@@ -605,7 +652,7 @@ export const ChatWindow = memo(({
               variant="ghost"
               size="sm"
               blur={18}
-              className="h-11 w-11 p-0 flex-shrink-0"
+              className="h-12 w-12 p-0 flex-shrink-0"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
             >
@@ -618,7 +665,7 @@ export const ChatWindow = memo(({
               } : undefined}
             >
               <input
-                placeholder={isUploading ? "Đang tải tệp..." : "Aa..."}
+                placeholder={isUploading ? t('messages.uploading_files') : t('messages.message_placeholder')}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => e.key === "Enter" && !isUploading && handleSend()}
@@ -669,6 +716,8 @@ export const ChatWindow = memo(({
             conversation={conversation}
             onJumpToMessage={onJumpToMessage}
             targetMessageId={targetMessageId}
+            onRefresh={onRefresh}
+            onRemoveParticipant={onRemoveParticipant}
           />
         </div>
       </div>

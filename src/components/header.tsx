@@ -4,9 +4,12 @@ import { Bell, Menu, LogOut, Moon, User as UserIcon, Settings, Search } from "lu
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext"
 import Link from "next/link"
 import { SwitchMode } from "@/components/SwitchMode"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 import { UploadHeaderIcon } from "@/components/common/UploadHeaderIcon"
 
 interface HeaderProps {
@@ -16,8 +19,10 @@ interface HeaderProps {
 }
 
 export function Header({ isDarkMode, onDarkModeToggle, onSearchToggle }: HeaderProps) {
+  const { t } = useTranslation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { logout, user } = useAuth()
+  const router = useRouter()
 
   const handleLogout = async () => {
     try {
@@ -44,19 +49,19 @@ export function Header({ isDarkMode, onDarkModeToggle, onSearchToggle }: HeaderP
         <button
           className="w-full px-4 py-2.5 text-left text-sm text-white font-medium hover:bg-white/15 flex items-center gap-3 transition-all duration-150 rounded-lg mx-1.5 group/item"
           onClick={() => {
-            // TODO: Navigate to profile
-            console.log('Navigate to profile')
+            router.push('/profile')
+            setMobileMenuOpen(false)
           }}
         >
           <UserIcon className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
-          <span>Profile</span>
+          <span>{t('common.profile')}</span>
         </button>
 
         {/* Dark Mode Toggle */}
         <div className="w-full px-4 py-2.5 text-left text-sm text-white font-medium hover:bg-white/15 flex items-center justify-between transition-all duration-150 rounded-lg mx-1.5 group/item">
           <div className="flex items-center gap-3 flex-shrink-0">
             <Moon className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
-            <span>Dark Mode</span>
+            <span>{t('settings.dark_mode')}</span>
           </div>
           <div className="flex-shrink-0">
             <SwitchMode isDarkMode={isDarkMode} onToggle={onDarkModeToggle} />
@@ -66,12 +71,12 @@ export function Header({ isDarkMode, onDarkModeToggle, onSearchToggle }: HeaderP
         <button
           className="w-full px-4 py-2.5 text-left text-sm text-white font-medium hover:bg-white/15 flex items-center gap-3 transition-all duration-150 rounded-lg mx-1.5 group/item"
           onClick={() => {
-            // TODO: Navigate to settings
-            console.log('Navigate to settings')
+            router.push('/settings')
+            setMobileMenuOpen(false)
           }}
         >
           <Settings className="h-4 w-4 text-white/80 group-hover/item:text-white transition-colors" />
-          <span>Settings</span>
+          <span>{t('common.settings')}</span>
         </button>
 
         <div className="border-t border-white/20 my-1.5 mx-2"></div>
@@ -81,7 +86,7 @@ export function Header({ isDarkMode, onDarkModeToggle, onSearchToggle }: HeaderP
           onClick={handleLogout}
         >
           <LogOut className="h-4 w-4 text-red-400 group-hover/item:text-red-300 transition-colors" />
-          <span>Logout</span>
+          <span>{t('common.logout')}</span>
         </button>
       </div>
     </div>
@@ -112,11 +117,11 @@ export function Header({ isDarkMode, onDarkModeToggle, onSearchToggle }: HeaderP
           >
             <Search className="h-5 w-5" />
           </Button>
-
+{/* 
           <Button variant="ghost" size="icon" className="relative text-white/60 hover:text-white hover:bg-white/10 rounded-lg">
             <Bell className="h-5 w-5" />
             <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
-          </Button>
+          </Button> */}
 
           {/* Avatar with Dropdown Menu */}
           <div className="hidden sm:block relative group">

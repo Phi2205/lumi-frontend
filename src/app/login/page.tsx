@@ -6,8 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDarkMode } from "@/hooks/useDarkMode";
-import { useBackgroundImage } from "@/hooks/useBackgroundImage";
-import { BackgroundRenderer } from "@/components/BackgroundRenderer";
 
 export default function LoginPage() {
   const { login, isLoading: authLoading, isAuthenticated } = useAuth();
@@ -20,7 +18,6 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const { isDarkMode, handleDarkModeToggle } = useDarkMode();
-  const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode);
 
   // Set full height on mount and window resize
   useEffect(() => {
@@ -75,12 +72,6 @@ export default function LoginPage() {
       ref={containerRef}
       className="relative min-h-screen"
     >
-      <BackgroundRenderer
-        isDarkMode={isDarkMode}
-        imageLoaded={imageLoaded}
-        imageError={imageError}
-      />
-
       <section className="py-28">
         <div className="container mx-auto px-4">
           {/* Lumi Logo */}

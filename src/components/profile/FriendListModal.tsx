@@ -8,6 +8,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/skeleton"
 import { Loader2, Users } from "lucide-react"
 import Link from "next/link"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface FriendListModalProps {
     isOpen: boolean
@@ -19,36 +21,65 @@ interface FriendListModalProps {
 }
 
 export function FriendListModal({ isOpen, onClose, userId, isOwnProfile, type, title }: FriendListModalProps) {
+    const { t } = useTranslation()
     const [friends, setFriends] = useState<User[]>([])
     const [isLoading, setIsLoading] = useState(false)
+    const [isFetchingMore, setIsFetchingMore] = useState(false)
+    const [page, setPage] = useState(1)
+    const [hasMore, setHasMore] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const LIMIT = 20
 
     useEffect(() => {
         if (isOpen && userId) {
-            fetchFriends()
+            setFriends([])
+            setPage(1)
+            setHasMore(true)
+            fetchFriends(1, true)
         }
     }, [isOpen, userId, type])
 
-    const fetchFriends = async () => {
+    const fetchFriends = async (pageNum: number, isInitial: boolean = false) => {
+        if (!hasMore && !isInitial) return
+
         try {
-            setIsLoading(true)
+            if (isInitial) setIsLoading(true)
+            else setIsFetchingMore(true)
+
             setError(null)
-            let data;
+            let data: User[] = [];
+
             if (type === "friends") {
                 const res = isOwnProfile
-                    ? await getFriendsService("20", "1")
-                    : await getFriendsUserIdService(userId, "20", "1")
-                data = res.data
+                    ? await getFriendsService(LIMIT.toString(), pageNum.toString())
+                    : await getFriendsUserIdService(userId, LIMIT.toString(), pageNum.toString())
+                data = res.data || []
+                // If we got fewer items than the limit, there are no more
+                setHasMore(data.length === LIMIT)
             } else {
+                // Mutual friends doesn't seem to support pagination in current service
                 const res = await getMutualFriendsService(userId)
-                data = res.data
+                data = res.data || []
+                setHasMore(false)
             }
-            setFriends(data || [])
+
+            setFriends(prev => isInitial ? data : [...prev, ...data])
         } catch (err) {
             console.error(`Failed to fetch ${type}:`, err)
-            setError(`Failed to load ${type}. Please try again.`)
+            setError(t('profile.load_failed', { type: t(`profile.${type}`) }))
         } finally {
             setIsLoading(false)
+            setIsFetchingMore(false)
+        }
+    }
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+        // Load more when 50px from bottom
+        if (scrollHeight - scrollTop - clientHeight < 50 && !isFetchingMore && hasMore && !isLoading) {
+            const nextPage = page + 1
+            setPage(nextPage)
+            fetchFriends(nextPage)
         }
     }
 
@@ -66,7 +97,10 @@ export function FriendListModal({ isOpen, onClose, userId, isOwnProfile, type, t
             }
             maxWidthClassName="max-w-md"
         >
-            <div className="min-h-[300px] max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div
+                className="min-h-[300px] max-h-[60vh] overflow-y-auto pr-2 custom-scrollba scroll-glass"
+                onScroll={handleScroll}
+            >
                 {isLoading ? (
                     <div className="space-y-4">
                         {Array.from({ length: 5 }).map((_, i) => (
@@ -86,10 +120,10 @@ export function FriendListModal({ isOpen, onClose, userId, isOwnProfile, type, t
                         </div>
                         <p className="text-white/60 mb-4">{error}</p>
                         <button
-                            onClick={fetchFriends}
+                            onClick={() => fetchFriends(1, true)}
                             className="text-brand-primary hover:underline text-sm font-medium"
                         >
-                            Try again
+                            {t('profile.try_again')}
                         </button>
                     </div>
                 ) : friends.length === 0 ? (
@@ -97,7 +131,7 @@ export function FriendListModal({ isOpen, onClose, userId, isOwnProfile, type, t
                         <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-white/20 mb-4">
                             <Users className="w-6 h-6" />
                         </div>
-                        <p className="text-white/40">No friends found.</p>
+                        <p className="text-white/40">{t('profile.no_friends')}</p>
                     </div>
                 ) : (
                     <div className="space-y-2">
@@ -120,6 +154,12 @@ export function FriendListModal({ isOpen, onClose, userId, isOwnProfile, type, t
                                 </div>
                             </Link>
                         ))}
+
+                        {isFetchingMore && (
+                            <div className="flex justify-center p-4">
+                                <Loader2 className="w-6 h-6 text-brand-primary animate-spin" />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

@@ -81,7 +81,7 @@ export function GlassStories() {
       {/* Stories Container with Background */}
       <div
         className="min-h-screen bg-cover bg-no-repeat bg-center relative"
-        style={{ 
+        style={{
           backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(/bg12.jpg)`
         }}
       >
@@ -114,11 +114,10 @@ export function GlassStories() {
                   onClick={() => setSelectedStory(story.id)}
                 >
                   <div
-                    className={`relative h-24 w-20 rounded-xl overflow-hidden ${
-                      !story.hasViewed
+                    className={`relative h-24 w-20 rounded-xl overflow-hidden ${!story.hasViewed
                         ? "ring-2 ring-blue-400/80 ring-offset-2 ring-offset-transparent"
                         : "ring-2 ring-white/30"
-                    } transition-all duration-300 group-hover:ring-blue-400/60`}
+                      } transition-all duration-300 group-hover:ring-blue-400/60`}
                   >
                     <img
                       src={story.image || "/placeholder.svg"}
@@ -130,11 +129,10 @@ export function GlassStories() {
                   </div>
                   <div className="mt-2 flex items-center justify-center">
                     <div
-                      className={`h-8 w-8 rounded-full overflow-hidden ${
-                        !story.hasViewed
+                      className={`h-8 w-8 rounded-full overflow-hidden ${!story.hasViewed
                           ? "ring-2 ring-blue-400/80"
                           : "ring-2 ring-white/40"
-                      } backdrop-blur-lg bg-white/20`}
+                        } backdrop-blur-lg bg-white/20`}
                     >
                       <img
                         src={story.avatar || "/placeholder.svg"}
@@ -174,7 +172,7 @@ export function GlassStories() {
             {/* Header */}
             <div className="sticky top-0 backdrop-blur-md bg-black/30 border-b border-white/20 p-4 flex items-center justify-between z-10">
               <h2 className="text-xl font-bold text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.7)]">
-                Tất cả Stories
+                All Stories
               </h2>
               <button
                 onClick={() => setSelectedStory(null)}
@@ -190,11 +188,10 @@ export function GlassStories() {
                 {mockStories.slice(1).map((story) => (
                   <div
                     key={story.id}
-                    className={`group cursor-pointer rounded-xl overflow-hidden backdrop-blur-lg bg-white/10 border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl ${
-                      !story.hasViewed
+                    className={`group cursor-pointer rounded-xl overflow-hidden backdrop-blur-lg bg-white/10 border-2 transition-all duration-300 hover:scale-105 hover:shadow-xl ${!story.hasViewed
                         ? "border-blue-400/60 ring-2 ring-blue-400/40"
                         : "border-white/30"
-                    } ${selectedStory === story.id ? "ring-4 ring-blue-400/60" : ""}`}
+                      } ${selectedStory === story.id ? "ring-4 ring-blue-400/60" : ""}`}
                     onClick={() => setSelectedStory(story.id)}
                   >
                     {/* Story Image */}
@@ -205,14 +202,13 @@ export function GlassStories() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                      
+
                       {/* Story Info Overlay */}
                       <div className="absolute bottom-0 left-0 right-0 p-4">
                         <div className="flex items-center gap-3 mb-2">
                           <div
-                            className={`h-10 w-10 rounded-full overflow-hidden ring-2 ${
-                              !story.hasViewed ? "ring-blue-400/80" : "ring-white/50"
-                            } backdrop-blur-lg bg-white/20`}
+                            className={`h-10 w-10 rounded-full overflow-hidden ring-2 ${!story.hasViewed ? "ring-blue-400/80" : "ring-white/50"
+                              } backdrop-blur-lg bg-white/20`}
                           >
                             <img
                               src={story.avatar || "/placeholder.svg"}
@@ -237,19 +233,19 @@ export function GlassStories() {
                             </p>
                           </div>
                         </div>
-                        
+
                         {/* Viewed Badge */}
                         {story.hasViewed && (
                           <div className="inline-flex items-center px-2 py-1 rounded-full backdrop-blur-md bg-white/20 border border-white/30">
                             <span className="text-xs text-white/80 [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
-                              Đã xem
+                              Viewed
                             </span>
                           </div>
                         )}
                         {!story.hasViewed && (
                           <div className="inline-flex items-center px-2 py-1 rounded-full backdrop-blur-md bg-blue-500/40 border border-blue-400/50">
                             <span className="text-xs text-white font-medium [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
-                              Mới
+                              New
                             </span>
                           </div>
                         )}
@@ -263,7 +259,7 @@ export function GlassStories() {
               {mockStories.length === 1 && (
                 <div className="text-center py-12">
                   <p className="text-white/60 text-lg [text-shadow:0_1px_2px_rgba(0,0,0,0.5)]">
-                    Chưa có stories nào
+                    No stories available
                   </p>
                 </div>
               )}
