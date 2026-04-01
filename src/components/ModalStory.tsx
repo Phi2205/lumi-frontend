@@ -10,6 +10,8 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react"
 import { GlassButton } from "@/lib/components"
 import { StorySkeletonContent } from "@/components/skeleton"
 import { viewStory } from "@/services/story.service"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface StoryFriend {
   id: string
@@ -50,6 +52,7 @@ export function ModalStory({
   hasPreviousFriend = false,
   hasNextFriend = false
 }: ModalStoryProps) {
+  const { t } = useTranslation()
   const videoRef = useRef<HTMLVideoElement>(null)
 
   // Setup HLS video player
@@ -270,7 +273,7 @@ export function ModalStory({
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <div className="text-white">No stories available</div>
+            <div className="text-white">{t('stories.no_stories')}</div>
           </div>
         )}
       </div>

@@ -14,9 +14,9 @@ export const usePresenceRealtime = (options?: PresenceRealtimeOptions) => {
         if (!socket) return;
 
         const handleStatusChanged = (data: { userId: string; is_online: boolean; last_online?: string }) => {
-            console.log(`User ${data.userId} hiện đang ${data.is_online ? 'Online' : 'Offline'}`);
+            console.log(`User ${data.userId} is now ${data.is_online ? 'Online' : 'Offline'}`);
             if (!data.is_online && data.last_online) {
-                console.log(`Hoạt động lần cuối: ${data.last_online}`);
+                console.log(`Last active: ${data.last_online}`);
             }
             onStatusChanged?.(data);
         };

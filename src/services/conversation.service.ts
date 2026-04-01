@@ -1,4 +1,5 @@
-import { getConversationsApi, Conversation as ApiConversation, getMessageApi, getConversationDetailApi, getMediaApi, createGroupConversationApi, getMessageAround, getMessageOlder, getMessageNewer } from "../apis/conversation.api";
+import { getConversationsApi, Conversation as ApiConversation, getMessageApi, getConversationDetailApi,
+    getMediaApi, createGroupConversationApi, getMessageAround, getMessageOlder, getMessageNewer, searchConversationApi, addParticipantApi, checkOwnerApi, removeParticipantApi } from "../apis/conversation.api";
 import { ConversationUI } from "../components/messages/ConversationList";
 import { formatTime } from "../utils/format";
 import { searchMessageApi } from "../apis/conversation.api";
@@ -20,12 +21,12 @@ export const mapConversationToUI = (conv: ApiConversation, currentUserId: string
     }
 
     const myParticipant = conv.participants.find(p => p.id === currentUserId);
-    console.log("conv", conv.unread_count);
+    console.log("conv time", typeof conv.last_message_at, conv.last_message_at, formatTime(conv.last_message_at ? new Date(conv.last_message_at) : new Date()));
     return {
         id: conv.id,
-        name: name || "Người dùng Lumi",
+        name: name || "Lumi User",
         avatar: avatar,
-        lastMessage: conv.last_message || "Chưa có tin nhắn",
+        lastMessage: conv.last_message || "No messages yet",
         type: conv.type,
         timestamp: conv.last_message_at ? formatTime(conv.last_message_at) : "",
         unread: (conv.unread_count || 0) > 0,
@@ -134,6 +135,46 @@ export const getMessageNewerService = async (conversationId: string, cursor: str
         return response.data;
     } catch (error) {
         console.error('Error fetching message newer:', error);
+        throw error;
+    }
+};
+
+export const searchConversationService = async (query: string, page: string, limit: string) => {
+    try {
+        const response = await searchConversationApi(query, page, limit);
+        return response.data;
+    } catch (error) {
+        console.error('Error searching conversations:', error);
+        throw error;
+    }
+};
+
+export const addParticipantService = async (conversationId: string, userIds: string[]) => {
+    try {
+        const response = await addParticipantApi(conversationId, userIds);
+        return response.data;
+    } catch (error) {
+        console.error('Error adding participant:', error);
+        throw error;
+    }
+};
+
+export const checkOwnerService = async (conversationId: string) => {
+    try {
+        const response = await checkOwnerApi(conversationId);
+        return response.data;
+    } catch (error) {
+        console.error('Error checking owner:', error);
+        throw error;
+    }
+};
+
+export const removeParticipantService = async (conversationId: string, userId: string) => {
+    try {
+        const response = await removeParticipantApi(conversationId, userId);
+        return response.data;
+    } catch (error) {
+        console.error('Error removing participant:', error);
         throw error;
     }
 };

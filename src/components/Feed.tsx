@@ -13,6 +13,8 @@ import { createPost } from "@/services/post.service"
 import type { PostMediaItem, PostMediaType, Post as ApiPost } from "@/apis/post.api"
 import * as postService from "@/services/post.service"
 import { useAuth } from "@/contexts/AuthContext"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 function mapPost(post: ApiPost): Post {
   return {
@@ -38,6 +40,7 @@ function mapPost(post: ApiPost): Post {
 
 
 export function Feed() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -118,6 +121,7 @@ export function Feed() {
 
     } catch (error) {
       console.error("Error loading more posts:", error);
+      setHideLoader(true);
     } finally {
       setIsFetchingMore(false);
     }
@@ -132,6 +136,7 @@ export function Feed() {
       setHideLoader(true);
     } catch (error) {
       console.error("Error fetching posts:", error);
+      setHideLoader(true);
     } finally {
       setIsLoading(false)
     }
@@ -294,7 +299,7 @@ export function Feed() {
               <AvatarFallback>Y</AvatarFallback>
             </Avatar>
             <Input
-              placeholder="What's on your mind?"
+              placeholder={t('feed.whats_on_your_mind')}
               value=""
               readOnly
               onFocus={() => setIsCreateOpen(true)}
@@ -314,7 +319,7 @@ export function Feed() {
               }}
             >
               <ImageIcon className="h-4 w-4" />
-              Photo
+              {t('feed.photo')}
             </GlassButton>
             <GlassButton
               variant="primary"
@@ -326,7 +331,7 @@ export function Feed() {
               }}
               disabled
             >
-              Post
+              {t('feed.post')}
             </GlassButton>
           </div>
         </div>
@@ -338,8 +343,8 @@ export function Feed() {
           if (isSubmitting) return
           setIsCreateOpen(false)
         }}
-        title="Create post"
-        description="Write something and optionally attach images/videos."
+        title={t('feed.create_post')}
+        description={t('feed.create_post_desc')}
         maxWidthClassName="max-w-[640px]"
         footer={
           <div className="flex gap-3 justify-end">
@@ -351,14 +356,14 @@ export function Feed() {
                 setIsCreateOpen(false)
               }}
             >
-              Cancel
+              {t('feed.cancel')}
             </GlassButton>
             <GlassButton
               variant="primary"
               onClick={handlePostSubmit}
               disabled={isSubmitting || (!draftContent.trim() && draftMedia.length === 0)}
             >
-              {isSubmitting ? "Posting..." : "Post"}
+              {isSubmitting ? t('feed.posting') : t('feed.post')}
             </GlassButton>
           </div>
         }
@@ -370,7 +375,7 @@ export function Feed() {
               <AvatarFallback>Y</AvatarFallback>
             </Avatar>
             <textarea
-              placeholder="What's on your mind?"
+              placeholder={t('feed.whats_on_your_mind')}
               value={draftContent}
               onChange={(e) => setDraftContent(e.target.value)}
               className="w-full min-h-[120px] rounded-2xl border border-white/15 bg-white/5 backdrop-blur-2xl p-4 text-white placeholder:text-white/40 outline-none focus:border-white/25"
@@ -378,7 +383,7 @@ export function Feed() {
           </div>
 
           <div className="rounded-2xl border border-white/12 bg-white/4 backdrop-blur-2xl p-4">
-            <div className="text-sm font-medium text-white mb-3">Media</div>
+            <div className="text-sm font-medium text-white mb-3">{t('feed.media')}</div>
             <div className="flex flex-col sm:flex-row gap-2 items-start">
               <label className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 backdrop-blur-2xl px-4 py-2 text-white/90 hover:bg-white/8 cursor-pointer">
                 <input
@@ -392,10 +397,10 @@ export function Feed() {
                     e.currentTarget.value = ""
                   }}
                 />
-                Choose files
+                {t('feed.choose_files')}
               </label>
               <div className="text-xs text-white/60 pt-2">
-                Supported: images/videos. You can select multiple files.
+                {t('feed.supported_media')}
               </div>
             </div>
 
@@ -464,9 +469,9 @@ export function Feed() {
             <div className="bg-white/5 p-6 rounded-full mb-4 backdrop-blur-xl border border-white/10 shadow-lg ring-1 ring-white/5">
               <Ghost className="w-10 h-10 text-white/40" />
             </div>
-            <h3 className="text-xl font-semibold text-white/90 mb-2">No posts yet</h3>
+            <h3 className="text-xl font-semibold text-white/90 mb-2">{t('feed.no_posts')}</h3>
             <p className="text-white/50 max-w-[280px] leading-relaxed">
-              Your feed is quiet for now. Add more friends or create a new post to get started!
+              {t('feed.quiet_feed')}
             </p>
           </div>
         ) : (
@@ -486,7 +491,7 @@ export function Feed() {
       >
         <div className="flex items-center gap-2 px-4 py-2 bg-white/5 backdrop-blur-md rounded-full border border-white/10 shadow-sm">
           <Loader2 className="w-4 h-4 text-blue-400 animate-spin" />
-          <span className="text-sm font-medium text-white/60">Loading more...</span>
+          <span className="text-sm font-medium text-white/60">{t('feed.loading_more')}</span>
         </div>
       </div>
     </div>

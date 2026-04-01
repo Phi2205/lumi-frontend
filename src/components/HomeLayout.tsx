@@ -8,8 +8,6 @@ import { Sidebar } from "@/components/sidebar"
 import { RightSidebar } from "@/components/RightSidebar"
 import { Feed } from "@/components/Feed"
 import { useDarkMode } from "@/hooks/useDarkMode"
-import { useBackgroundImage } from "@/hooks/useBackgroundImage"
-import { BackgroundRenderer } from "@/components/BackgroundRenderer"
 import { useStoryRealtime } from "@/socket/story/useStoryRealtime"
 import { SearchPanel } from "@/components/SearchPanel"
 
@@ -23,7 +21,6 @@ function HomeContent({ children }: HomeLayoutProps) {
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "home")
   const { user, isLoading } = useAuth()
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
-  const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   // Listen for story status changes and broadcast them via window events
@@ -50,41 +47,27 @@ function HomeContent({ children }: HomeLayoutProps) {
   if (isLoading || !user) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        {isDarkMode ? (
-          <>
-            <div
-              className="fixed inset-0 -z-10 transition-all duration-1000"
-              style={{
-                background: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(3, 0, 20, 0.8) 0%, #030014 50%, #020010 100%)'
-              }}
+        <div className="flex flex-col items-center justify-center min-h-screen gap-6 animate-in fade-in duration-700">
+          <div className="relative w-24 h-24 sm:w-32 sm:h-32">
+            <div className="absolute inset-0 bg-white/20 rounded-full blur-2xl animate-pulse" />
+            <img
+              src="/lumi-logo-v2.png"
+              alt="Lumi Logo"
+              className="relative w-full h-full object-contain filter drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] transition-all duration-1000 animate-pulse"
             />
-            <div
-              className="fixed inset-0 -z-10 opacity-40 transition-opacity duration-1000"
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <span
+              className="text-3xl text-white font-semibold tracking-wider"
               style={{
-                background: 'radial-gradient(ellipse 60% 40% at 20% 30%, rgba(182, 196, 162, 0.15) 0%, transparent 70%)'
+                fontFamily: 'var(--font-dancing-script), cursive',
+                textShadow: '0 0 20px rgba(255,255,255,0.3)'
               }}
-            />
-            <div
-              className="fixed inset-0 -z-10 opacity-[0.03]"
-              style={{
-                backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 400 400\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noiseFilter\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'4\' numOctaves=\'3\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noiseFilter)\'/%3E%3C/svg%3E")',
-                backgroundSize: '200px 200px'
-              }}
-            />
-          </>
-        ) : (
-          <div
-            className="fixed inset-0 -z-10"
-            style={{
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url(/bg12.jpg)`,
-              backgroundSize: 'cover',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'center',
-            }}
-          />
-        )}
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-white/90 text-sm font-medium tracking-wide">Loading...</div>
+            >
+              Lumi
+            </span>
+            <div className="h-[2px] w-12 bg-gradient-to-r from-transparent via-white/40 to-transparent rounded-full" />
+          </div>
         </div>
       </div>
     )
@@ -92,12 +75,6 @@ function HomeContent({ children }: HomeLayoutProps) {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <BackgroundRenderer
-        isDarkMode={isDarkMode}
-        imageLoaded={imageLoaded}
-        imageError={imageError}
-      />
-
       <Header
         isDarkMode={isDarkMode}
         onDarkModeToggle={handleDarkModeToggle}

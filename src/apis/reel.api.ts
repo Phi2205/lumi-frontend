@@ -98,3 +98,6 @@ export const getReelRecommendationsApi = (limit: number = 5) =>
     axiosInstance.get<ApiResponse<Reel[]>>("/reels/recommendations", {
         params: { limit }
     });
+
+export const getReelByIdApi = (reelId: string) =>
+    axiosInstance.get<ApiResponse<Reel>>(`/reels/${reelId}`);

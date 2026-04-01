@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from "react"
 import { GlassButton } from "@/lib/components"
 import { UserMinus, UserCheck, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface FriendActionButtonProps {
     status: string | undefined
@@ -26,6 +28,7 @@ export function FriendActionButton({
     isLoading,
     className
 }: FriendActionButtonProps) {
+    const { t } = useTranslation()
     const [isOpen, setIsOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -44,9 +47,9 @@ export function FriendActionButton({
             <GlassButton
                 onClick={onAddFriend}
                 disabled={isLoading}
-                className={cn("bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap", className)}
+                className={cn("bg-linear-to-r from-brand-primary to-brand-primary-dark min-w-0 max-w-[120px] md:max-w-none", className)}
             >
-                {isLoading ? 'Processing...' : 'Add Friend'}
+                <span className="truncate">{isLoading ? t('profile.processing') : t('profile.add_friend')}</span>
             </GlassButton>
         )
     }
@@ -56,9 +59,9 @@ export function FriendActionButton({
             <GlassButton
                 onClick={onCancelRequest}
                 disabled={isLoading}
-                className={cn("bg-white/10 hover:bg-white/20 whitespace-nowrap", className)}
+                className={cn("bg-white/10 hover:bg-white/20 min-w-0 max-w-[120px] md:max-w-none", className)}
             >
-                {isLoading ? 'Processing...' : 'Request Sent'}
+                <span className="truncate">{isLoading ? t('profile.processing') : t('profile.request_sent')}</span>
             </GlassButton>
         )
     }
@@ -69,9 +72,9 @@ export function FriendActionButton({
                 <GlassButton
                     onClick={onAcceptRequest}
                     disabled={isLoading}
-                    className={cn("bg-linear-to-r from-brand-primary to-brand-primary-dark whitespace-nowrap", className)}
+                    className={cn("bg-linear-to-r from-brand-primary to-brand-primary-dark min-w-0 max-w-[120px] md:max-w-none", className)}
                 >
-                    {isLoading ? 'Processing...' : 'Accept'}
+                    <span className="truncate">{isLoading ? t('profile.processing') : t('profile.accept')}</span>
                 </GlassButton>
             </div>
         )
@@ -84,14 +87,14 @@ export function FriendActionButton({
                 onClick={() => setIsOpen(!isOpen)}
                 disabled={isLoading}
                 className={cn(
-                    "bg-white/10 hover:bg-white/20 whitespace-nowrap flex items-center gap-2 pr-3",
+                    "bg-white/10 hover:bg-white/20 min-w-0 max-w-[120px] md:max-w-none flex items-center gap-2 pr-3",
                     isOpen && "bg-white/20",
                     className
                 )}
             >
-                <UserCheck className="w-4 h-4" />
-                <span>Friends</span>
-                <ChevronDown className={cn("w-3 h-3 transition-transform", isOpen && "rotate-180")} />
+                <UserCheck className="w-4 h-4 shrink-0" />
+                <span className="truncate">{t('profile.friends')}</span>
+                <ChevronDown className={cn("w-3 h-3 transition-transform shrink-0", isOpen && "rotate-180")} />
             </GlassButton>
 
             {isOpen && (
@@ -105,7 +108,7 @@ export function FriendActionButton({
                             className="w-full flex items-center justify-start gap-3 px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/15 rounded-xl border-none transition-all group"
                         >
                             <UserMinus className="w-4 h-4 transition-transform group-hover:scale-110" />
-                            <span className="font-medium text-red-500">Unfriend {name}</span>
+                            <span className="font-medium text-red-500">{t('profile.unfriend')} {name}</span>
                         </GlassButton>
                     </div>
                 </div>

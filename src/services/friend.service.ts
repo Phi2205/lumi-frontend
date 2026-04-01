@@ -1,4 +1,4 @@
-import { getFriendsApi, getMutualFriendsApi, getCountFriendsApi, getFriendsUserIdApi, deleteFriendApi } from "../apis/friend.api";
+import { getFriendsApi, getMutualFriendsApi, getCountFriendsApi, getFriendsUserIdApi, deleteFriendApi, searchFriendsApi } from "../apis/friend.api";
 
 export const getFriendsUserIdService = async (userId: string, limit: string, page: string) => {
     try {
@@ -40,6 +40,15 @@ export const getCountFriendsService = async (userId: string) => {
 export const deleteFriendService = async (userId: string) => {
     try {
         const response = await deleteFriendApi(userId);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const searchFriendsService = async (q: string, userId: string, limit: string, page: string) => {
+    try {
+        const response = await searchFriendsApi(q, userId, limit, page);
         return response.data;
     } catch (error) {
         throw error;

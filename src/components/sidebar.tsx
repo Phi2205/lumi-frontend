@@ -1,3 +1,5 @@
+"use client"
+
 import { Home, BookOpen, Zap, MessageSquare, User, Settings, Search, Users, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchPanel } from "@/components/SearchPanel"
@@ -5,6 +7,9 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
+import { useTranslation } from "react-i18next"
+import { cn } from "@/lib/utils"
+import "@/lib/i18n"
 
 interface SidebarProps {
   activeTab?: string
@@ -15,26 +20,27 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: "home", label: "Home", icon: Home },
-  { id: "search", label: "Search", icon: Search },
-  { id: "blog", label: "Blog", icon: BookOpen },
-  { id: "reels", label: "Reels", icon: Play },
-  { id: "stories", label: "Stories", icon: Zap },
-  { id: "friends", label: "Friends", icon: Users },
-  { id: "messages", label: "Messages", icon: MessageSquare },
-  { id: "profile", label: "Profile", icon: User },
-  { id: "settings", label: "Settings", icon: Settings },
+  { id: "home", icon: Home },
+  { id: "search", icon: Search },
+  // { id: "blog", icon: BookOpen },
+  { id: "reels", icon: Play },
+  // { id: "stories", icon: Zap },
+  { id: "friends", icon: Users },
+  { id: "messages", icon: MessageSquare },
+  { id: "profile", icon: User },
+  { id: "settings", icon: Settings },
 ]
 
 const mobileItems = [
-  { id: "home", label: "Home", icon: Home },
-  { id: "reels", label: "Reels", icon: Play },
-  { id: "friends", label: "Friends", icon: Users },
-  { id: "messages", label: "Messages", icon: MessageSquare },
-  { id: "profile", label: "Profile", icon: User },
+  { id: "home", icon: Home },
+  { id: "reels", icon: Play },
+  { id: "friends", icon: Users },
+  { id: "messages", icon: MessageSquare },
+  { id: "profile", icon: User },
 ]
 
 export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden, isSearchOpen, onSearchToggle }: SidebarProps) {
+  const { t } = useTranslation()
   const router = useRouter()
   const pathname = usePathname()
   const { user } = useAuth()
@@ -42,7 +48,6 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden, is
   const mobileNavRef = useRef<HTMLDivElement>(null)
   const [animatingTab, setAnimatingTab] = useState<string | null>(null)
 
-  // Determine active item based on pathname if possible, otherwise fallback to prop
   const currentActiveId = useMemo(() => {
     if (isSearchOpen) return "search"
     if (pathname === "/") return "home"
@@ -51,7 +56,6 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden, is
     return matchingItem ? matchingItem.id : (_activeTab || "home")
   }, [pathname, isSearchOpen, _activeTab, user])
 
-  // Update sliding indicator position
   const updateIndicator = useCallback(() => {
     if (!mobileNavRef.current) return
     const activeIndex = mobileItems.findIndex((item) => item.id === currentActiveId)
@@ -73,7 +77,6 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden, is
     return () => window.removeEventListener("resize", updateIndicator)
   }, [updateIndicator])
 
-  // Trigger bounce animation on tab change
   useEffect(() => {
     setAnimatingTab(currentActiveId)
     const timer = setTimeout(() => setAnimatingTab(null), 400)
@@ -127,11 +130,11 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden, is
                   backgroundColor: 'var(--brand-primary)',
                   borderColor: 'var(--brand-primary)'
                 } : {}}
-                title={(isSearchOpen || currentActiveId === "messages") ? item.label : undefined}
+                title={(isSearchOpen || currentActiveId === "messages") ? t(`common.${item.id}`) : undefined}
                 onClick={item.id === "search" ? handleSearchToggle : undefined}
               >
                 <Icon className="h-5 w-5" />
-                {!(isSearchOpen || currentActiveId === "messages") && <span>{item.label}</span>}
+                {!(isSearchOpen || currentActiveId === "messages") && <span>{t(`common.${item.id}`)}</span>}
               </Button>
             )
 
@@ -147,8 +150,6 @@ export function Sidebar({ activeTab: _activeTab, onTabChange, isMobileHidden, is
           })}
         </nav>
       </aside>
-
-      {/* Desktop Sidebar Toggle Logic (SearchPanel is now in HomeLayout) */}
 
       {/* Mobile Bottom Navigation */}
       <nav className={`fixed bottom-0 left-0 right-0 md:hidden h-16 border-t border-white/20 bg-black/20 backdrop-blur-md px-4 z-50 transform translate-z-0 ${isMobileHidden ? 'hidden' : 'flex'

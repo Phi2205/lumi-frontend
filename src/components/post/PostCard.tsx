@@ -16,6 +16,8 @@ import { formatTime } from "@/utils/format"
 import { UserHoverCard } from "../UserHoverCard"
 import { PostMediaCarousel } from "./PostMediaCarousel"
 import { markAsViewed } from "@/services/post.service"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 
 export interface Post {
@@ -54,6 +56,7 @@ interface PostCardProps {
 
 /** Embedded preview of the original post inside a share — Facebook-style */
 export function SharedPostPreview({ post }: { post: Post }) {
+  const { t } = useTranslation()
   return (
     <div className="rounded-xl border border-white/15 overflow-hidden bg-white/[0.03] hover:bg-white/[0.06] transition-colors cursor-pointer">
       {/* Header */}
@@ -91,7 +94,7 @@ export function SharedPostPreview({ post }: { post: Post }) {
             </div>
           )}
           {true && (
-            <span className="text-white/35 text-[11px] ml-auto">{post.comments} bình luận</span>
+            <span className="text-white/35 text-[11px] ml-auto">{post.comments} {t('post.comments')}</span>
           )}
         </div>
       )}
@@ -100,6 +103,7 @@ export function SharedPostPreview({ post }: { post: Post }) {
 }
 
 export function PostCard({ post, onLike }: PostCardProps) {
+  const { t } = useTranslation()
   const [isExpanded, setIsExpanded] = useState(false)
   const [showLikes, setShowLikes] = useState(false)
   const [showShare, setShowShare] = useState(false)
@@ -167,7 +171,7 @@ export function PostCard({ post, onLike }: PostCardProps) {
                 <>
                   <span className="text-white/20 text-[10px]">·</span>
                   <Share2 size={11} className="text-white/40" />
-                  <span className="text-xs text-white/40">Đã chia sẻ</span>
+                  <span className="text-xs text-white/40">{t('post.shared')}</span>
                 </>
               )}
               <span className="text-white/20 text-[10px]">·</span>
@@ -201,10 +205,10 @@ export function PostCard({ post, onLike }: PostCardProps) {
           onClick={() => setShowLikes(true)}
           className="hover:text-white/80 transition-colors cursor-pointer"
         >
-          {post.likes} likes
+          {post.likes} {t('post.likes')}
         </button>
-        <span className="">{post.comments} comments</span>
-        <span className="">{post.shares} shares</span>
+        <span className="">{post.comments} {t('post.comments')}</span>
+        <span className="">{post.shares} {t('post.shares')}</span>
       </div>
 
       {/* Post Actions */}
@@ -216,7 +220,7 @@ export function PostCard({ post, onLike }: PostCardProps) {
           className="flex-1 gap-2 text-white/60 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
           onClick={() => setIsExpanded(!isExpanded)}
         >
-          💬 Comment
+          💬 {t('post.comment')}
         </Button>
         <Button
           variant="ghost"
@@ -225,7 +229,7 @@ export function PostCard({ post, onLike }: PostCardProps) {
           onClick={() => setShowShare(true)}
         >
           <Share2 className="h-4 w-4" />
-          Share
+          {t('post.share')}
         </Button>
       </div>
 

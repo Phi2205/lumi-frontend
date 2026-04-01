@@ -9,15 +9,16 @@ import { getMe } from "@/services/auth.service"
 import { User } from "@/types/user.type"
 import { ProfileContent } from "@/components/profile/ProfileContent"
 import { useDarkMode } from "@/hooks/useDarkMode"
-import { useBackgroundImage } from "@/hooks/useBackgroundImage"
-import { BackgroundRenderer } from "@/components/BackgroundRenderer"
+import { SearchPanel } from "@/components/SearchPanel"
 
 export default function MyProfilePage() {
     const [activeTab, setActiveTab] = useState("home")
     const [userProfile, setUserProfile] = useState<User | null>(null);
     const [isInitialLoading, setIsInitialLoading] = useState(true)
     const { isDarkMode, handleDarkModeToggle } = useDarkMode()
-    const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
+    const [isSearchOpen, setIsSearchOpen] = useState(false)
+
+    const toggleSearch = () => setIsSearchOpen(!isSearchOpen)
 
     useEffect(() => {
         const fetchMyProfile = async () => {
@@ -36,16 +37,24 @@ export default function MyProfilePage() {
 
     return (
         <div className="min-h-screen relative overflow-hidden">
-            <BackgroundRenderer
+            <Header
                 isDarkMode={isDarkMode}
-                imageLoaded={imageLoaded}
-                imageError={imageError}
+                onDarkModeToggle={handleDarkModeToggle}
+                onSearchToggle={toggleSearch}
+            />
+            <Sidebar
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                isSearchOpen={isSearchOpen}
+                onSearchToggle={toggleSearch}
             />
 
-            <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
-            <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+            <SearchPanel isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-            <main className="md:ml-64 lg:mr-80 pt-20 pb-20 md:pb-4 relative z-10">
+            <main className={cn(
+                "pt-20 pb-20 md:pb-4 relative z-10 lg:mr-80 transition-all duration-300",
+                isSearchOpen ? "md:ml-20" : "md:ml-64"
+            )}>
                 <ProfileContent
                     userProfile={userProfile}
                     isInitialLoading={isInitialLoading}

@@ -13,6 +13,8 @@ import { useAuth } from "@/contexts/AuthContext"
 import { useChatRealtime } from "@/socket/chat/useChatRealtime"
 import { MessageItem } from "./ChatWindow"
 import { ParticipantUI } from "./ConversationList"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface MiniChatProps {
   conversationId?: string
@@ -41,6 +43,7 @@ export function MiniChat({
   lastSeenMessageId,
   unreadCount = 0,
 }: MiniChatProps) {
+  const { t } = useTranslation()
   const [inputValue, setInputValue] = useState("")
   const [showIncomingTooltip, setShowIncomingTooltip] = useState(initialShowTooltip)
   const [lastEmittedReadId, setLastEmittedReadId] = useState<string | null>(null)
@@ -97,7 +100,7 @@ export function MiniChat({
 
   console.log('unreadCount', unreadCount)
 
-  const lastMessage = messages[0]?.content || "Chưa có tin nhắn"
+  const lastMessage = messages[0]?.content || t('messages.no_messages_yet')
 
   if (isMinimized) {
     return (
@@ -165,7 +168,7 @@ export function MiniChat({
           </div>
           <div className="flex flex-col">
             <span className="text-[15px] font-bold text-white tracking-tight leading-tight">{recipientName}</span>
-            <span className="text-[11px] text-white/40 font-medium tracking-wide">Đang hoạt động</span>
+            <span className="text-[11px] text-white/40 font-medium tracking-wide">{t('messages.active_now')}</span>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
@@ -227,17 +230,6 @@ export function MiniChat({
           //           className="w-3 h-3 text-white/30"
           //           viewBox="0 0 24 24"
           //           fill="none"
-          //           stroke="currentColor"
-          //           strokeWidth="3"
-          //           strokeLinecap="round"
-          //           strokeLinejoin="round"
-          //         >
-          //           <path d="M5 12l4 4L19 6" />
-          //         </svg>
-          //       )}
-          //     </div>
-          //   )}
-          // </div>
           <MessageItem key={msg.id} message={msg} isDarkMode={false} participants={participants} currentUserId={user?.id} showAuto={msg.isOwn && idx === 0} />
         ))}
 
@@ -249,10 +241,10 @@ export function MiniChat({
           </Avatar>
           <div>
             <h3 className="font-bold text-xl text-white tracking-tight">{recipientName}</h3>
-            <p className="text-xs text-white/40 mt-1">Các bạn là bạn bè</p>
+            <p className="text-xs text-white/40 mt-1">{t('messages.you_are_friends')}</p>
           </div>
           <p className="text-[11px] text-white/30 px-6 mt-2 leading-relaxed italic border-t border-white/5 pt-4">
-            🔒 Tin nhắn được mã hóa đầu cuối. <span className="text-brand-primary cursor-pointer hover:underline not-italic">Tìm hiểu thêm</span>
+            🔒 {t('messages.end_to_end_encrypted')}. <span className="text-brand-primary cursor-pointer hover:underline not-italic">{t('messages.learn_more')}</span>
           </p>
         </div>
       </div>
@@ -271,7 +263,7 @@ export function MiniChat({
 
           <div className="flex-1 flex items-center bg-black/40 backdrop-blur-md rounded-xl px-3 py-2 border border-white/10 focus-within:border-brand-primary/50 transition-all min-w-0">
             <input
-              placeholder="Aa..."
+              placeholder={t('messages.message_placeholder')}
               className="bg-transparent border-none outline-none text-[14px] flex-1 text-white placeholder-white/20 min-w-0"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
