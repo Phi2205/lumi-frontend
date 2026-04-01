@@ -122,7 +122,7 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             if (!lastResponseData) throw new Error("Upload failed")
 
             updateUploadState(id, { status: "creating", progress: 99 })
-            await creatReelApi({
+            const responseReel = await creatReelApi({
                 video_url: lastResponseData.secure_url,
                 thumbnail_url: lastResponseData.thumbnail_url || lastResponseData.secure_url.replace(/\.[^/.]+$/, ".jpg"),
                 public_id: lastResponseData.public_id,
@@ -132,6 +132,9 @@ export const UploadProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             })
 
             updateUploadState(id, { status: "success", progress: 100 })
+            if (responseReel.data?.data) {
+                window.dispatchEvent(new CustomEvent('reelCreated', { detail: responseReel.data.data }))
+            }
             await uploadDb.remove(id)
             setTimeout(() => removeUpload(id), 15000)
 

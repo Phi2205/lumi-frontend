@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { RightSidebar } from "@/components/RightSidebar"
@@ -20,10 +20,12 @@ import { useAuth } from "@/contexts/AuthContext"
 import { mapConversationToUI } from "@/services/conversation.service"
 import { ProfileContent } from "@/components/profile/ProfileContent"
 import { useDarkMode } from "@/hooks/useDarkMode"
-import { useBackgroundImage } from "@/hooks/useBackgroundImage"
-import { BackgroundRenderer } from "@/components/BackgroundRenderer"
+import { SearchPanel } from "@/components/SearchPanel"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 export default function UserProfilePage() {
+  const { t } = useTranslation()
   const params = useParams()
   const username = params.username as string
   const { user } = useAuth()
@@ -34,10 +36,13 @@ export default function UserProfilePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialLoading, setIsInitialLoading] = useState(true)
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
-  const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const { openChat } = useMiniChat()
+  const router = useRouter()
   const [isStartingChat, setIsStartingChat] = useState(false)
   const [showUnfriendModal, setShowUnfriendModal] = useState(false)
+
+  const toggleSearch = () => setIsSearchOpen(!isSearchOpen)
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -53,6 +58,10 @@ export default function UserProfilePage() {
     }
     fetchUser()
   }, [username]);
+
+  useEffect(() => {
+    console.log(userProfile)
+  }, [userProfile]);
 
   const handleAddFriend = async () => {
     if (!userProfile?.id || isLoading) return;
@@ -133,15 +142,21 @@ export default function UserProfilePage() {
       const res = await getOrCreatePrivateConversationApi(userProfile.id)
       if (res.data.success) {
         const conversation = res.data.data
-        const mapped = mapConversationToUI(conversation, user?.id || "")
-        openChat({
-          recipientId: userProfile.id,
-          recipientName: userProfile.name || "User",
-          recipientAvatar: userProfile.avatar_url || "/avatar-default.jpg",
-          conversationId: conversation.id,
-          participants: mapped.participants,
-          lastSeenMessageId: mapped.lastSeenMessageId,
-        })
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024
+        if (isMobile) {
+          // Navigate to messages page directly on mobile
+          router.push(`/messages?conversationId=${conversation.id}`)
+        } else {
+          const mapped = mapConversationToUI(conversation, user?.id || "")
+          openChat({
+            recipientId: userProfile.id,
+            recipientName: userProfile.name || "User",
+            recipientAvatar: userProfile.avatar_url || "/avatar-default.jpg",
+            conversationId: conversation.id,
+            participants: mapped.participants,
+            lastSeenMessageId: mapped.lastSeenMessageId,
+          })
+        }
       }
     } catch (error) {
       console.error("Failed to start chat:", error)
@@ -153,16 +168,24 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <BackgroundRenderer
+      <Header
         isDarkMode={isDarkMode}
-        imageLoaded={imageLoaded}
-        imageError={imageError}
+        onDarkModeToggle={handleDarkModeToggle}
+        onSearchToggle={toggleSearch}
+      />
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isSearchOpen={isSearchOpen}
+        onSearchToggle={toggleSearch}
       />
 
-      <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <SearchPanel isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
 
-      <main className="md:ml-64 lg:mr-80 pt-20 pb-20 md:pb-4 relative z-10">
+      <main className={cn(
+        "pt-20 pb-20 md:pb-4 relative z-10 lg:mr-80 transition-all duration-300",
+        isSearchOpen ? "md:ml-20" : "md:ml-64"
+      )}>
         <ProfileContent
           userProfile={userProfile}
           isInitialLoading={isInitialLoading}
@@ -184,7 +207,7 @@ export default function UserProfilePage() {
           title={
             <div className="flex items-center gap-3 text-red-500">
               <AlertCircle className="w-6 h-6" />
-              <span>Unfriend?</span>
+              <span>{t('profile.unfriend_title')}</span>
             </div>
           }
           maxWidthClassName="max-w-md"
@@ -192,8 +215,9 @@ export default function UserProfilePage() {
           <div className="space-y-6">
             <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl">
               <p className="text-white/80 text-center leading-relaxed">
-                Are you sure you want to unfriend <span className="text-white font-bold">{userProfile?.name}</span>?
-                This will remove them from your friend list.
+                {t('profile.unfriend_confirm', { name: userProfile?.name })}
+                <br />
+                {t('profile.unfriend_desc')}
               </p>
             </div>
 
@@ -202,14 +226,14 @@ export default function UserProfilePage() {
                 className="flex-1 bg-white/5 hover:bg-white/10"
                 onClick={() => setShowUnfriendModal(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </GlassButton>
               <GlassButton
                 className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-500 border border-red-500/30 font-bold h-11 rounded-xl"
                 onClick={confirmDeleteFriend}
                 disabled={isLoading}
               >
-                {isLoading ? "Processing..." : "Unfriend"}
+                {isLoading ? t('profile.processing') : t('profile.unfriend')}
               </GlassButton>
             </div>
           </div>

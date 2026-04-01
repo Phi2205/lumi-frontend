@@ -10,8 +10,6 @@ import type { User } from "@/types/user.type"
 import type { Story as StoryApi } from "@/apis/story.api"
 import { StorySkeleton } from "@/components/skeleton"
 import { useDarkMode } from "@/hooks/useDarkMode"
-import { useBackgroundImage } from "@/hooks/useBackgroundImage"
-import { BackgroundRenderer } from "@/components/BackgroundRenderer"
 import { useStoryContext } from "@/contexts/StoryContext"
 
 export default function StoryPage() {
@@ -26,7 +24,6 @@ export default function StoryPage() {
   const [isLoadingStories, setIsLoadingStories] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
-  const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
   const storyCtx = useStoryContext()
 
   // Fetch user info and stories
@@ -128,11 +125,6 @@ export default function StoryPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        <BackgroundRenderer
-          isDarkMode={isDarkMode}
-          imageLoaded={imageLoaded}
-          imageError={imageError}
-        />
         <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
         <div className="pt-16 h-[calc(100vh-4rem)]">
           <StorySkeleton />
@@ -144,11 +136,6 @@ export default function StoryPage() {
   if (error || !user) {
     return (
       <div className="min-h-screen relative overflow-hidden">
-        <BackgroundRenderer
-          isDarkMode={isDarkMode}
-          imageLoaded={imageLoaded}
-          imageError={imageError}
-        />
         <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
         <div className="pt-16 flex items-center justify-center h-[calc(100vh-4rem)]">
           <div className="text-center">
@@ -172,11 +159,6 @@ export default function StoryPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <BackgroundRenderer
-        isDarkMode={isDarkMode}
-        imageLoaded={imageLoaded}
-        imageError={imageError}
-      />
       <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
       <div className="mt-16  h-[calc(100vh-4rem)]">
         <ModalStory

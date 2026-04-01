@@ -21,20 +21,25 @@ import {
     AlertCircle,
     Clock,
     Lock,
-    ArrowLeft
+    ArrowLeft,
+    UserPlus
 } from "lucide-react"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { StoryAvatar } from "@/components/ui/avatar"
 import { GlassButton } from "@/lib/components/glass-button"
 import { MessageUI, AttachmentUI } from "./ChatWindow"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 import { useRouter } from "next/navigation"
 
-import { getMediaService, searchMessageService } from "@/services/conversation.service"
+import { getMediaService, searchMessageService, checkOwnerService, removeParticipantService } from "@/services/conversation.service"
 import { messageSearch } from "@/apis/conversation.api"
 import { useDebounce } from "@/hooks/useDebounce"
 import { urlImage } from "@/utils/imageUrl"
 import { MediaDetailView } from "./MediaDetailView"
+import { AddMemberModal } from "./AddMemberModal"
+import { ConfirmModal } from "@/components/ui/ConfirmModal"
 
 import { ConversationUI, ParticipantUI } from "./ConversationList"
 
@@ -51,6 +56,8 @@ interface ConversationInfoProps {
     currentUserId?: string
     onJumpToMessage?: (messageId: string) => void
     targetMessageId?: string | null
+    onRefresh?: (users: any[]) => void
+    onRemoveParticipant?: (userId: string) => void
 }
 
 const InfoSection = ({
@@ -99,8 +106,9 @@ const InfoItem = ({
     return (
         <button
             onClick={onClick}
-            className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 transition-colors text-left ${danger ? "text-red-400" : isDarkMode ? "text-white" : "text-gray-900"
-                }`}
+            disabled={!onClick}
+            className={`w-full flex items-center gap-3 px-4 py-2.5 transition-colors text-left ${danger ? "text-red-400" : isDarkMode ? "text-white" : "text-gray-900"
+                } ${!onClick ? "opacity-30 cursor-not-allowed" : "hover:bg-white/5 cursor-pointer"}`}
         >
             <div className={`p-2 rounded-full ${isDarkMode ? "bg-white/10" : "bg-gray-100"}`}>
                 <Icon className="w-4 h-4" />
@@ -125,8 +133,11 @@ export const ConversationInfo = ({
     onClose,
     currentUserId,
     onJumpToMessage,
-    targetMessageId
+    targetMessageId,
+    onRefresh,
+    onRemoveParticipant
 }: ConversationInfoProps) => {
+    const { t } = useTranslation()
     const router = useRouter()
     const [sections, setSections] = useState({
         chatInfo: true,
@@ -146,7 +157,31 @@ export const ConversationInfo = ({
     const [searchPage, setSearchPage] = useState(1)
     const [hasMoreSearch, setHasMoreSearch] = useState(false)
     const [isSearchingMore, setIsSearchingMore] = useState(false)
+    const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false)
+    const [isOwner, setIsOwner] = useState(false)
+    const [removingUserId, setRemovingUserId] = useState<string | null>(null)
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
+    const [userToRemove, setUserToRemove] = useState<ParticipantUI | null>(null)
     const debouncedSearchQuery = useDebounce(searchQuery, 500)
+
+    useEffect(() => {
+        const fetchOwnerStatus = async () => {
+            if (conversation?.type === 'group' && conversationId) {
+                try {
+                    const res = await checkOwnerService(conversationId)
+                    if (res && res.success && typeof res.data.isOwner === 'boolean') {
+                        setIsOwner(res.data.isOwner)
+                    }
+                } catch (error) {
+                    console.error("Failed to check owner:", error)
+                    setIsOwner(false)
+                }
+            } else {
+                setIsOwner(false)
+            }
+        }
+        fetchOwnerStatus()
+    }, [conversationId, conversation?.type])
 
     useEffect(() => {
         const handleInitialSearch = async () => {
@@ -201,6 +236,28 @@ export const ConversationInfo = ({
             loadMoreSearch();
         }
     };
+
+    const handleRemoveMember = (participant: ParticipantUI, e: React.MouseEvent) => {
+        e.stopPropagation()
+        setUserToRemove(participant)
+        setIsConfirmModalOpen(true)
+    }
+
+    const onConfirmRemove = async () => {
+        if (!conversationId || !userToRemove) return
+
+        setRemovingUserId(userToRemove.id)
+        setIsConfirmModalOpen(false) // Close modal immediately
+        try {
+            await removeParticipantService(conversationId, userToRemove.id)
+            onRemoveParticipant?.(userToRemove.id)
+        } catch (error) {
+            console.error("Failed to remove member:", error)
+        } finally {
+            setRemovingUserId(null)
+            setUserToRemove(null)
+        }
+    }
 
     const handleProfileClick = () => {
         const otherParticipant = participants.find(p => p.id !== currentUserId);
@@ -269,7 +326,7 @@ export const ConversationInfo = ({
                             <input
                                 autoFocus
                                 type="text"
-                                placeholder="Tìm kiếm tin nhắn..."
+                                placeholder={t('messages.search_messages')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className={`w-full bg-white/5 border border-white/10 rounded-full py-1.5 pl-10 pr-4 text-sm focus:outline-none focus:border-brand-primary/50 transition-all ${!isDarkMode && "bg-black/5 text-gray-900 border-black/10"}`}
@@ -284,12 +341,12 @@ export const ConversationInfo = ({
                         {isSearchingLoading ? (
                             <div className="flex flex-col items-center justify-center h-40 opacity-50">
                                 <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-primary mb-2"></div>
-                                <span className="text-sm">Đang tìm kiếm...</span>
+                                <span className="text-sm">{t('messages.searching')}</span>
                             </div>
                         ) : searchQuery && searchResults.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-40 opacity-50">
                                 <Search className="w-10 h-10 mb-2" />
-                                <span className="text-sm text-center">Không tìm thấy kết quả nào cho<br /><span className="font-semibold">"{searchQuery}"</span></span>
+                                <span className="text-sm text-center">{t('messages.no_results_for')}<br /><span className="font-semibold">"{searchQuery}"</span></span>
                             </div>
                         ) : searchResults.length > 0 ? (
                             <div className="space-y-3">
@@ -344,7 +401,7 @@ export const ConversationInfo = ({
                         ) : (
                             <div className="flex flex-col items-center justify-center h-40 opacity-30 text-center px-8">
                                 <Search className="w-12 h-12 mb-4" />
-                                <p className="text-sm">Nhập nội dung tin nhắn bạn muốn tìm kiếm trong cuộc trò chuyện này</p>
+                                <p className="text-sm">{t('messages.enter_search_desc')}</p>
                             </div>
                         )}
                     </div>
@@ -359,7 +416,7 @@ export const ConversationInfo = ({
                 >
                     <ArrowLeft className="w-5 h-5" />
                 </button>
-                <span className="ml-2 font-semibold text-sm">Thông tin</span>
+                <span className="ml-2 font-semibold text-sm">{t('messages.information')}</span>
             </div>
             {/* Header Profile */}
             <div className="flex flex-col items-center pt-8 pb-6 px-4">
@@ -370,12 +427,12 @@ export const ConversationInfo = ({
                     className="h-20 w-20 mb-3"
                 />
                 <h2 className="text-lg font-bold text-center">{conversationName}</h2>
-                <p className="text-xs opacity-60 mb-4">{isOnline ? "Đang hoạt động" : "Ngoại tuyến"}</p>
+                <p className="text-xs opacity-60 mb-4">{isOnline ? t('messages.active_now') : t('messages.offline')}</p>
 
                 <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-medium mb-6 backdrop-blur-md border ${isDarkMode ? "bg-white/10 border-white/5" : "bg-black/5 border-black/5"
                     }`}>
                     <Lock className="w-3 h-3" />
-                    <span>Được mã hóa đầu cuối</span>
+                    <span>{t('messages.end_to_end_encrypted')}</span>
                 </div>
 
                 <div className="flex justify-center gap-8 w-full mb-4">
@@ -388,15 +445,15 @@ export const ConversationInfo = ({
                                 }`}>
                                 <User className="w-5 h-5" />
                             </div>
-                            <span className="text-[11px] font-medium">Trang cá nhân</span>
+                            <span className="text-[11px] font-medium">{t('messages.profile')}</span>
                         </div>
                     )}
-                    <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
-                        <div className={`h-9 w-9 rounded-full flex items-center justify-center transition-all backdrop-blur-md border ${isDarkMode ? "bg-white/10 group-hover:bg-white/20 border-white/10 shadow-lg shadow-black/20" : "bg-white/50 group-hover:bg-white/80 border-black/5 shadow-sm"
+                    <div className="flex flex-col items-center gap-1.5 opacity-30 cursor-not-allowed">
+                        <div className={`h-9 w-9 rounded-full flex items-center justify-center backdrop-blur-md border ${isDarkMode ? "bg-white/10 border-white/10" : "bg-gray-200 border-black/5"
                             }`}>
                             <BellOff className="w-5 h-5" />
                         </div>
-                        <span className="text-[11px] font-medium">Tắt thông báo</span>
+                        <span className="text-[11px] font-medium">{t('messages.mute_notifications')}</span>
                     </div>
                     <div
                         onClick={() => setIsSearching(true)}
@@ -406,7 +463,7 @@ export const ConversationInfo = ({
                             }`}>
                             <Search className="w-5 h-5" />
                         </div>
-                        <span className="text-[11px] font-medium">Tìm kiếm</span>
+                        <span className="text-[11px] font-medium">{t('messages.search')}</span>
                     </div>
                 </div>
             </div>
@@ -414,22 +471,36 @@ export const ConversationInfo = ({
             {/* Sections */}
             <div className="flex-1">
                 <InfoSection
-                    title="Thông tin về đoạn chat"
+                    title={t('messages.about_chat')}
                     isOpen={sections.chatInfo}
                     onToggle={() => toggleSection('chatInfo')}
                     isDarkMode={isDarkMode}
                 >
-                    <InfoItem icon={Pin} label="Xem tin nhắn đã ghim" isDarkMode={isDarkMode} />
+                    <InfoItem icon={Pin} label={t('messages.view_pinned')} isDarkMode={isDarkMode} />
                 </InfoSection>
 
                 {conversation?.type === 'group' && (
                     <InfoSection
-                        title="Thành viên nhóm"
+                        title={t('messages.group_members')}
                         isOpen={sections.members}
                         onToggle={() => toggleSection('members')}
                         isDarkMode={isDarkMode}
                     >
                         <div className="px-2 space-y-1">
+                            {isOwner && (
+                                <div
+                                    onClick={() => setIsAddMemberModalOpen(true)}
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-all hover:bg-white/5 cursor-pointer group w-full text-left`}
+                                >
+                                    <div className="h-8 w-8 rounded-full border border-dashed border-white/30 flex items-center justify-center group-hover:border-white">
+                                        <UserPlus className="w-4 h-4 opacity-70 group-hover:opacity-100" />
+                                    </div>
+                                    <span className={`text-sm font-medium ${isDarkMode ? "text-white/80 group-hover:text-white" : "text-gray-700"}`}>
+                                        {t('messages.add_member', { defaultValue: 'Thêm thành viên' })}
+                                    </span>
+                                </div>
+                            )}
+
                             {participants.map((p) => (
                                 <div
                                     key={p.id}
@@ -449,13 +520,27 @@ export const ConversationInfo = ({
                                         <div className="flex items-center justify-between">
                                             <p className={`text-sm font-medium truncate ${isDarkMode ? "text-white" : "text-gray-900"}`}>{p.name}</p>
                                             {p.id === currentUserId && (
-                                                <span className="text-[10px] font-medium bg-brand-primary/20 text-brand-primary px-1.5 py-0.5 rounded">Bạn</span>
+                                                <span className="text-[10px] font-medium bg-brand-primary/20 text-brand-primary px-1.5 py-0.5 rounded">{t('messages.you')}</span>
                                             )}
                                         </div>
                                         <p className="text-[11px] opacity-50 truncate">@{p.username || p.id.slice(0, 8)}</p>
                                     </div>
                                     {p.isOnline && (
                                         <div className="h-2 w-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50" />
+                                    )}
+
+                                    {isOwner && p.id !== currentUserId && (
+                                        <button
+                                            onClick={(e) => handleRemoveMember(p, e)}
+                                            disabled={removingUserId === p.id}
+                                            className="p-2 opacity-0 group-hover:opacity-100 hover:bg-white/10 rounded-lg transition-all text-red-400 hover:text-red-500 disabled:opacity-50"
+                                        >
+                                            {removingUserId === p.id ? (
+                                                <div className="h-3.5 w-3.5 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" />
+                                            ) : (
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            )}
+                                        </button>
                                     )}
                                 </div>
                             ))}
@@ -464,50 +549,50 @@ export const ConversationInfo = ({
                 )}
 
                 <InfoSection
-                    title="Tùy chỉnh đoạn chat"
+                    title={t('messages.customize_chat')}
                     isOpen={sections.customization}
                     onToggle={() => toggleSection('customization')}
                     isDarkMode={isDarkMode}
                 >
-                    <InfoItem icon={Palette} label="Đổi chủ đề" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Smile} label="Thay đổi biểu tượng cảm xúc" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Type} label="Chỉnh sửa biệt danh" isDarkMode={isDarkMode} />
+                    <InfoItem icon={Palette} label={t('messages.change_theme')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Smile} label={t('messages.change_emoji')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Type} label={t('messages.edit_nicknames')} isDarkMode={isDarkMode} />
                 </InfoSection>
 
                 <InfoSection
-                    title="File phương tiện & file"
+                    title={t('messages.media_files')}
                     isOpen={sections.media}
                     onToggle={() => toggleSection('media')}
                     isDarkMode={isDarkMode}
                 >
                     <InfoItem
                         icon={ImageIcon}
-                        label="File phương tiện"
+                        label={t('messages.media')}
                         isDarkMode={isDarkMode}
                         onClick={handleMediaClick}
                     />
                     <InfoItem
                         icon={FileText}
-                        label="File"
-                        subLabel={documentFiles.length > 0 ? `${documentFiles.length} tệp` : "Không có tệp nào"}
+                        label={t('messages.files')}
+                        subLabel={documentFiles.length > 0 ? t('messages.files_count', { count: documentFiles.length }) : t('messages.no_files')}
                         isDarkMode={isDarkMode}
                     />
                 </InfoSection>
 
                 <InfoSection
-                    title="Quyền riêng tư và hỗ trợ"
+                    title={t('messages.privacy_support')}
                     isOpen={sections.privacy}
                     onToggle={() => toggleSection('privacy')}
                     isDarkMode={isDarkMode}
                 >
-                    <InfoItem icon={BellOff} label="Tắt thông báo" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Shield} label="Quyền nhắn tin" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Clock} label="Tin nhắn tự hủy" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Eye} label="Thông báo đã đọc" subLabel="Bật" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Lock} label="Xác minh mã hóa đầu cuối" isDarkMode={isDarkMode} />
-                    <InfoItem icon={UserMinus} label="Hạn chế" isDarkMode={isDarkMode} />
-                    <InfoItem icon={Slash} label="Chặn" isDarkMode={isDarkMode} />
-                    <InfoItem icon={AlertCircle} label="Báo cáo" subLabel="Đóng góp ý kiến và báo cáo cuộc trò chuyện" danger isDarkMode={isDarkMode} />
+                    <InfoItem icon={BellOff} label={t('messages.mute_notifications')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Shield} label={t('messages.messaging_permissions')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Clock} label={t('messages.disappearing_messages')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Eye} label={t('messages.read_receipts')} subLabel={t('messages.on')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Lock} label={t('messages.verify_encryption')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={UserMinus} label={t('messages.restrict')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={Slash} label={t('messages.block')} isDarkMode={isDarkMode} />
+                    <InfoItem icon={AlertCircle} label={t('messages.report')} subLabel={t('messages.report_desc')} danger isDarkMode={isDarkMode} />
                 </InfoSection>
             </div>
 
@@ -519,6 +604,31 @@ export const ConversationInfo = ({
                     isDarkMode={isDarkMode}
                 />
             )}
+
+            {conversationId && (
+                <AddMemberModal
+                    isOpen={isAddMemberModalOpen}
+                    onClose={() => setIsAddMemberModalOpen(false)}
+                    conversationId={conversationId}
+                    existingParticipants={participants}
+                    onAdded={(newUsers) => {
+                        onRefresh?.(newUsers)
+                    }}
+                    isDarkMode={isDarkMode}
+                />
+            )}
+
+            <ConfirmModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setIsConfirmModalOpen(false)}
+                onConfirm={onConfirmRemove}
+                title={t('messages.remove_member_title', { defaultValue: "Xóa thành viên" })}
+                description={t('messages.remove_member_confirm', {
+                    defaultValue: `Bạn có chắc chắn muốn xóa ${userToRemove?.name} khỏi nhóm không?`
+                })}
+                danger
+                isLoading={removingUserId !== null}
+            />
         </div>
     )
 }

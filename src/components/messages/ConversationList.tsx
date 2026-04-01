@@ -1,11 +1,17 @@
 "use client"
 
-import { Search, PlusCircle } from "lucide-react"
+import { Search, PlusCircle, X } from "lucide-react"
 import { StoryAvatar } from "@/components/ui/avatar"
-import { useState, memo, useDeferredValue, useMemo, useEffect } from "react"
+import { useState, memo, useDeferredValue, useMemo, useEffect, useRef, useCallback } from "react"
 import { SkeletonConversationList } from "@/components/skeleton"
 import { GlassButton } from "@/lib/components/glass-button"
 import { CreateGroupModal } from "./CreateGroupModal"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
+import { useDebounce } from "@/hooks/useDebounce"
+import { mapConversationToUI, searchConversationService } from "@/services/conversation.service"
+import { useAuth } from "@/contexts/AuthContext"
+
 
 export interface ParticipantUI {
   id: string
@@ -63,7 +69,7 @@ const ConversationItem = memo(({
         }`}
     >
       <div className="relative flex-shrink-0">
-        <StoryAvatar className="w-12 h-12" src={conversation.avatar || (conversation.type === 'group' ? "/avatar-group-default.jpg" : "/avatar-default.jpg" )} alt={conversation.name} hasStory={false} />
+        <StoryAvatar className="w-12 h-12" src={conversation.avatar || (conversation.type === 'group' ? "/avatar-group-default.jpg" : "/avatar-default.jpg")} alt={conversation.name} hasStory={false} />
         {conversation.isOnline && (
           <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full bg-green-400 ring-2 ring-zinc-900" />
         )}
@@ -98,17 +104,77 @@ const ConversationItem = memo(({
 ConversationItem.displayName = "ConversationItem";
 
 export function ConversationList({ conversations, selectedId, onSelect, loading, onOpenCreateGroup }: ConversationListProps) {
+  const { t } = useTranslation()
+  const { user } = useAuth()
   const [searchQuery, setSearchQuery] = useState("")
-  const deferredQuery = useDeferredValue(searchQuery)
+  const debouncedQuery = useDebounce(searchQuery, 500)
+
+  const [searchResults, setSearchResults] = useState<ConversationUI[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchPage, setSearchPage] = useState(1)
+  const [hasMoreSearch, setHasMoreSearch] = useState(false)
+  const [isSearchingMore, setIsSearchingMore] = useState(false)
 
   useEffect(() => {
-    console.log(loading);
-  }, [loading]);
+    const handleInitialSearch = async () => {
+      if (!debouncedQuery.trim()) {
+        setSearchResults([])
+        setSearchPage(1)
+        setHasMoreSearch(false)
+        setIsSearching(false)
+        return
+      }
 
-  const filtered = useMemo(() =>
-    conversations.filter((conv) => conv.name.toLowerCase().includes(deferredQuery.toLowerCase())),
-    [conversations, deferredQuery]
-  )
+      setIsSearching(true)
+      setSearchPage(1)
+      try {
+        const data = await searchConversationService(debouncedQuery, "1", "20")
+        if (data && data.success && user?.id) {
+          setSearchResults((data.data.items || []).map(conv => mapConversationToUI(conv, user.id)))
+          setHasMoreSearch(data.data.pagination?.hasNextPage || false)
+        }
+      } catch (error) {
+        console.error("Search error:", error)
+      } finally {
+        setIsSearching(false)
+      }
+    }
+
+    handleInitialSearch()
+  }, [debouncedQuery, user?.id])
+
+  const loadMoreSearch = async () => {
+    if (isSearchingMore || !hasMoreSearch || !debouncedQuery.trim()) return
+
+    setIsSearchingMore(true)
+    const nextPage = searchPage + 1
+    try {
+      const data = await searchConversationService(debouncedQuery, nextPage.toString(), "20")
+      if (data && data.success && user?.id) {
+        const newResults = (data.data.items || []).map(conv => mapConversationToUI(conv, user.id))
+        setSearchResults(prev => [...prev, ...newResults])
+        setSearchPage(nextPage)
+        setHasMoreSearch(data.data.pagination?.hasNextPage || false)
+      }
+    } catch (error) {
+      console.error("Load more search error:", error)
+    } finally {
+      setIsSearchingMore(false)
+    }
+  }
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+    if (scrollHeight - scrollTop - clientHeight < 20) {
+      if (debouncedQuery.trim() && hasMoreSearch && !isSearchingMore) {
+        loadMoreSearch()
+      }
+    }
+  }
+
+  const displayList = debouncedQuery.trim() ? searchResults : conversations
+  const isLoading = debouncedQuery.trim() ? isSearching : loading
+
 
   return (
     <div className="flex flex-col h-full w-full relative overflow-hidden">
@@ -122,18 +188,26 @@ export function ConversationList({ conversations, selectedId, onSelect, loading,
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-300" />
             <input
-              placeholder="Tìm kiếm..."
+              placeholder={t('messages.search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-full text-sm text-white placeholder-white/50 focus:outline-none transition-all bg-white/10 border border-white/10"
+              className="w-full pl-10 pr-10 py-2.5 rounded-full text-sm text-white placeholder-white/50 focus:outline-none transition-all bg-white/10 border border-white/10"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors flex items-center justify-center p-1 rounded-full hover:bg-white/10"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
           <GlassButton
             variant="ghost"
             size="sm"
             onClick={onOpenCreateGroup}
             className="h-10 w-10 p-0 rounded-full flex-shrink-0 border-white/10 hover:bg-brand-primary/20"
-            title="Tạo nhóm"
+            title={t('messages.create_group')}
           >
             <PlusCircle className="h-5 w-5 text-cyan-300" />
           </GlassButton>
@@ -145,24 +219,32 @@ export function ConversationList({ conversations, selectedId, onSelect, loading,
       <div
         className="flex-1 overflow-y-auto relative z-10 space-y-1.5 p-2 scroll-glass"
         style={{ contentVisibility: 'auto' } as any}
+        onScroll={handleScroll}
       >
-        {loading ? (
+        {isLoading ? (
           <SkeletonConversationList count={10} />
-        ) : filtered.length > 0 ? (
-          filtered.map((conversation) => (
-            <ConversationItem
-              key={conversation.id}
-              conversation={conversation}
-              selectedId={selectedId}
-              onSelect={onSelect}
-            />
-          ))
+        ) : displayList.length > 0 ? (
+          <>
+            {displayList.map((conversation) => (
+              <ConversationItem
+                key={conversation.id}
+                conversation={conversation}
+                selectedId={selectedId}
+                onSelect={onSelect}
+              />
+            ))}
+            {isSearchingMore && (
+              <div className="flex justify-center p-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-brand-primary"></div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="p-4 text-center text-white/40 text-sm">
-            No conversations found
+            {debouncedQuery.trim() ? `${t('messages.no_results_for')} "${debouncedQuery}"` : t('messages.no_conversations')}
           </div>
         )}
       </div>
-    </div>
+    </div >
   )
 }

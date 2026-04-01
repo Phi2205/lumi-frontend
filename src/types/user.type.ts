@@ -8,6 +8,7 @@ export interface User {
   name: string;
   email: string;
   avatar_url?: string;
+  cover_image?: string;
   bio?: string;
   friend_status?: FriendshipStatus;
   location?: string;
@@ -17,6 +18,8 @@ export interface User {
   user_location?: Location;
   post_count?: number;
   has_story?: boolean;
+  mutual_friends_count?: number;
+  friend_count?: number;
 }
 
 export interface UserHoverCard {

@@ -16,6 +16,8 @@ import { ModalStory } from "@/components/ModalStory"
 import type { User } from "@/types/user.type"
 import { useStoryContext } from "@/contexts/StoryContext"
 import { StoryAvatar } from "@/components/ui/avatar"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 const cdnUrl = (publicId: string, mediaType: string) => {
   console.log(publicId, mediaType);
@@ -43,6 +45,7 @@ if (typeof window !== 'undefined') {
 }
 
 export function Stories() {
+  const { t } = useTranslation()
   const router = useRouter()
   const storyCtx = useStoryContext()
   const [stories, setStories] = useState<StoryFriend[]>([])
@@ -200,14 +203,14 @@ export function Stories() {
     // Validate file type
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'video/mp4', 'video/webm']
     if (!validTypes.includes(file.type)) {
-      setUploadError("Please select an image (JPEG, PNG, WebP) or video (MP4, WebM)")
+      setUploadError(t('stories.invalid_type'))
       return
     }
 
     // Validate file size (max 50MB)
     const maxSize = 50 * 1024 * 1024 // 50MB
     if (file.size > maxSize) {
-      setUploadError("File size must be less than 50MB")
+      setUploadError(t('stories.file_too_large'))
       return
     }
 
@@ -247,7 +250,7 @@ export function Stories() {
       setUploadError(
         error?.response?.data?.message ||
         error?.message ||
-        "Failed to upload story. Please try again."
+        t('stories.upload_failed')
       )
     } finally {
       setIsUploading(false)
@@ -379,10 +382,10 @@ export function Stories() {
             >
               <div className="flex flex-col items-center">
                 <Plus className="h-6 w-6 text-white" />
-                <span className="text-xs text-white font-semibold mt-1">Add</span>
+                <span className="text-xs text-white font-semibold mt-1">{t('stories.add')}</span>
               </div>
             </div>
-            <p className="text-xs text-center text-white font-medium mt-2">Your Story</p>
+            <p className="text-xs text-center text-white font-medium mt-2">{t('stories.your_story')}</p>
           </div>
 
           {/* Story Items */}
@@ -436,7 +439,7 @@ export function Stories() {
             })
           ) : (
             <div className="flex-shrink-0">
-              <p className="text-xs text-center text-white/50 font-medium">No stories</p>
+              <p className="text-xs text-center text-white/50 font-medium">{t('stories.no_stories')}</p>
             </div>
           )}
 
@@ -452,11 +455,11 @@ export function Stories() {
                 ) : (
                   <div className="flex flex-col items-center">
                     <ChevronRight className="h-6 w-6 text-white/80" />
-                    <span className="text-[10px] text-white/60 font-semibold mt-1">More</span>
+                    <span className="text-[10px] text-white/60 font-semibold mt-1">{t('stories.more')}</span>
                   </div>
                 )}
               </div>
-              <p className="text-xs text-center text-white/50 font-medium mt-2">See More</p>
+              <p className="text-xs text-center text-white/50 font-medium mt-2">{t('stories.see_more')}</p>
             </div>
           )}
         </div>
@@ -509,7 +512,7 @@ export function Stories() {
           <div className="relative w-full max-w-md bg-black/80 backdrop-blur-sm rounded-2xl overflow-hidden shadow-2xl">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-white/10">
-              <h2 className="text-white text-lg font-semibold">Create Story</h2>
+              <h2 className="text-white text-lg font-semibold">{t('stories.create_story')}</h2>
               <Button
                 variant="ghost"
                 size="icon"
@@ -529,9 +532,9 @@ export function Stories() {
                     <div className="mb-4 p-6 rounded-full bg-white/10">
                       <Upload className="h-12 w-12 text-white/80" />
                     </div>
-                    <p className="text-white text-center mb-2">Upload Photo or Video</p>
+                    <p className="text-white text-center mb-2">{t('stories.upload_desc')}</p>
                     <p className="text-white/60 text-sm text-center mb-6">
-                      Share a photo or video as your story
+                      {t('stories.share_desc')}
                     </p>
                     <input
                       ref={fileInputRef}
@@ -547,7 +550,7 @@ export function Stories() {
                       variant="primary"
                     >
                       <Upload className="h-4 w-4 mr-1" />
-                      Select File
+                      {t('stories.select_file')}
                     </GlassButton>
                   </div>
                 </>
@@ -612,7 +615,7 @@ export function Stories() {
                       disabled={isUploading}
                       className="flex-1 text-white/60 hover:text-white"
                     >
-                      Change
+                      {t('stories.change')}
                     </GlassButton>
                     <GlassButton
                       onClick={handleUpload}
@@ -620,7 +623,7 @@ export function Stories() {
                       className="flex-1 text-white"
                       variant="primary"
                     >
-                      {isUploading ? "Uploading..." : "Upload Story"}
+                      {isUploading ? t('stories.uploading') : t('stories.upload_story')}
                     </GlassButton>
                   </div>
                 </>

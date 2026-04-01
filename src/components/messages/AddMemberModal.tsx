@@ -1,31 +1,32 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { X, Search, Check, Users, Loader2 } from "lucide-react"
+import { X, Search, Check, Users, Loader2, UserPlus } from "lucide-react"
 import { GlassButton } from "@/lib/components/glass-button"
-import { GlassInput } from "@/lib/components/glass-input"
 import { StoryAvatar } from "@/components/ui/avatar"
-import { createGroupConversationService } from "@/services/conversation.service"
+import { addParticipantService } from "@/services/conversation.service"
 import { getFriendsService } from "@/services/friend.service"
 import { User } from "@/types/user.type"
 import { useTranslation } from "react-i18next"
 import "@/lib/i18n"
+import { ParticipantUI } from "./ConversationList"
 
-interface CreateGroupModalProps {
+interface AddMemberModalProps {
     isOpen: boolean
     onClose: () => void
-    onCreated: (conversationId: string) => void
+    onAdded: (users: User[]) => void
+    conversationId: string
+    existingParticipants: ParticipantUI[]
     isDarkMode?: boolean
 }
 
-export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true }: CreateGroupModalProps) => {
+export const AddMemberModal = ({ isOpen, onClose, onAdded, conversationId, existingParticipants, isDarkMode = true }: AddMemberModalProps) => {
     const { t } = useTranslation()
-    const [groupName, setGroupName] = useState("")
     const [searchQuery, setSearchQuery] = useState("")
     const [friends, setFriends] = useState<User[]>([])
     const [selectedUsers, setSelectedUsers] = useState<User[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [isCreating, setIsCreating] = useState(false)
+    const [isAdding, setIsAdding] = useState(false)
     const [page, setPage] = useState(1)
     const [hasMore, setHasMore] = useState(true)
     const [isFetchingMore, setIsFetchingMore] = useState(false)
@@ -38,7 +39,6 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
         }
 
         try {
-            // Fetch friends with pagination (limit 20)
             const res = await getFriendsService("20", pageNumber.toString())
             if (res && res.data) {
                 const newFriends = res.data
@@ -59,7 +59,6 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
 
     useEffect(() => {
         if (!isOpen) {
-            setGroupName("")
             setSearchQuery("")
             setSelectedUsers([])
             setPage(1)
@@ -73,8 +72,6 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
-
-        // Trigger load more when 50px near bottom
         if (scrollHeight - scrollTop <= clientHeight + 50 && hasMore && !isFetchingMore && !isLoading) {
             const nextPage = page + 1
             setPage(nextPage)
@@ -83,12 +80,16 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
     }
 
     const filteredFriends = useMemo(() => {
-        if (!searchQuery.trim()) return friends
-        return friends.filter(friend =>
+        // Lọc ra những friend CHƯA có trong existingParticipants
+        const existingIds = new Set(existingParticipants.map(p => p.id))
+        let available = friends.filter(f => !existingIds.has(f.id))
+
+        if (!searchQuery.trim()) return available
+        return available.filter(friend =>
             friend.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             friend.username.toLowerCase().includes(searchQuery.toLowerCase())
         )
-    }, [friends, searchQuery])
+    }, [friends, searchQuery, existingParticipants])
 
     const toggleUser = (user: User) => {
         setSelectedUsers(prev =>
@@ -98,21 +99,19 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
         )
     }
 
-    const handleCreateGroup = async () => {
-        if (!groupName.trim() || selectedUsers.length === 0) return
+    const handleAddMember = async () => {
+        if (selectedUsers.length === 0) return
 
-        setIsCreating(true)
+        setIsAdding(true)
         try {
             const participantIds = selectedUsers.map(u => u.id)
-            const res = await createGroupConversationService(groupName, participantIds)
-            if (res && res.data) {
-                onCreated(res.data.id)
-                onClose()
-            }
+            await addParticipantService(conversationId, participantIds)
+            onAdded(selectedUsers)
+            onClose()
         } catch (error) {
-            console.error("Failed to create group", error)
+            console.error("Failed to add members", error)
         } finally {
-            setIsCreating(false)
+            setIsAdding(false)
         }
     }
 
@@ -144,25 +143,23 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
                     animation: "slideInModal 0.4s ease",
                 }}
             >
-                {/* Background Gradient (Strictly matching modal.tsx) */}
                 <svg className="absolute inset-0 w-full h-full pointer-events-none">
                     <defs>
-                        <linearGradient id="createGroupGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <linearGradient id="addMemberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" style={{ stopColor: "rgba(30,30,30,0.98)" }} />
                             <stop offset="50%" style={{ stopColor: "rgba(20,20,20,0.98)" }} />
                             <stop offset="100%" style={{ stopColor: "rgba(10,10,10,0.99)" }} />
                         </linearGradient>
                     </defs>
-                    <rect x="0" y="0" width="100%" height="100%" rx="32" fill="url(#createGroupGrad)" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
+                    <rect x="0" y="0" width="100%" height="100%" rx="32" fill="url(#addMemberGrad)" stroke="rgba(255,255,255,0.2)" strokeWidth="1" />
                 </svg>
 
-                {/* Header */}
                 <div className="relative z-10 flex items-center justify-between p-6 border-b border-white/10">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 flex items-center justify-center border border-brand-primary/20">
-                            <Users className="w-5 h-5 text-cyan-300" />
+                            <UserPlus className="w-5 h-5 text-cyan-300" />
                         </div>
-                        <h3 className="font-bold text-xl tracking-tight text-white">{t('messages.new_group')}</h3>
+                        <h3 className="font-bold text-xl tracking-tight text-white">{t('messages.add_member', { defaultValue: 'Thêm thành viên' })}</h3>
                     </div>
                     <button
                         onClick={onClose}
@@ -176,22 +173,9 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
                     onScroll={handleScroll}
                     className="relative z-10 p-6 space-y-6 flex-1 overflow-y-auto min-h-[400px] max-h-[70vh] scroll-glass"
                 >
-                    {/* Group Name Input */}
-                    <div className="space-y-3">
-                        <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/80 ml-1">{t('messages.group_name')}</label>
-                        <GlassInput
-                            placeholder={t('messages.enter_group_name')}
-                            value={groupName}
-                            onChange={(e) => setGroupName(e.target.value)}
-                            className="bg-white/5 border-white/15 focus:border-brand-primary/40 h-13 rounded-2xl text-[15px] text-white placeholder:text-white/30"
-                        />
-                    </div>
-
-                    {/* Member Selection */}
                     <div className="space-y-3 flex flex-col">
                         <label className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/80 ml-1">{t('messages.members')} ({selectedUsers.length})</label>
 
-                        {/* Selected Members Chips */}
                         {selectedUsers.length > 0 && (
                             <div className="flex flex-wrap gap-2 mb-1 p-3 bg-white/5 rounded-2xl border border-white/10 max-h-40 overflow-y-auto scroll-glass">
                                 {selectedUsers.map(u => (
@@ -219,7 +203,6 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
                             />
                         </div>
 
-                        {/* Friends List */}
                         <div className="mt-2 space-y-1.5">
                             {isLoading ? (
                                 <div className="flex flex-col items-center justify-center py-16">
@@ -273,24 +256,20 @@ export const CreateGroupModal = ({ isOpen, onClose, onCreated, isDarkMode = true
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="relative z-10 p-6 border-t border-white/5 bg-black/40 backdrop-blur-md">
                     <GlassButton
-                        onClick={handleCreateGroup}
-                        disabled={!groupName.trim() || selectedUsers.length === 0 || isCreating}
+                        onClick={handleAddMember}
+                        disabled={selectedUsers.length === 0 || isAdding}
                         className="w-full h-14 text-[15px] font-black tracking-wide shadow-[0_8px_30px_rgb(0,0,0,0.4)] active:scale-[0.97]"
                     >
-                        {isCreating ? (
+                        {isAdding ? (
                             <div className="flex items-center gap-3">
                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                <span>{t('messages.creating_group')}</span>
+                                <span>{t('messages.processing', { defaultValue: 'Đang xử lý...' })}</span>
                             </div>
                         ) : (
                             <div className="flex items-center gap-3">
-                                <span>{t('messages.create_group_btn')}</span>
-                                <div className="px-2 py-0.5 rounded-md bg-white/20 text-[11px]">
-                                    {t('messages.friends_count', { count: selectedUsers.length })}
-                                </div>
+                                <span>{t('messages.add_member', { defaultValue: 'Thêm thành viên' })}</span>
                             </div>
                         )}
                     </GlassButton>

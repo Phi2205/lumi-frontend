@@ -6,6 +6,8 @@ import { GlassButton } from "@/lib/components/glass-button"
 import { getMediaService } from "@/services/conversation.service"
 import { urlImage } from "@/utils/imageUrl"
 import { AttachmentUI } from "./ChatWindow"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 interface MediaDetailViewProps {
     conversationId: string
@@ -14,6 +16,7 @@ interface MediaDetailViewProps {
 }
 
 export const MediaDetailView = ({ conversationId, onBack, isDarkMode = true }: MediaDetailViewProps) => {
+    const { t } = useTranslation()
     const [activeTab, setActiveTab] = useState<'media' | 'file'>('media')
     const [mediaItems, setMediaItems] = useState<AttachmentUI[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -57,7 +60,7 @@ export const MediaDetailView = ({ conversationId, onBack, isDarkMode = true }: M
                 <button onClick={onBack} className="p-1 hover:bg-white/10 rounded-full transition-colors">
                     <ArrowLeft className="w-5 h-5" />
                 </button>
-                <h3 className="font-semibold">File phương tiện và file</h3>
+                <h3 className="font-semibold">{t('messages.media_files')}</h3>
             </div>
 
             {/* Tabs */}
@@ -67,7 +70,7 @@ export const MediaDetailView = ({ conversationId, onBack, isDarkMode = true }: M
                     className={`flex-1 py-3 text-sm font-medium transition-all relative ${activeTab === 'media' ? "text-blue-400" : "text-white/50"
                         }`}
                 >
-                    File phương tiện
+                    {t('messages.media')}
                     {activeTab === 'media' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />}
                 </button>
                 <button
@@ -75,7 +78,7 @@ export const MediaDetailView = ({ conversationId, onBack, isDarkMode = true }: M
                     className={`flex-1 py-3 text-sm font-medium transition-all relative ${activeTab === 'file' ? "text-blue-400" : "text-white/50"
                         }`}
                 >
-                    File
+                    {t('messages.files')}
                     {activeTab === 'file' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400" />}
                 </button>
             </div>
@@ -90,7 +93,7 @@ export const MediaDetailView = ({ conversationId, onBack, isDarkMode = true }: M
                     <div className="space-y-6">
                         {/* Note: In a real app, you'd map through months here */}
                         <div>
-                            <p className="text-sm font-medium mb-3 opacity-70">Tháng này</p>
+                            <p className="text-sm font-medium mb-3 opacity-70">{t('messages.this_month')}</p>
                             <div className="grid grid-cols-3 gap-1">
                                 {mediaItems.map((item, idx) => (
                                     <div key={idx} className="aspect-square rounded-sm overflow-hidden border border-white/5 hover:border-white/20 transition-all cursor-pointer">
@@ -117,7 +120,7 @@ export const MediaDetailView = ({ conversationId, onBack, isDarkMode = true }: M
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full text-white/30">
                         <FileText className="w-12 h-12 mb-2 opacity-20" />
-                        <p className="text-sm">Không có file nào</p>
+                        <p className="text-sm">{t('messages.no_files')}</p>
                     </div>
                 )}
             </div>

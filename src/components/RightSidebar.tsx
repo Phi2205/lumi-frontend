@@ -1,3 +1,5 @@
+"use client"
+
 import { Avatar, AvatarImage, AvatarFallback, StoryAvatar } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { GlassButton } from "@/lib/components/glass-button"
@@ -14,8 +16,11 @@ import { User } from "@/types/user.type"
 import { usePresenceRealtime } from "@/socket/presence/usePresenceRealtime"
 import { useStoryRealtime } from "@/socket/story/useStoryRealtime"
 import { getOnlineUsers } from "@/socket/presence/presence.socket"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 export function RightSidebar() {
+  const { t } = useTranslation()
   const router = useRouter()
   const [onlineFriends, setOnlineFriends] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -77,7 +82,7 @@ export function RightSidebar() {
         <h3 className="text-sm font-semibold text-white mb-4 pb-3 border-b border-white/10 flex items-center justify-between">
           <span className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            Online Friends
+            {t('common.online_friends')}
           </span>
           <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-400 font-medium">
             {onlineFriends.length}
@@ -112,7 +117,7 @@ export function RightSidebar() {
             ))
           ) : (
             <div className="flex flex-col items-center justify-center py-6 opacity-40">
-              <p className="text-xs text-white text-center">No friends online</p>
+              <p className="text-xs text-white text-center">{t('common.no_friends_online')}</p>
             </div>
           )}
         </div>

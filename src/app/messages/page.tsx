@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { ConversationList, type ConversationUI } from "@/components/messages/ConversationList"
+import { useSearchParams } from "next/navigation"
+import { ConversationList, type ConversationUI, ParticipantUI } from "@/components/messages/ConversationList"
 import { ChatWindow, type MessageUI } from "@/components/messages/ChatWindow"
 import { useDarkMode } from "@/hooks/useDarkMode"
-import { BackgroundRenderer } from "@/components/BackgroundRenderer"
-import { useBackgroundImage } from "@/hooks/useBackgroundImage"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
 import { ChevronLeft } from "lucide-react"
@@ -17,13 +16,18 @@ import { useJumpMessages } from "@/hooks/chat/useJumpMessages"
 import { useChatRealtime } from "@/socket/chat/useChatRealtime"
 import { usePresenceRealtime } from "@/socket/presence/usePresenceRealtime"
 import { CreateGroupModal } from "@/components/messages/CreateGroupModal"
+import { useTranslation } from "react-i18next"
+import "@/lib/i18n"
 
 // export default function Page() {
 //   return <div>Test messages</div>
 // }
 
 export default function MessagesPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
+  const searchParams = useSearchParams()
+  const targetConversationId = searchParams.get('conversationId')
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
   const [jumpMessageId, setJumpMessageId] = useState<string | null>(null)
   const { conversations, loading, error, reload, setConversations, markAsRead } = useConversations()
@@ -83,18 +87,23 @@ export default function MessagesPage() {
     }
   });
   const { isDarkMode, handleDarkModeToggle } = useDarkMode()
-  const { imageLoaded, imageError } = useBackgroundImage("/bg12.jpg", isDarkMode)
   const [showChatMobile, setShowChatMobile] = useState(false)
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
 
-
+  // Auto-select from URL query param (navigated from profile on mobile)
+  useEffect(() => {
+    if (targetConversationId && conversations.length > 0) {
+      setSelectedConversationId(targetConversationId)
+      setShowChatMobile(true)
+    }
+  }, [targetConversationId, conversations])
 
   // Set default selected conversation when list loads
   useEffect(() => {
-    if (conversations.length > 0 && !selectedConversationId) {
+    if (conversations.length > 0 && !selectedConversationId && !targetConversationId) {
       setSelectedConversationId(conversations[0].id);
     }
-  }, [conversations, selectedConversationId]);
+  }, [conversations, selectedConversationId, targetConversationId]);
 
   // Auto-show chat on mobile when selection changed if not already shown
   useEffect(() => {
@@ -136,14 +145,50 @@ export default function MessagesPage() {
     setJumpMessageId(null)
   }
 
+  const handleMembersAdded = (users: any[]) => {
+    if (selectedConversationId && users && users.length > 0) {
+      setConversations(prev => prev.map(conv => {
+        if (conv.id === selectedConversationId) {
+          const newParticipants: ParticipantUI[] = users.map(u => ({
+            id: u.id,
+            name: u.name,
+            avatar_url: u.avatar_url || "",
+            username: u.username,
+            isOnline: false,
+          }))
+
+          const existingIds = new Set(conv.participants.map(p => p.id))
+          const uniqueNewParticipants = newParticipants.filter(p => !existingIds.has(p.id))
+
+          return {
+            ...conv,
+            participants: [...conv.participants, ...uniqueNewParticipants]
+          }
+        }
+        return conv
+      }))
+    }
+    // Also reload from server to ensure data integrity
+    reload()
+  }
+
+  const handleMemberRemoved = (userId: string) => {
+    if (selectedConversationId) {
+      setConversations(prev => prev.map(conv => {
+        if (conv.id === selectedConversationId) {
+          return {
+            ...conv,
+            participants: conv.participants.filter(p => p.id !== userId)
+          }
+        }
+        return conv
+      }))
+    }
+    reload()
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <BackgroundRenderer
-        isDarkMode={isDarkMode}
-        imageLoaded={imageLoaded}
-        imageError={imageError}
-      />
-
       <div className={`${showChatMobile ? 'hidden lg:block' : 'block'}`}>
         <Header isDarkMode={isDarkMode} onDarkModeToggle={handleDarkModeToggle} />
       </div>
@@ -211,12 +256,14 @@ export default function MessagesPage() {
                 isLoadingMoreBelow={loadingBelow}
                 onCloseJumpMode={handleCloseJumpMode}
                 onJumpToMessage={handleJumpToMessage}
+                onRefresh={handleMembersAdded}
+                onRemoveParticipant={handleMemberRemoved}
               />
             </div>
           ) : (
             <div className="flex items-center justify-center h-full">
               <div className="text-center">
-                <div className="text-white/50 text-sm">Select a conversation to start messaging</div>
+                <div className="text-white/50 text-sm">{t('messages.select_to_start')}</div>
               </div>
             </div>
           )}

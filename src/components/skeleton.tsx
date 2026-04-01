@@ -157,19 +157,19 @@ export const ProfileSkeleton = () => (
     {/* Back button skeleton */}
     <div className="mb-4">
       <Skeleton
-        width="w-20"
-        height="h-8"
-        className="rounded-xl bg-white/5 opacity-50"
+        width="w-24"
+        height="h-9"
+        className="rounded-xl bg-white/5"
       />
     </div>
 
     {/* Cover Photo Skeleton */}
-    <GlassCard variant="lg" className="h-72 md:h-96 rounded-3xl overflow-hidden mb-0 p-0 border-white/10">
+    <GlassCard variant="lg" className="h-72 md:h-96 rounded-3xl overflow-hidden mb-0 p-0 border-none shadow-none">
       <div className="w-full h-full bg-linear-to-b from-white/10 to-transparent animate-pulse" />
     </GlassCard>
 
-    {/* Profile Header Section Skeleton - Matching GlassCardVariant overlap */}
-    <GlassCardVariant className="relative -mt-37 md:-mt-57 mb-8 p-4 md:p-8 !rounded-b-3xl items-end">
+    {/* Profile Header Section Skeleton - Exactly matching ProfileContent layout */}
+    <GlassCardVariant className="relative -mt-37 md:-mt-57 mb-8 p-4 md:p-8 !rounded-b-3xl !overflow-visible">
       <div className="flex flex-row items-end gap-4 md:gap-6">
         {/* Avatar Skeleton */}
         <div className="shrink-0">
@@ -178,15 +178,15 @@ export const ProfileSkeleton = () => (
 
         {/* User Info Skeleton */}
         <div className="flex-1 text-left pb-2">
-          <div className="mb-3 md:mb-4 space-y-2">
-            <div className="h-6 md:h-9 w-32 md:w-48 bg-white/15 rounded-lg animate-pulse" />
-            <div className="h-4 md:h-6 w-24 md:w-32 bg-white/10 rounded animate-pulse" />
+          <div className="mb-3 md:mb-4 space-y-2.5">
+            <div className="h-7 md:h-10 w-32 md:w-56 bg-white/15 rounded-xl animate-pulse" />
+            <div className="h-4 md:h-6 w-24 md:w-36 bg-white/10 rounded-lg animate-pulse" />
           </div>
 
           <div className="flex gap-2 items-center flex-wrap">
-            <div className="h-8 md:h-11 w-24 md:w-32 bg-white/10 rounded-xl animate-pulse" />
-            <div className="h-8 md:h-11 w-8 md:w-11 bg-white/10 rounded-xl animate-pulse" />
-            <div className="h-8 md:h-11 w-8 md:w-11 bg-white/10 rounded-xl animate-pulse" />
+            <div className="h-9 md:h-11 w-28 md:w-36 bg-white/10 rounded-xl animate-pulse" />
+            <div className="h-9 md:h-11 w-9 md:w-11 bg-white/10 rounded-xl animate-pulse" />
+            <div className="h-9 md:h-11 w-9 md:w-11 bg-white/10 rounded-xl animate-pulse" />
           </div>
         </div>
       </div>
@@ -194,41 +194,49 @@ export const ProfileSkeleton = () => (
 
     {/* Information Section Skeleton */}
     <GlassCard variant="lg" className="mb-8">
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
           <div className="flex items-center justify-between mb-4">
-            <div className="h-7 w-32 bg-white/15 rounded-lg animate-pulse" />
-            <div className="h-6 w-20 bg-brand-primary/10 rounded-full animate-pulse" />
+            <div className="h-7 w-36 bg-white/15 rounded-lg animate-pulse" />
+            <div className="h-6 w-24 bg-white/10 rounded-lg animate-pulse" />
           </div>
-          <div className="space-y-2">
-            <div className="h-4 w-full bg-white/5 rounded animate-pulse" />
-            <div className="h-4 w-3/4 bg-white/5 rounded animate-pulse" />
+          <div className="space-y-3">
+            <div className="h-4 w-full bg-white/5 rounded-full animate-pulse" />
+            <div className="h-4 w-5/6 bg-white/5 rounded-full animate-pulse" />
           </div>
         </div>
 
-        <div className="flex flex-col items-start sm:flex-row sm:flex-wrap gap-3 sm:gap-4">
-          <div className="h-8 w-40 bg-white/5 border border-white/5 rounded-full animate-pulse" />
-          <div className="h-8 w-32 bg-white/5 border border-white/5 rounded-full animate-pulse" />
-          <div className="h-8 w-28 bg-white/5 border border-white/5 rounded-full animate-pulse" />
+        <div className="flex flex-wrap gap-3 sm:gap-4">
+          <div className="h-9 w-44 bg-white/5 border border-white/5 rounded-full animate-pulse" />
+          <div className="h-9 w-36 bg-white/5 border border-white/5 rounded-full animate-pulse" />
+          <div className="h-9 w-32 bg-white/5 border border-white/5 rounded-full animate-pulse" />
         </div>
       </div>
     </GlassCard>
 
     {/* Stats Section Skeleton */}
-    <div className="grid grid-cols-3 gap-4 mb-8">
-      <div className="h-20 bg-white/5 border border-white/10 rounded-2xl animate-pulse" />
-      <div className="h-20 bg-white/5 border border-white/10 rounded-2xl animate-pulse" />
-      <div className="h-20 bg-white/5 border border-white/10 rounded-2xl animate-pulse" />
+    <div className="grid grid-cols-3 gap-3 md:gap-4 mb-8">
+      <div className="h-24 bg-white/5 border border-white/10 rounded-2xl animate-pulse shadow-xl shadow-black/10" />
+      <div className="h-24 bg-white/5 border border-white/10 rounded-2xl animate-pulse shadow-xl shadow-black/10" />
+      <div className="h-24 bg-white/5 border border-white/10 rounded-2xl animate-pulse shadow-xl shadow-black/10" />
     </div>
 
-    {/* Posts Section Skeleton */}
-    <div className="mb-8">
-      <div className="h-8 w-24 bg-white/15 rounded-lg mb-6 animate-pulse" />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-64 bg-white/5 rounded-2xl border border-white/5 animate-pulse" />
-        ))}
+    {/* Tabs Section Skeleton */}
+    <div className="mb-8 border-b border-white/10 flex items-center gap-8">
+      <div className="pb-4 relative">
+        <div className="h-5 w-20 bg-white/15 rounded-lg animate-pulse" />
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-primary/50" />
       </div>
+      <div className="pb-4">
+        <div className="h-5 w-20 bg-white/10 rounded-lg animate-pulse" />
+      </div>
+    </div>
+
+    {/* Content Grid Skeleton (Default for Posts) */}
+    <div className="grid grid-cols-3 gap-0.5 md:gap-4 mb-12">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="aspect-[3/4] bg-white/5 rounded-sm md:rounded-2xl border border-white/5 animate-pulse" />
+      ))}
     </div>
   </div>
 );
@@ -503,64 +511,91 @@ export const SkeletonSettingsList = ({ count = 3, className = "" }: { count?: nu
   </div>
 );
 // Reel Page Skeleton Component
+// Reel Page Skeleton Component
 export const ReelSkeleton = () => (
-  <div
-    className="relative w-full h-screen bg-[#0a0a0a] flex items-center justify-center overflow-hidden"
-  >
-    {/* Blurred Background Simulation */}
-    <div className="hidden sm:block absolute inset-0 opacity-20 blur-3xl scale-110 bg-linear-to-br from-zinc-700 via-zinc-900 to-black pointer-events-none" />
+  <div className="relative w-full h-screen flex items-center justify-center overflow-hidden bg-transparent">
+    {/* Shimmer Animation Keyframes */}
+    <style jsx global>{`
+      @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+      .shimmer {
+        position: relative;
+        overflow: hidden;
+      }
+      .shimmer::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.05) 50%,
+          transparent 100%
+        );
+        animation: shimmer 2s infinite;
+      }
+    `}</style>
 
     <div className="flex w-full h-full max-w-full justify-center relative z-10 sm:py-6">
-      <div
-        className="relative w-full h-full sm:max-w-[420px] md:max-w-[480px] lg:max-w-[600px] sm:rounded-[2rem] overflow-hidden bg-black flex items-center justify-center z-10 sm:ring-1 sm:ring-white/10 shadow-2xl flex-shrink-0"
-      >
-        {/* Simulated Grayish Background with slight pulse */}
-        <div className="absolute inset-0 bg-white/5 animate-pulse" />
+      <div className="relative w-full h-full sm:max-w-[420px] md:max-w-[480px] lg:max-w-[550px] sm:rounded-[2.5rem] overflow-hidden bg-white/5 backdrop-blur-3xl flex items-center justify-center z-10 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.3)] flex-shrink-0 shimmer">
 
-        {/* Top Progress Bar */}
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-white/10 z-30">
-          <div className="h-full w-1/4 bg-white/30" />
-        </div>
+        {/* Overlay để làm tối phần dưới cho text */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
 
-        {/* Bottom Gradient overlay */}
-        <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-10" />
-
-        {/* Info Bottom Left */}
-        <div className="absolute bottom-6 left-4 right-20 z-20 space-y-4">
-          {/* User info */}
-          <div className="flex items-center gap-2.5">
-            <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/20 ring-2 ring-white/10" />
-            <Skeleton height="h-4" width="w-24" className="bg-white/10 rounded" />
-            <Skeleton height="h-7" width="w-16" rounded="rounded-lg" className="bg-white/5 border border-white/10" />
+        {/* Bottom Info Section */}
+        <div className="absolute bottom-10 left-6 right-20 z-20 space-y-5">
+          {/* User profile & Info */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-white/10 ring-1 ring-white/20" />
+            <div className="space-y-2">
+              <div className="h-4 w-32 bg-white/20 rounded-full" />
+              <div className="h-3 w-20 bg-white/10 rounded-full" />
+            </div>
+            <div className="ml-2 h-8 w-20 bg-white/10 rounded-xl border border-white/10" />
           </div>
 
-          {/* Caption */}
-          <div className="space-y-2">
-            <Skeleton height="h-3.5" width="w-full" className="bg-white/10 rounded" />
-            <Skeleton height="h-3.5" width="w-3/4" className="bg-white/5 rounded" />
+          {/* Caption area */}
+          <div className="space-y-2.5">
+            <div className="h-3.5 w-full bg-white/15 rounded-full" />
+            <div className="h-3.5 w-4/5 bg-white/10 rounded-full" />
           </div>
 
-          {/* Music */}
-          <div className="pt-1">
-            <Skeleton height="h-7" width="w-32" rounded="rounded-full" className="bg-white/10" />
+          {/* Music track simulation */}
+          <div className="flex items-center gap-2 pt-2">
+            <div className="w-5 h-5 rounded-full bg-white/20 animate-spin-slow" />
+            <div className="h-6 w-40 bg-white/10 rounded-full backdrop-blur-md border border-white/5" />
           </div>
         </div>
 
-        {/* Actions Right Buttons */}
-        <div className="absolute right-3 bottom-8 flex flex-col items-center gap-6 z-20">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="flex flex-col items-center gap-1.5">
-              <Skeleton height="h-12" width="w-12" rounded="rounded-full" className="bg-white/15 backdrop-blur-sm" />
-              <Skeleton height="h-2" width="w-5" className="bg-white/5 rounded" />
+        {/* Vertical Actions (Like, Comment, Share) */}
+        <div className="absolute right-4 bottom-12 flex flex-col items-center gap-8 z-20">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex flex-col items-center gap-2">
+              <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-lg">
+                <div className="w-6 h-6 bg-white/20 rounded-full" />
+              </div>
+              <div className="h-2.5 w-6 bg-white/20 rounded-full" />
             </div>
           ))}
-          <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/10" />
-          <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/20 border-2 border-white/10" />
+
+          {/* User avatar small circle at the very bottom */}
+          <div className="w-12 h-12 rounded-full p-0.5 bg-white/10 border border-white/20 mt-2">
+            <div className="w-full h-full rounded-full bg-white/5 animate-pulse" />
+          </div>
         </div>
 
-        {/* Volume button skeleton */}
-        <div className="absolute top-6 right-4 z-20">
-          <Skeleton height="h-10" width="w-10" rounded="rounded-full" className="bg-white/20 backdrop-blur-sm" />
+        {/* Top Control Icons (Mute/Info) */}
+        <div className="absolute top-8 right-6 flex items-center gap-4 z-20">
+          <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md border border-white/10" />
+        </div>
+
+        <div className="absolute top-8 left-6 z-20">
+          <div className="h-5 w-20 bg-white/10 rounded-full backdrop-blur-md border border-white/5" />
         </div>
       </div>
     </div>
