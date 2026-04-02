@@ -1,11 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Eye, EyeOff, CheckSquare, Square } from 'lucide-react';
+import { Eye, EyeOff, CheckSquare, Square, ShieldCheck, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDarkMode } from "@/hooks/useDarkMode";
+import { forgotPassword, resetPassword } from "@/services/auth.service";
+import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
+import "@/lib/i18n";
 
 export default function LoginPage() {
   const { login, isLoading: authLoading, isAuthenticated } = useAuth();
@@ -18,6 +22,69 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const { isDarkMode, handleDarkModeToggle } = useDarkMode();
+  const { t } = useTranslation();
+
+  // Forgot Password state
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [forgotStep, setForgotStep] = useState<'email' | 'otp'>('email');
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError('');
+    try {
+      await forgotPassword({ email: forgotEmail });
+      setForgotStep('otp');
+    } catch (error: any) {
+      setForgotError(error?.response?.data?.message || error?.message || 'Failed to send OTP');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmNewPassword) {
+      setForgotError('New passwords do not match');
+      return;
+    }
+    setForgotLoading(true);
+    setForgotError('');
+    try {
+      await resetPassword({ email: forgotEmail, otp, newPassword });
+      setForgotSuccess('Your password has been successfully reset. Please log in with your new password.');
+      setTimeout(() => {
+        setIsForgotModalOpen(false);
+        setForgotStep('email');
+        setForgotSuccess('');
+        setForgotEmail('');
+        setOtp('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+      }, 3000);
+    } catch (error: any) {
+      setForgotError(error?.response?.data?.message || error?.message || 'Failed to reset password');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const closeForgotModal = () => {
+    if (!forgotLoading) {
+      setIsForgotModalOpen(false);
+      setForgotStep('email');
+      setForgotError('');
+      setForgotSuccess('');
+    }
+  };
 
   // Set full height on mount and window resize
   useEffect(() => {
@@ -167,39 +234,28 @@ export default function LoginPage() {
                   </div>
 
                   {/* Remember Me & Forgot Password */}
-                  <div className="flex flex-col md:flex-row mb-4">
-                    <div className="w-full md:w-1/2 mb-4 md:mb-0">
-                      <label className="block relative pl-8 cursor-pointer text-base font-medium select-none" style={{ color: 'var(--brand-primary)' }}>
-                        Remember Me
-                        <input
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={(e) => setRememberMe(e.target.checked)}
-                          className="absolute opacity-0 cursor-pointer h-0 w-0"
-                          disabled={isLoading || authLoading}
-                        />
-                        <span className="absolute top-0 left-0">
-                          {rememberMe ? (
-                            <CheckSquare className="w-5 h-5 -mt-1 transition-all duration-300" style={{ color: 'var(--brand-primary)' }} />
-                          ) : (
-                            <Square className="w-5 h-5 -mt-1 transition-all duration-300" style={{ color: 'var(--brand-primary)' }} />
-                          )}
-                        </span>
-                      </label>
-                    </div>
-                    <div className="w-full md:w-1/2 text-center md:text-right">
-                      <a href="#" className="text-white transition-all duration-300" style={{ '--hover-color': 'var(--brand-primary)' } as React.CSSProperties} onMouseEnter={(e) => e.currentTarget.style.color = 'var(--brand-primary)'} onMouseLeave={(e) => e.currentTarget.style.color = 'white'}>
+                  <div className="flex mb-4">
+                    <div className="w-full text-right">
+                      <button
+                        type="button"
+                        onClick={() => setIsForgotModalOpen(true)}
+                        className="text-white transition-all duration-300 hover:text-white/80 bg-transparent border-none cursor-pointer p-0"
+                        style={{ '--hover-color': 'var(--brand-primary)' } as React.CSSProperties}
+                        onMouseEnter={(e) => e.currentTarget.style.color = 'var(--brand-primary)'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = 'white'}
+                        disabled={isLoading || authLoading}
+                      >
                         Forgot Password
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </form>
 
                 {/* Separator */}
-                <p className="w-full text-center my-4">&mdash; Google &mdash;</p>
+                {/* <p className="w-full text-center my-4">&mdash; Google &mdash;</p> */}
 
                 {/* Google Login Button */}
-                <div className="flex justify-center">
+                {/* <div className="flex justify-center">
                   <button
                     type="button"
                     className="w-full h-[50px] rounded-full text-sm uppercase font-normal cursor-pointer transition-all duration-300 focus:outline-none shadow-none border flex items-center justify-center gap-3"
@@ -227,7 +283,7 @@ export default function LoginPage() {
                     </svg>
                     <span className="font-medium">Google</span>
                   </button>
-                </div>
+                </div> */}
 
                 {/* Sign Up Link */}
                 <p className="mt-8 text-center text-sm text-white/90">
@@ -245,6 +301,146 @@ export default function LoginPage() {
           </div>
         </div>
       </section>
+
+      {/* Forgot Password Modal */}
+      {isForgotModalOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="relative w-full max-w-md bg-neutral-900/90 backdrop-blur-xl border border-white/20 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-white/10">
+              <h2 className="text-white text-xl font-semibold">
+                {forgotStep === 'email' ? 'Forgot Password' : 'Reset Password'}
+              </h2>
+              <button
+                className="text-white/60 hover:text-white transition-all p-1 cursor-pointer"
+                onClick={closeForgotModal}
+                disabled={forgotLoading}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-8">
+              {forgotSuccess ? (
+                <div className="flex flex-col items-center justify-center py-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                    <CheckCircle2 className="w-8 h-8 text-green-400" />
+                  </div>
+                  <p className="text-white text-center font-medium">{forgotSuccess}</p>
+                </div>
+              ) : (
+                <form onSubmit={forgotStep === 'email' ? handleForgotPassword : handleResetPassword} className="space-y-6">
+                  {forgotStep === 'email' ? (
+                    <>
+                      <p className="text-white/60 text-sm">
+                        Enter your email address and we'll send you an OTP code to reset your password.
+                      </p>
+                      <div className="relative">
+                        <input
+                          type="email"
+                          className="w-full h-12 bg-white/10 border border-white/20 rounded-xl px-4 text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-all font-medium"
+                          placeholder="your@email.com"
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          required
+                          disabled={forgotLoading}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-white/60 text-sm">
+                        Please enter the OTP sent to <strong>{forgotEmail}</strong> and your new password.
+                      </p>
+                      <div className="space-y-4">
+                        <div className="relative">
+                          <input
+                            type="text"
+                            className="w-full h-12 bg-white/10 border border-white/20 rounded-xl px-4 text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-all font-medium"
+                            placeholder="OTP Code"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            required
+                            disabled={forgotLoading}
+                          />
+                        </div>
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? "text" : "password"}
+                            className="w-full h-12 bg-white/10 border border-white/20 rounded-xl px-4 pr-10 text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-all font-medium"
+                            placeholder="New Password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            required
+                            disabled={forgotLoading}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                          >
+                            {showNewPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          </button>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? "text" : "password"}
+                            className="w-full h-12 bg-white/10 border border-white/20 rounded-xl px-4 text-white placeholder-white/40 focus:outline-none focus:border-white/40 transition-all font-medium"
+                            placeholder="Confirm New Password"
+                            value={confirmNewPassword}
+                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            required
+                            disabled={forgotLoading}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {forgotError && (
+                    <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-xl flex items-center gap-2 text-red-400 text-sm animate-in shake duration-300">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>{forgotError}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={forgotLoading}
+                    className="w-full h-12 rounded-xl font-semibold transition-all duration-300 disabled:opacity-50"
+                    style={{
+                      backgroundColor: 'var(--brand-primary)',
+                      color: 'black'
+                    }}
+                  >
+                    {forgotLoading ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                        <span>Processing...</span>
+                      </div>
+                    ) : (
+                      forgotStep === 'email' ? 'Send OTP' : 'Reset Password'
+                    )}
+                  </button>
+
+                  {forgotStep === 'otp' && (
+                    <button
+                      type="button"
+                      onClick={() => setForgotStep('email')}
+                      className="w-full text-center text-white/60 hover:text-white text-sm transition-colors mt-2"
+                      disabled={forgotLoading}
+                    >
+                      Use a different email
+                    </button>
+                  )}
+                </form>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

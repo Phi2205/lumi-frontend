@@ -58,3 +58,30 @@ export const getMe = async () => {
         throw error;
     }
 }
+
+export const changePassword = async (data: { oldPassword: string, newPassword: string }) => {
+    try {
+        const response = await authApi.changePasswordApi(data);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const forgotPassword = async (data: { email: string }) => {
+    try {
+        const response = await authApi.forgotPasswordApi(data);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}
+
+export const resetPassword = async (data: { email: string, otp: string, newPassword: string }) => {
+    try {
+        const response = await authApi.resetPasswordApi(data);
+        return response.data;
+    } catch (error) {
+        throw error;
+    }
+}

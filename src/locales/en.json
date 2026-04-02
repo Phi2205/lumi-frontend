@@ -140,7 +140,16 @@
         "dark_mode_desc": "Switch between light and dark themes",
         "language": "Language",
         "app_language": "App Language",
-        "choose_language": "Choose your preferred language"
+        "choose_language": "Choose your preferred language",
+        "change_password": "Change Password",
+        "current_password": "Current Password",
+        "new_password": "New Password",
+        "confirm_password": "Confirm Password",
+        "passwords_not_match": "New passwords do not match",
+        "change_password_success": "Password changed successfully",
+        "change_password_error": "Failed to change password",
+        "min_password_length": "Password must be at least 6 characters",
+        "updating": "Updating..."
     },
     "time": {
         "just_now": "just now",
