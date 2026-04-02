@@ -24,6 +24,17 @@ export interface UserResponse extends User {
   bio: string;
 }
 
+// Axios instance riêng cho refresh token (không dùng interceptor chung)
+const baseURL = process.env.NEXT_PUBLIC_API_URL;
+
+const axiosPublic = axios.create({
+  baseURL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 export const loginApi = async (data: LoginPayload) => {
   if (typeof window !== 'undefined') {
     // Clear old auth data
@@ -32,23 +43,20 @@ export const loginApi = async (data: LoginPayload) => {
     document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   }
-  return axiosInstance.post('/auth/login', data);
+  return axiosPublic.post('/auth/login', data);
 };
 
 export const logoutApi = () =>
   axiosInstance.post('/auth/logout');
 
 export const registerApi = (data: RegisterPayload) =>
-  axiosInstance.post('/auth/register', data);
+  axiosPublic.post('/auth/register', data);
 
 export const verifyOtpApi = (data: VerifyPayload) =>
-  axiosInstance.post('/auth/verify-otp', data);
+  axiosPublic.post('/auth/verify-otp', data);
 
 export const resendOtpApi = (data: { email: string }) =>
-  axiosInstance.post('/auth/resend-otp', data);
-
-// Axios instance riêng cho refresh token (không dùng interceptor chung)
-const baseURL = process.env.NEXT_PUBLIC_API_URL;
+  axiosPublic.post('/auth/resend-otp', data);
 
 const axiosRefresh = axios.create({
   baseURL,
@@ -63,3 +71,12 @@ export const refreshTokenApi = () =>
 
 export const getMeApi = () =>
   axiosInstance.get('/auth/me');
+
+export const changePasswordApi = (data: { oldPassword: string, newPassword: string }) =>
+  axiosInstance.post('/auth/change-password', data);
+
+export const forgotPasswordApi = (data: { email: string }) =>
+  axiosPublic.post('/auth/forgot-password', data);
+
+export const resetPasswordApi = (data: { email: string, otp: string, newPassword: string }) =>
+  axiosPublic.post('/auth/reset-password', data);

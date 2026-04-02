@@ -4,7 +4,7 @@ import { HomeLayout } from "@/components/HomeLayout"
 import { useDarkMode } from "@/hooks/useDarkMode"
 import { SwitchMode } from "@/components/SwitchMode"
 import { GlassCard, GlassSelect } from "@/lib/components"
-import { Moon, Sun, Languages } from "lucide-react"
+import { Moon, Sun, Languages, Lock } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import "@/lib/i18n" // Ensure i18n is initialized
 
@@ -69,6 +69,24 @@ export default function SettingsPage() {
                                 { value: "vi", label: "Tiếng Việt (VI)" }
                             ]}
                         />
+                    </div>
+                </GlassCard>
+
+                {/* Security Section */}
+                <GlassCard className="p-6">
+                    <h2 className="text-xl font-semibold text-white mb-6">Bảo mật</h2>
+
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 cursor-pointer hover:bg-white/10 transition-colors"
+                        onClick={() => window.location.href = '/settings/change-password'}>
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 rounded-xl bg-red-500/10">
+                                <Lock className="w-6 h-6 text-red-400" />
+                            </div>
+                            <div>
+                                <p className="text-white font-medium">{t('settings.change_password')}</p>
+                                <p className="text-white/40 text-[11px] sm:text-xs">Cập nhật mật khẩu để bảo vệ tài khoản</p>
+                            </div>
+                        </div>
                     </div>
                 </GlassCard>
             </div>
