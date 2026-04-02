@@ -11,6 +11,7 @@ import { GlassButton } from "@/lib/components"
 import { StorySkeletonContent } from "@/components/skeleton"
 import { viewStory } from "@/services/story.service"
 import { useTranslation } from "react-i18next"
+import { useAuth } from "@/contexts/AuthContext"
 import "@/lib/i18n"
 
 interface StoryFriend {
@@ -53,6 +54,7 @@ export function ModalStory({
   hasNextFriend = false
 }: ModalStoryProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const videoRef = useRef<HTMLVideoElement>(null)
 
   // Setup HLS video player
@@ -245,7 +247,7 @@ export function ModalStory({
                 </Avatar>
                 <div>
                   <p className="text-white text-sm font-semibold">
-                    {storyFriend.name}
+                    {storyFriend.id === user?.id ? t('messages.you') : storyFriend.name}
                   </p>
                   <p className="text-white/70 text-xs">
                     {formatTime(currentStory.created_at)}
