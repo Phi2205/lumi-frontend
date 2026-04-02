@@ -20,6 +20,7 @@ export interface User {
   has_story?: boolean;
   mutual_friends_count?: number;
   friend_count?: number;
+  has_unseen?: boolean;
 }
 
 export interface UserHoverCard {
