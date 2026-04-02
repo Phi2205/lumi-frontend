@@ -15,6 +15,7 @@ import { SkeletonStories } from "@/components/skeleton"
 import { ModalStory } from "@/components/ModalStory"
 import type { User } from "@/types/user.type"
 import { useStoryContext } from "@/contexts/StoryContext"
+import { useAuth } from "@/contexts/AuthContext"
 import { StoryAvatar } from "@/components/ui/avatar"
 import { useTranslation } from "react-i18next"
 import "@/lib/i18n"
@@ -46,6 +47,7 @@ if (typeof window !== 'undefined') {
 
 export function Stories() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const router = useRouter()
   const storyCtx = useStoryContext()
   const [stories, setStories] = useState<StoryFriend[]>([])
@@ -433,7 +435,9 @@ export function Stories() {
                       username={story.user.username}
                     />
                   </div>
-                  <p className="text-xs text-center text-white font-medium mt-1 truncate">{story.user.name}</p>
+                  <p className="text-xs text-center text-white font-medium mt-1 truncate">
+                    {story.user.id === user?.id ? t('messages.you') : story.user.name}
+                  </p>
                 </div>
               )
             })

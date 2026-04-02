@@ -27,6 +27,7 @@ export function RightSidebar() {
 
   const fetchOnlineFriends = useCallback((excludeIds: string[] = []) => {
     getOnlineUsers({ limit: 20, exclude: excludeIds }, (users) => {
+      console.log(users)
       setOnlineFriends(prev => {
         const currentIds = new Set(prev.map(u => u.id));
         const newOnes = users.filter(u => !currentIds.has(u.id));
@@ -103,6 +104,7 @@ export function RightSidebar() {
                     hasStory={friend.has_story}
                     isOnline={true}
                     className="h-9 w-9 shrink-0"
+                    isSeen={!friend.has_unseen}
                   />
                   <div className="flex flex-col min-w-0">
                     <span

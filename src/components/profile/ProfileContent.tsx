@@ -492,6 +492,7 @@ export function ProfileContent({
                                     hasStory={userProfile?.has_story}
                                     username={!isOwnProfile && userProfile?.has_story ? userProfile?.username : undefined}
                                     storyRingSize="lg"
+                                    isSeen={!userProfile?.has_unseen}
                                     className={cn("h-20 w-20 md:h-40 md:w-40 rounded-full ring-4 ring-white/20 shadow-2xl transition-all duration-300 group-hover/avatar:ring-brand-primary/40", isAvatarUploading && "opacity-50 blur-sm")}
                                 />
 
