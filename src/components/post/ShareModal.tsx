@@ -72,65 +72,10 @@ export function ShareModal({ post, onClose, onShared }: ShareModalProps) {
     >
       <div className="-mx-6 -my-5 overflow-y-auto" style={{ maxHeight: "70vh" }}>
         {/* User info + caption area */}
-        <div className="px-5 pt-5 pb-4">
-          {/* User row */}
-          <div className="flex items-center gap-3 mb-4">
-            <Avatar className="h-10 w-10 shrink-0">
-              <AvatarImage
-                src={user?.avatar_url ?? undefined}
-                alt={user?.name ?? "User"}
-              />
-              <AvatarFallback className="bg-gradient-to-br from-violet-500 to-indigo-600 text-white text-xs font-bold">
-                {user?.name?.charAt(0).toUpperCase() ?? "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0 flex-1">
-              <p className="text-white text-sm font-semibold truncate">
-                {user?.name ?? "User"}
-              </p>
 
-              {/* Privacy badge row */}
-              <div className="flex items-center gap-1.5 mt-1">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 text-[11px] text-white/70 font-medium">
-                  Bảng feed
-                </span>
-                <button className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-white/10 text-[11px] text-white/70 font-medium hover:bg-white/15 transition-colors cursor-pointer">
-                  <Globe size={10} className="text-white/50" />
-                  <span>Công khai</span>
-                  <ChevronDown size={10} className="text-white/40" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Caption textarea */}
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Hãy nói gì đó về nội dung này..."
-            rows={3}
-            className="w-full bg-transparent text-white/90 text-sm placeholder-white/30 border-none outline-none resize-none leading-relaxed"
-          />
-
-          {/* Share button */}
-          <button
-            onClick={handleShare}
-            disabled={isSharing}
-            className="w-full mt-2 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-2"
-          >
-            {isSharing ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                Đang chia sẻ...
-              </>
-            ) : (
-              "Chia sẻ ngay"
-            )}
-          </button>
-        </div>
 
         {/* Divider */}
-        <div className="border-t border-white/10" />
+        {/* <div className="border-t border-white/10" /> */}
 
         {/* Share to section */}
         <div className="px-5 pt-4 pb-5">
