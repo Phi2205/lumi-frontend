@@ -100,7 +100,7 @@ export const MediaDetailView = ({ conversationId, onBack, isDarkMode = true }: M
                                         {item.type === 'video' ? (
                                             <div className="w-full h-full relative">
                                                 <img
-                                                    src={`https://res.cloudinary.com/dibvkarvg/video/upload/so_0/${item.url}.jpg`}
+                                                    src={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/video/upload/so_0/${item.url}.jpg`}
                                                     className="w-full h-full object-cover transition-opacity"
                                                     alt=""
                                                 />

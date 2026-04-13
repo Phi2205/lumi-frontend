@@ -23,9 +23,9 @@ export default function StoriesPage() {
     // Helper to generate CDN URLs for story previews
     const cdnUrl = (publicId: string, mediaType: string) => {
         if (mediaType === 'video') {
-            return `https://res.cloudinary.com/dibvkarvg/video/upload/so_0/${publicId}.jpg`
+            return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/video/upload/so_0/${publicId}.jpg`
         } else {
-            return `https://res.cloudinary.com/dibvkarvg/image/upload/v1769332463/${publicId}.jpg`
+            return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/image/upload/v1769332463/${publicId}.jpg`
         }
     }
 

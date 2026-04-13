@@ -35,7 +35,7 @@ interface ModalStoryProps {
 }
 
 const cdnUrlImage = (publicId: string) => {
-  return `https://res.cloudinary.com/dibvkarvg/image/upload/v1769332463/${publicId}.jpg`
+  return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/image/upload/v1769332463/${publicId}.jpg`
 }
 
 // Import Hls.js normally - it will be empty on SSR anyway
