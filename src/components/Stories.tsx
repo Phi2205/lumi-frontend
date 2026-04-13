@@ -23,14 +23,14 @@ import "@/lib/i18n"
 const cdnUrl = (publicId: string, mediaType: string) => {
   console.log(publicId, mediaType);
   if (mediaType == 'video') {
-    return `https://res.cloudinary.com/dibvkarvg/video/upload/so_0/${publicId}.jpg`
+    return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/video/upload/so_0/${publicId}.jpg`
   } else {
-    return `https://res.cloudinary.com/dibvkarvg/image/upload/v1769332463/${publicId}.jpg`
+    return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/image/upload/v1769332463/${publicId}.jpg`
   }
 }
 
 const cdnUrlImage = (publicId: string) => {
-  return `https://res.cloudinary.com/dibvkarvg/image/upload/v1769332463/${publicId}.jpg`
+  return `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/image/upload/v1769332463/${publicId}.jpg`
 }
 
 // Dynamic import for HLS.js to avoid SSR issues
@@ -274,7 +274,7 @@ export function Stories() {
   // Extract public_id from streaming_url
   const extractPublicId = (streamingUrl: string): string | null => {
     try {
-      // Format: https://res.cloudinary.com/dibvkarvg/video/upload/sp_auto/{publicId}.m3u8
+      // Format: https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/video/upload/sp_auto/{publicId}.m3u8
       const match = streamingUrl.match(/\/upload\/sp_auto\/([^\/]+)\.m3u8/)
       if (match && match[1]) {
         return match[1]

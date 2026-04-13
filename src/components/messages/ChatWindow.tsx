@@ -67,7 +67,7 @@ const VideoMessage = memo(({ publicId }: { publicId: string }) => {
         onClick={handleOpenModal}
         className="w-auto h-[350px] object-cover rounded-xl cursor-pointer"
         playsInline
-        poster={`https://res.cloudinary.com/dibvkarvg/video/upload/so_0/${publicId}.jpg`}
+        poster={`https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/video/upload/so_0/${publicId}.jpg`}
       />
 
       {isOpen && typeof document !== 'undefined' && createPortal(

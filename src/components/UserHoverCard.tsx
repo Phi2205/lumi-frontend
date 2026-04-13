@@ -12,6 +12,14 @@ import { UserHoverCard as UserHoverCardType } from "@/types/user.type"
 import { Skeleton, SkeletonAvatar } from "@/components/skeleton"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "react-i18next"
+import { GlassButton } from "@/lib/components"
+import { FriendActionButton } from "@/components/profile/FriendActionButton"
+import { sendFriendRequestApi, acceptFriendRequestApi, cancelFriendRequestApi } from "@/apis/friendRequest.api"
+import { deleteFriendApi } from "@/apis/friend.api"
+import { useMiniChat } from "@/components/messages/MiniChatContext"
+import { useAuth } from "@/contexts/AuthContext"
+import { getOrCreatePrivateConversationApi } from "@/apis/conversation.api"
+import { mapConversationToUI } from "@/services/conversation.service"
 import "@/lib/i18n"
 
 interface UserHoverCardProps {
@@ -21,8 +29,12 @@ interface UserHoverCardProps {
     education?: string
     location?: string
     mutualFriends?: number
-    isFollowing?: boolean
     onFollow?: () => void
+    onAddFriend?: () => void
+    onUnfriend?: () => void
+    onCancelRequest?: () => void
+    onAcceptRequest?: () => void
+    isLoading?: boolean
     onMessage?: () => void
     username?: string
     hasStory?: boolean
@@ -37,8 +49,12 @@ export function UserHoverCard({
     education,
     location,
     mutualFriends = 0,
-    isFollowing = false,
     onFollow,
+    onAddFriend,
+    onUnfriend,
+    onCancelRequest,
+    onAcceptRequest,
+    isLoading: parentIsLoading = false,
     onMessage,
     username,
     hasStory = false,
@@ -47,6 +63,8 @@ export function UserHoverCard({
 }: UserHoverCardProps) {
     const { t } = useTranslation()
     const router = useRouter()
+    const { openChat } = useMiniChat()
+    const { user: currentUser } = useAuth()
     const [isOpen, setIsOpen] = useState(false)
     const [position, setPosition] = useState({ x: 0, y: 0 })
     const [userData, setUserData] = useState<UserHoverCardType | null>(null)
@@ -58,6 +76,88 @@ export function UserHoverCard({
         setMounted(true)
         return () => setMounted(false)
     }, [])
+
+    const handleInternalAddFriend = async () => {
+        if (!userId || isLoading) return
+        setIsLoading(true)
+        try {
+            await sendFriendRequestApi({ receiver_id: userId })
+            setUserData(prev => prev ? { ...prev, friend_status: 'pending' } : null)
+        } catch (err) {
+            console.error("Error adding friend:", err)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleInternalAcceptRequest = async () => {
+        if (!userId || isLoading) return
+        setIsLoading(true)
+        try {
+            await acceptFriendRequestApi({ requester_id: userId })
+            setUserData(prev => prev ? { ...prev, friend_status: 'accepted' } : null)
+        } catch (err) {
+            console.error("Error accepting friend request:", err)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleInternalCancelRequest = async () => {
+        if (!userId || isLoading) return
+        setIsLoading(true)
+        try {
+            await cancelFriendRequestApi({ receiver_id: userId })
+            setUserData(prev => prev ? { ...prev, friend_status: 'none' } : null)
+        } catch (err) {
+            console.error("Error cancelling friend request:", err)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleInternalUnfriend = async () => {
+        if (!userId || isLoading) return
+        setIsLoading(true)
+        try {
+            await deleteFriendApi(userId)
+            setUserData(prev => prev ? { ...prev, friend_status: 'none' } : null)
+        } catch (err) {
+            console.error("Error unfriending:", err)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleInternalChat = async () => {
+        if (!userId || isLoading) return
+        setIsLoading(true)
+        try {
+            const res = await getOrCreatePrivateConversationApi(userId)
+            if (res.data.success) {
+                const conversation = res.data.data
+                const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024
+                if (isMobile) {
+                    router.push(`/messages?conversationId=${conversation.id}`)
+                } else {
+                    const mapped = mapConversationToUI(conversation, currentUser?.id || "")
+                    openChat({
+                        recipientId: userId,
+                        recipientName: userData?.name || name || "User",
+                        recipientAvatar: userData?.avatar_url || avatar || "/avatar-default.jpg",
+                        conversationId: conversation.id,
+                        participants: mapped.participants,
+                        lastSeenMessageId: mapped.lastSeenMessageId,
+                    })
+                }
+                setIsOpen(false)
+            }
+        } catch (error) {
+            console.error("Failed to start chat from hover card:", error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
 
     useEffect(() => {
         if (isOpen && userId && !userData && !isLoading) {
@@ -127,7 +227,7 @@ export function UserHoverCard({
             {/* Hover Card */}
             {isOpen && mounted && createPortal(
                 <GlassCard
-                    className="fixed z-[9999] w-96 p-6 rounded-3xl !backdrop-blur-2xl !bg-gradient-to-br !from-white/15 !to-white/10 !border-white/30"
+                    className="fixed z-[9999] w-[26rem] p-6 rounded-[2.5rem] !backdrop-blur-3xl !bg-gradient-to-br !from-white/20 !to-white/5 !border-white/20 shadow-2xl"
                     variant="lg"
                     style={{
                         left: `${position.x}px`,
@@ -141,7 +241,7 @@ export function UserHoverCard({
                     {/* Close Button */}
                     <button
                         onClick={() => setIsOpen(false)}
-                        className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition"
+                        className="absolute top-4 right-4 p-1 hover:bg-white/10 rounded-full transition cursor-pointer"
                     >
                         <X className="w-5 h-5 text-white/70" />
                     </button>
@@ -159,7 +259,7 @@ export function UserHoverCard({
                         <div className="flex items-start gap-4 mb-4">
                             {/* Profile Picture */}
                             <div className="relative">
-                                <Avatar className="w-16 h-16 border-4 border-blue-400 shadow-lg">
+                                <Avatar className="w-20 h-20 border-2 border-white/20 shadow-xl">
                                     <AvatarImage src={userData?.avatar_url || avatar} alt={userData?.name || name} />
                                     <AvatarFallback className="bg-gradient-to-br from-blue-400 to-purple-500 text-white">
                                         {(userData?.name || name)
@@ -173,9 +273,9 @@ export function UserHoverCard({
 
                             {/* User Info */}
                             <div className="flex-1">
-                                <h3 className="text-white font-bold text-lg leading-tight">{userData?.name || name}</h3>
+                                <h3 className="text-white font-bold text-xl tracking-tight leading-tight">{userData?.name || name}</h3>
                                 {(userData?.friend_count ?? mutualFriends) > 0 && (
-                                    <p className="text-white/60 text-xs mt-1">
+                                    <p className="text-white/50 text-xs mt-1 font-medium">
                                         {t('friends.friends_count', { count: userData?.friend_count ?? mutualFriends })}
                                     </p>
                                 )}
@@ -226,55 +326,48 @@ export function UserHoverCard({
                             <Skeleton height="h-10" width="w-full" className="flex-1 rounded-xl bg-white/10" />
                             <Skeleton height="h-10" width="w-full" className="flex-1 rounded-xl bg-white/10" />
                             <Skeleton height="h-10" width="w-10" className="rounded-xl bg-white/10 shrink-0" />
-                            <Skeleton height="h-10" width="w-10" className="rounded-xl bg-white/10 shrink-0" />
                         </div>
                     ) : (
                         <div className="flex gap-2">
                             {/* Message Button */}
-                            <Button
-                                onClick={onMessage}
-                                className="flex-1 backdrop-blur-lg bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 h-10"
+                            <GlassButton
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (onMessage) {
+                                        onMessage()
+                                    } else {
+                                        handleInternalChat()
+                                    }
+                                }}
+                                className="flex-1 !rounded-[1rem] h-10 font-bold bg-white/10 hover:bg-white/20 border-white/20"
                             >
-                                <MessageCircle className="w-4 h-4" />
+                                <MessageCircle className="w-4 h-4 mr-1" />
                                 {t('common.message')}
-                            </Button>
+                            </GlassButton>
 
-                            {/* Follow Button */}
-                            <Button
-                                onClick={onFollow}
-                                className={cn(
-                                    "flex-1 backdrop-blur-lg rounded-xl font-semibold transition transform hover:scale-105 flex items-center justify-center gap-2 h-10",
-                                    isFollowing
-                                        ? "bg-white/10 hover:bg-white/20 border border-white/30 text-white"
-                                        : "bg-blue-500 hover:bg-blue-600 text-white"
-                                )}
-                            >
-                                <UserPlus className="w-4 h-4" />
-                                {isFollowing ? t('common.following') : t('common.follow')}
-                            </Button>
+                            <FriendActionButton
+                                status={userData?.friend_status}
+                                name={userData?.name || name}
+                                onAddFriend={onAddFriend || handleInternalAddFriend}
+                                onUnfriend={onUnfriend || handleInternalUnfriend}
+                                onCancelRequest={onCancelRequest || handleInternalCancelRequest}
+                                onAcceptRequest={onAcceptRequest || handleInternalAcceptRequest}
+                                isLoading={isLoading || parentIsLoading}
+                                className="flex-1 !rounded-[1rem] h-10 font-bold"
+                            />
 
                             {/* Profile Button */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
+                            <GlassButton
+                                onClick={(e) => {
+                                    e.stopPropagation()
                                     const u = userData?.username || username
                                     if (u) router.push(`/users/${u}`)
                                     setIsOpen(false)
                                 }}
-                                className="backdrop-blur-lg bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-xl h-10 w-10 shrink-0"
+                                className="!rounded-[1rem] h-10 w-10 shrink-0 bg-white/5 hover:bg-white/10 border-white/10 !p-0"
                             >
-                                <User className="w-4 h-4" />
-                            </Button>
-
-                            {/* More Options */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="backdrop-blur-lg bg-white/10 hover:bg-white/20 border border-white/30 text-white rounded-xl h-10 w-10 shrink-0"
-                            >
-                                <MoreHorizontal className="w-4 h-4" />
-                            </Button>
+                                <User className="w-5 h-5" />
+                            </GlassButton>
                         </div>
                     )}
                 </GlassCard>,
@@ -293,9 +386,12 @@ interface UserNameHoverProps {
         education?: string
         location?: string
         mutualFriends?: number
-        isFollowing?: boolean
     }
     onFollow?: () => void
+    onAddFriend?: () => void
+    onUnfriend?: () => void
+    onCancelRequest?: () => void
+    onAcceptRequest?: () => void
     onMessage?: () => void
     className?: string
 }
@@ -305,6 +401,10 @@ export function UserNameWithHover({
     name,
     userInfo,
     onFollow,
+    onAddFriend,
+    onUnfriend,
+    onCancelRequest,
+    onAcceptRequest,
     onMessage,
     className,
 }: UserNameHoverProps) {
@@ -316,8 +416,11 @@ export function UserNameWithHover({
             education={userInfo.education}
             location={userInfo.location}
             mutualFriends={userInfo.mutualFriends}
-            isFollowing={userInfo.isFollowing}
             onFollow={onFollow}
+            onAddFriend={onAddFriend}
+            onUnfriend={onUnfriend}
+            onCancelRequest={onCancelRequest}
+            onAcceptRequest={onAcceptRequest}
             onMessage={onMessage}
             className={className}
         >

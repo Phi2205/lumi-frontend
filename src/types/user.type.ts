@@ -30,5 +30,6 @@ export interface UserHoverCard {
   avatar_url?: string;
   address?: string;
   friend_count?: number;
+  friend_status?: FriendshipStatus;
 }
 

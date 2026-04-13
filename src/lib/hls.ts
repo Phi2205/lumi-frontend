@@ -14,7 +14,7 @@ export function playHlsPreview(
   }
 
   const streamUrl =
-    `https://res.cloudinary.com/dibvkarvg/video/upload/sp_auto/${publicId}.m3u8`;
+    `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/video/upload/sp_auto/${publicId}.m3u8`;
 
   let hls: Hls | null = null;
   let stopTimer: number | null = null;
@@ -76,7 +76,7 @@ export function playHlsVideo(
   if (!videoEl) return () => { };
 
   const streamUrl =
-    `https://res.cloudinary.com/dibvkarvg/video/upload/sp_auto/${publicId}.m3u8`;
+    `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/video/upload/sp_auto/${publicId}.m3u8`;
 
   let hls: Hls | null = null;
 
@@ -96,7 +96,7 @@ export function playHlsVideo(
   } else {
     // Fallback cuối cùng (hiếm)
     videoEl.src =
-      `https://res.cloudinary.com/dibvkarvg/video/upload/${publicId}.mp4`;
+      `https://res.cloudinary.com/${process.env.NEXT_PUBLIC_CLOUDINARY_NAME}/video/upload/${publicId}.mp4`;
   }
 
   // videoEl.muted = true; // Cho phép có tiếng
