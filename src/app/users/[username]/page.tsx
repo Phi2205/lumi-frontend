@@ -24,7 +24,7 @@ import { SearchPanel } from "@/components/SearchPanel"
 import { useTranslation } from "react-i18next"
 import "@/lib/i18n"
 
-export default function UserProfilePage() {
+function UserProfileContent() {
   const { t } = useTranslation()
   const params = useParams()
   const username = params.username as string
@@ -243,3 +243,14 @@ export default function UserProfilePage() {
     </div>
   )
 }
+
+import { Suspense } from "react"
+
+export default function UserProfilePage() {
+  return (
+    <Suspense fallback={null}>
+      <UserProfileContent />
+    </Suspense>
+  )
+}
+

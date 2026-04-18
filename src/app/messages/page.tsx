@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { ConversationList, type ConversationUI, ParticipantUI } from "@/components/messages/ConversationList"
 import { ChatWindow, type MessageUI } from "@/components/messages/ChatWindow"
@@ -19,11 +19,7 @@ import { CreateGroupModal } from "@/components/messages/CreateGroupModal"
 import { useTranslation } from "react-i18next"
 import "@/lib/i18n"
 
-// export default function Page() {
-//   return <div>Test messages</div>
-// }
-
-export default function MessagesPage() {
+function MessagesContent() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const searchParams = useSearchParams()
@@ -282,3 +278,13 @@ export default function MessagesPage() {
     </div>
   )
 }
+
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={null}>
+      <MessagesContent />
+    </Suspense>
+  )
+}
+
