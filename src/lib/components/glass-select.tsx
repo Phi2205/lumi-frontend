@@ -34,7 +34,7 @@ export function GlassSelect({ options, value, onChange }: GlassSelectProps) {
         <div ref={containerRef} className="relative min-w-[140px]">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full h-11 flex items-center justify-between px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold hover:bg-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                className="w-full h-11 flex items-center justify-between px-4 bg-white/5 border border-white/10 rounded-xl text-white text-sm font-bold hover:bg-white/10 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500/50 cursor-pointer"
             >
                 <span className="truncate">{selectedOption.label}</span>
                 <ChevronDown className={`w-4 h-4 text-white/40 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
@@ -59,7 +59,7 @@ export function GlassSelect({ options, value, onChange }: GlassSelectProps) {
                                             onChange(option.value)
                                             setIsOpen(false)
                                         }}
-                                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all relative group/item ${isActive
+                                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all relative group/item cursor-pointer ${isActive
                                                 ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20'
                                                 : 'text-white/60 hover:text-white hover:bg-white/10'
                                             }`}
