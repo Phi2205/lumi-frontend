@@ -47,7 +47,7 @@ export default function SettingsPage() {
                 </GlassCard>
 
                 {/* Language Section */}
-                <GlassCard className="p-6">
+                <GlassCard className="p-6 relative z-10">
                     <h2 className="text-xl font-semibold text-white mb-6">{t('settings.language')}</h2>
 
                     <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
