@@ -1,4 +1,5 @@
 import * as authApi from '@/apis/auth.api';
+import { clearViewedCache } from './post.service';
 
 export const loginUser = async (data: { email: string, password: string }) => {
     try {
@@ -18,8 +19,9 @@ export const logoutUser = async () => {
         // Even if API call fails, we still want to clear local storage
         console.error('Logout API error:', error);
     } finally {
-        // Always clear user from localStorage
+        // Always clear user from localStorage and local caches
         localStorage.removeItem('user');
+        clearViewedCache();
     }
 }
 
