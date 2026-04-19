@@ -10,6 +10,11 @@ export const markAsViewed = (postId: string) => {
     viewedQueue.add(postId);
 }
 
+export const clearViewedCache = () => {
+    localViewed.clear();
+    viewedQueue.clear();
+}
+
 setInterval(async () => {
     if (viewedQueue.size === 0) return;
 
