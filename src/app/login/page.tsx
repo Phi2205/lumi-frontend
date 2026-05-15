@@ -296,6 +296,35 @@ export default function LoginPage() {
                     Sign up
                   </Link>
                 </p>
+
+                {/* Test Credentials Box */}
+                <div className="mt-10 border-beam-container animate-in fade-in slide-in-from-bottom-4 duration-700">
+                  <div className="border-beam"></div>
+                  <div className="p-6 glass-dark border border-white/10 rounded-2xl relative z-10">
+                    <div className="flex items-center gap-2 mb-3 text-white/60">
+                      <ShieldCheck size={16} className="text-[var(--brand-primary)]" />
+                      <span className="text-xs uppercase tracking-widest font-semibold">Test Account</span>
+                    </div>
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmail('user1@example.com');
+                          setPassword('123456@Abc');
+                        }}
+                        className="w-full text-left group transition-all"
+                      >
+                        <div className="flex flex-col gap-1 p-3 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/10 transition-all">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium text-white/80 group-hover:text-[var(--brand-primary)] transition-colors">user1@example.com</span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/40 group-hover:bg-[var(--brand-primary)]/20 group-hover:text-[var(--brand-primary)] transition-all">Click to fill</span>
+                          </div>
+                          <span className="text-xs text-white/40 font-mono tracking-wider">123456@Abc</span>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
