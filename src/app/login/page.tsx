@@ -298,7 +298,7 @@ export default function LoginPage() {
                 </p>
 
                 {/* Test Credentials Box */}
-                <div className="mt-10 border-beam-container animate-in fade-in slide-in-from-bottom-4 duration-700">
+                {/* <div className="mt-10 border-beam-container animate-in fade-in slide-in-from-bottom-4 duration-700">
                   <div className="border-beam"></div>
                   <div className="p-6 glass-dark border border-white/10 rounded-2xl relative z-10">
                     <div className="flex items-center gap-2 mb-3 text-white/60">
@@ -324,7 +324,7 @@ export default function LoginPage() {
                       </button>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
